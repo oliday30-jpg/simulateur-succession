@@ -1,0 +1,116 @@
+import { z } from 'zod';
+import type { AppState } from '../model/types';
+
+/** Version courante du format d'export JSON. */
+export const SCHEMA_VERSION = 1 as const;
+export const APP_ID = 'simulateur-succession-wallonie';
+
+const cents = z.number().int().safe();
+const ncents = cents.nullable();
+const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const fracS = z.object({ n: z.number().int().nonnegative(), d: z.number().int().positive() });
+const value = z.object({ cents: ncents, certainty: z.enum(['approx', 'manuel', 'verifie']), source: z.string(), note: z.string().optional() });
+const holder = z.enum(['pere', 'fils', 'beneficiaire', 'petitFils', 'quart']);
+const person = z.enum(['pere', 'fils', 'beneficiaire', 'petitFils', 'filsPredecede']);
+const donee = z.enum(['fils', 'petitFils']);
+
+const lot = z.object({ id: z.string(), share: fracS, pp: holder.optional(), np: holder.optional(), us: holder.optional(), origine: z.string() });
+
+const situation = z.object({
+  region: z.literal('wallonie'),
+  persons: z.array(z.object({ id: person, role: z.string(), lien: z.string(), heritierLegal: z.enum(['presume', 'non', 'a_confirmer']) })),
+  house: z.object({
+    label: z.string(), occupationDepuis: z.number().int(),
+    valeurAncienne: value, valeurHypothese: value, valeurExpertise: value, valeurDecesFilsPredecede: value,
+    dateDecesFilsPredecede: iso,
+    sourceValeurCourante: z.enum(['hypothese', 'expertise', 'ancienne']),
+    lots: z.array(lot),
+    quartResolution: z.enum(['inconnu', 'beneficiaire_conserve', 'personnalise']),
+    quartPersonnalise: z.object({ holder, note: z.string() }),
+    logementEligibilite: z.enum(['inconnu', 'hypothese_eligible', 'eligible_confirme', 'non_eligible']),
+    logementSituation: z.enum(['conserve', 'demenagement_volontaire', 'depart_justifie', 'inconnu']),
+  }),
+  postes: z.array(z.object({
+    id: z.string(), label: z.string(), kind: z.enum(['compte', 'titres', 'autre_avoir', 'dette', 'frais_funeraires', 'autres_frais', 'prelevement']),
+    value, liquide: z.boolean(), deductible: z.enum(['oui', 'non', 'a_confirmer']), payePar: z.union([person, z.literal('succession')]),
+  })),
+  creance: z.object({
+    nominal: value, remboursements: z.array(cents), recouvre: value,
+    traitementFiscal: z.enum(['a_confirmer', 'actif_valide', 'exclu']), inclusion: z.enum(['exclue', 'solde_nominal', 'montant_recouvre']),
+    dejaEncaisse: z.boolean(), dateRecouvrement: iso.nullable(),
+  }),
+  bilanMode: z.enum(['A', 'B']),
+  soldeAuDecesB: value,
+  budget: z.object({
+    pensionMensuelle: value, depensesMensuelles: value, soinsMensuels: value, reserveMinimale: value, travaux: value, prixRelogement: value,
+    dureeMois: z.number().int().nonnegative().nullable(),
+  }),
+  horsPerimetre: z.object({ changementRegion: z.boolean(), indivisionLitigieuse: z.boolean(), chargesParticulieres: z.boolean(), decesDonataireAvantDonateur: z.boolean(), plusValueCession: z.boolean() }),
+});
+
+const evBase = { id: z.string(), date: iso, order: z.number().int(), note: z.string().optional() };
+const event = z.discriminatedUnion('type', [
+  z.object({ ...evBase, type: z.literal('donation_immobiliere'), fraction: fracS, donataire: donee, reserveUsufruit: z.boolean(), valeurBien: ncents, fraisActe: value, droitsPayesPar: person, fraisPayesPar: person }),
+  z.object({ ...evBase, type: z.literal('don_bancaire'), montant: ncents, donataire: donee, statut: z.enum(['prevu', 'realise_non_enregistre', 'enregistrement_confirme']), dateEnregistrement: iso.nullable(), droitsPayesPar: person, fraisEnregistrement: value }),
+  z.object({ ...evBase, type: z.literal('vente'), prix: ncents, frais: value, fraisRepartition: z.union([z.literal('prorata'), holder]), mode: z.enum(['coefficient', 'montants_saisis']), coefUsufruit: fracS.nullable(), coefParLot: z.record(fracS.nullable()), montantsSaisis: z.record(ncents), accordsConfirmes: z.boolean() }),
+  z.object({ ...evBase, type: z.literal('cession_quote_part'), lotId: z.string(), de: holder, vers: holder, prix: ncents, frais: value, statut: z.enum(['hypothese', 'confirme_notaire']) }),
+  z.object({ ...evBase, type: z.literal('depense'), label: z.string(), montant: ncents }),
+  z.object({ ...evBase, type: z.literal('recette'), label: z.string(), montant: ncents }),
+]);
+
+const scenario = z.object({
+  id: z.string(), name: z.string().max(200), templateId: z.string(),
+  deathDate: iso.nullable(), valeurMaisonDeces: ncents,
+  rulesMode: z.enum(['auto', 'constant2026', 'decret2024', 'annonce2026', 'manuel']),
+  reserveProgressivite: z.enum(['inconnu', 'appliquer', 'ne_pas_appliquer']),
+  abattementLegataire: z.enum(['non', 'oui_confirme']),
+  manualDeathTax: z.record(ncents),
+  events: z.array(event),
+  legs: z.array(z.object({ id: z.string(), beneficiaire: donee, montant: ncents, actif: z.boolean(), imputation: z.enum(['aucune', 'imputation_confirmee']), droitsACharge: z.enum(['legataire', 'heritier']) })),
+  snapshot: z.object({ savedAt: iso, ruleIds: z.array(z.string()), fiscalTotal: ncents, label: z.string() }).nullable(),
+  notes: z.string(),
+});
+
+export const stateSchema = z.object({
+  schemaVersion: z.literal(1),
+  situation,
+  scenarios: z.array(scenario).max(50),
+  selectedIds: z.array(z.string()),
+  activeId: z.string().nullable(),
+});
+
+export const exportSchema = z.object({
+  app: z.literal(APP_ID),
+  schemaVersion: z.literal(SCHEMA_VERSION),
+  exportedAt: iso,
+  avertissement: z.string(),
+  noms: z.record(z.string()).optional(),
+  state: stateSchema,
+});
+
+export type ExportFile = z.infer<typeof exportSchema>;
+
+/**
+ * Migrations successives. v0 (prototype) : montants en euros décimaux sous `house.value` et
+ * `savings` — converti en v1 (centimes, postes). Toute version future inconnue est refusée.
+ */
+export function migrate(raw: unknown): { ok: true; data: unknown; migratedFrom?: number } | { ok: false; error: string } {
+  if (typeof raw !== 'object' || raw === null) return { ok: false, error: 'Fichier JSON vide ou invalide.' };
+  const r = raw as Record<string, unknown>;
+  if (r.app !== APP_ID) return { ok: false, error: 'Ce fichier ne provient pas du simulateur.' };
+  const v = typeof r.schemaVersion === 'number' ? r.schemaVersion : 0;
+  if (v > SCHEMA_VERSION) return { ok: false, error: `Version de fichier ${v} plus récente que l’application (${SCHEMA_VERSION}).` };
+  if (v === SCHEMA_VERSION) return { ok: true, data: raw };
+  if (v === 0) {
+    // Format v0 : { app, houseValue (euros), savings (euros), scenarios: [...v1 scenarios] }
+    return { ok: false, error: 'Format v0 : utilisez migrateV0(base, fichier).' };
+  }
+  return { ok: false, error: `Version ${v} non prise en charge.` };
+}
+
+export function migrateV0(base: AppState, raw: { houseValue?: number; savings?: number }): AppState {
+  const s = structuredClone(base);
+  if (typeof raw.houseValue === 'number') s.situation.house.valeurHypothese.cents = Math.round(raw.houseValue * 100);
+  if (typeof raw.savings === 'number' && s.situation.postes[0]) s.situation.postes[0].value.cents = Math.round(raw.savings * 100);
+  return s;
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+# Exports privés : ne jamais versionner des montants ou noms réels
+exports/
+*.export.json
+simulation-*.json
+comparaison-*.csv
+*.local.json
+.vscode/settings.local.json
+*.tsbuildinfo
