@@ -1,5 +1,6 @@
 import { euros } from '../util/money';
 import { frac } from '../util/fraction';
+import { lotsForRepartition } from '../domain/devolution';
 import type { AppState, Scenario, Situation, Value, SimEvent, Legs } from './types';
 
 const v = (e: number | null, certainty: Value['certainty'], source: string, note?: string): Value => ({
@@ -17,7 +18,7 @@ export function sampleSituation(): Situation {
       { id: 'pere', role: 'Père', lien: 'Défunt simulé (donateur)', heritierLegal: 'non' },
       { id: 'fils', role: 'Fils survivant', lien: 'Enfant', heritierLegal: 'presume' },
       { id: 'filsPredecede', role: 'Fils prédécédé', lien: 'Enfant décédé le 07/10/2026', heritierLegal: 'non' },
-      { id: 'beneficiaire', role: 'Bénéficiaire potentielle du quart', lien: 'Cohabitante légale du fils prédécédé', heritierLegal: 'non' },
+      { id: 'beneficiaire', role: 'Bénéficiaire potentielle de la part du fils prédécédé', lien: 'Cohabitante légale du fils prédécédé', heritierLegal: 'non' },
       { id: 'petitFils', role: 'Petit-fils', lien: 'Petit-enfant (légataire ou donataire possible)', heritierLegal: 'non' },
     ],
     house: {
@@ -29,11 +30,7 @@ export function sampleSituation(): Situation {
       valeurDecesFilsPredecede: v(null, 'approx', 'À confirmer (valeur au 07/10/2026)'),
       dateDecesFilsPredecede: '2026-10-07',
       sourceValeurCourante: 'hypothese',
-      lots: [
-        { id: 'L1', share: frac(1, 2), pp: 'pere', origine: 'Moitié du père (pleine propriété)' },
-        { id: 'L2', share: frac(1, 4), np: 'fils', us: 'pere', origine: 'Succession de la mère : nue-propriété du fils survivant' },
-        { id: 'L3', share: frac(1, 4), np: 'quart', us: 'pere', origine: 'Nue-propriété du fils prédécédé — succession ouverte' },
-      ],
+      lots: lotsForRepartition('acte2005_reduction'),
       quartResolution: 'inconnu',
       quartPersonnalise: { holder: 'beneficiaire', note: '' },
       logementEligibilite: 'hypothese_eligible',
@@ -139,7 +136,7 @@ export const TEMPLATES: Template[] = [
     id: `legs${m / 1000}k`, label: `Legs ${m / 1000} 000 € au petit-fils`, description: 'Disposition au décès (pas une sortie du vivant).',
     build: () => ({ ...baseScenario(`legs${m / 1000}k`, `Legs ${m / 1000} 000 € au petit-fils`), legs: [mkLegs(m)] }),
   })),
-  { id: 'donation_immo', label: 'Donation immobilière avec usufruit', description: 'Le père donne sa moitié en nue-propriété au fils et se réserve l’usufruit.',
+  { id: 'donation_immo', label: 'Donation immobilière avec usufruit', description: 'Le père donne 1/2 de la maison en nue-propriété au fils et se réserve l’usufruit.',
     build: () => ({ ...baseScenario('donation_immo', 'Donation de la moitié (réserve d’usufruit)'), events: [mkDonationImmo()] }) },
   { id: 'vente_actuelle', label: 'Vente avec droits actuels', description: 'Vente de toute la maison, répartition du prix selon les lots actuels.',
     build: () => ({ ...baseScenario('vente_actuelle', 'Vente (droits actuels)'), events: [mkVente('2027-03-01')] }) },

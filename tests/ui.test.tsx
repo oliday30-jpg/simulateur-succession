@@ -90,6 +90,19 @@ describe('parcours interface', () => {
     expect(details.textContent).toMatch(/WAL-DON-ACTUEL/);
   });
 
+  it('sélection de la répartition de la succession de la mère', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    const sel = screen.getByLabelText(/Répartition issue de la succession de la mère/) as HTMLSelectElement;
+    expect(sel.value).toBe('acte2005_reduction');
+    expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 2\/3/);
+    await user.selectOptions(sel, 'legale_moitie');
+    expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 1\/2 /);
+    await user.selectOptions(sel, 'donation_survie_integrale');
+    expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 100/);
+    expect(screen.getByText(/^Résumé :/).textContent).not.toMatch(/Fils survivant/);
+  });
+
   it('onglets utilisables au clavier', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);

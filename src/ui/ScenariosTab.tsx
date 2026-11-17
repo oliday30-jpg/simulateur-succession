@@ -214,7 +214,7 @@ function DonFields({ e, onChange }: { e: DonBancaire; onChange: (e: SimEvent) =>
 function ImmoFields({ e, onChange }: { e: DonationImmo; onChange: (e: SimEvent) => void }) {
   return (
     <>
-      <FracField label="Fraction de la maison donnée" value={e.fraction} onChange={(f) => f && onChange({ ...e, fraction: f })} hint="Ex. 1/2 = toute la moitié du père ; 1/4 = la moitié de sa moitié" />
+      <FracField label="Fraction de la maison donnée" value={e.fraction} onChange={(f) => f && onChange({ ...e, fraction: f })} hint="Fraction de toute la maison, au plus la pleine propriété du père (2/3 selon l’acte de 2005). Ex. 1/2, 2/3" />
       <SelectField label="Donataire" value={e.donataire} onChange={(v) => onChange({ ...e, donataire: v })} options={DONEES} />
       <CheckField label="Réserve d’usufruit au profit du père" checked={e.reserveUsufruit} onChange={(v) => onChange({ ...e, reserveUsufruit: v })} />
       <MoneyField label="Valeur de la maison à la date de l’acte" value={e.valeurBien} onChange={(v) => onChange({ ...e, valeurBien: v })} hint={e.valeurBien === null ? 'Vide = hérite de l’hypothèse de la situation' : undefined} />
@@ -236,7 +236,7 @@ function VenteFields({ e, onChange }: { e: Vente; onChange: (e: SimEvent) => voi
       {e.mode === 'montants_saisis' && HOLDERS.map(([h, l]) => (
         <MoneyField key={h} label={`Montant — ${l}`} value={e.montantsSaisis[h] ?? null} onChange={(v) => onChange({ ...e, montantsSaisis: { ...e.montantsSaisis, [h]: v } })} />
       ))}
-      <CheckField label="Accords de tous les titulaires confirmés" checked={e.accordsConfirmes} onChange={(v) => onChange({ ...e, accordsConfirmes: v })} hint="Y compris la clarification du quart du fils prédécédé" />
+      <CheckField label="Accords de tous les titulaires confirmés" checked={e.accordsConfirmes} onChange={(v) => onChange({ ...e, accordsConfirmes: v })} hint="Y compris la clarification de la part du fils prédécédé" />
     </>
   );
 }

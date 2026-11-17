@@ -3,10 +3,34 @@ import { sampleSituation, TEMPLATES, mkDonBancaire, mkDonationImmo, mkLegs, mkVe
 import type { Scenario, Situation, Vente, DonBancaire } from '../src/model/types';
 import { euros } from '../src/util/money';
 import { frac } from '../src/util/fraction';
+import { lotsForRepartition } from '../src/domain/devolution';
 
 const E = euros;
 const tpl = (id: string): Scenario => TEMPLATES.find((t) => t.id === id)!.build();
-const sit = (f?: (s: Situation) => void) => { const s = sampleSituation(); f?.(s); return s; };
+// Les repères historiques (38 425, 13 050…) ont été établis avec l'ancienne hypothèse « père 1/2 PP + US 1/2 ».
+const sit = (f?: (s: Situation) => void) => { const s = sampleSituation(); s.house.lots = lotsForRepartition('legale_moitie'); f?.(s); return s; };
+const sit2005 = (f?: (s: Situation) => void) => { const s = sampleSituation(); f?.(s); return s; };
+
+describe('répartition selon l’acte de 2005 (défaut)', () => {
+  it('décès 2027, logement éligible : 47 675 €', () => {
+    // Masse : 2/3 × 300 000 = 200 000 (maison) + 170 000 = 370 000 (l'usufruit sur 1/3 s'éteint sans droits).
+    // Logement 200 000 : 25 000×1 % + 25 000×2 % + 125 000×5 % + 25 000×12 % = 250 + 500 + 6 250 + 3 000 = 10 000
+    // Reste 170 000 placé de 200 000 à 370 000 : 50 000×18 % + 120 000×24 % = 9 000 + 28 800 = 37 800
+    // Exemption 12 500 sur la tranche la plus basse (1 %) : −125 → 47 675
+    expect(simulate(sit2005(), tpl('reference')).totals.fiscalDeath.value).toBe(E(47675));
+  });
+  it('logement non éligible : 55 050 €', () => {
+    // 370 000 au barème ordinaire : 26 625 (jusqu'à 250 000) + 120 000×24 % = 55 425 ; −12 500×3 % = −375
+    const r = simulate(sit2005((s) => { s.house.logementEligibilite = 'non_eligible'; }), tpl('reference'));
+    expect(r.totals.fiscalDeath.value).toBe(E(55050));
+  });
+  it('après le décès : fils 5/6, part du fils prédécédé 1/6', () => {
+    const r = simulate(sit2005((s) => { s.house.quartResolution = 'beneficiaire_conserve'; }), tpl('reference'));
+    const pp = (h: string) => r.lotsApresDeces!.filter((l) => l.pp === h).reduce((a, l) => a + l.share.n / l.share.d, 0);
+    expect(pp('fils')).toBeCloseTo(5 / 6, 12);
+    expect(pp('beneficiaire')).toBeCloseTo(1 / 6, 12);
+  });
+});
 
 describe('référence sans donation', () => {
   it('décès 2027 : 38 425 € (logement éligible par hypothèse)', () => {

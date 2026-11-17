@@ -6,6 +6,7 @@ import { formatFrac } from '../util/fraction';
 import { formatEUR } from '../util/money';
 import { newId } from '../model/sample';
 import { useWho } from './display';
+import { detectRepartition, lotsForRepartition, REPARTITION_LABEL, REPARTITION_NOTE, type RepartitionMere } from '../domain/devolution';
 
 type Upd = (fn: (s: Situation) => void) => void;
 
@@ -18,6 +19,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
   const who = useWho();
   const hv = houseValueOf(s);
   const lotIssues = validateLots(s.house.lots);
+  const repartition = detectRepartition(s.house.lots);
   const soldeCreance = s.creance.nominal.cents === null ? null : s.creance.nominal.cents - s.creance.remboursements.reduce((a, b) => a + b, 0);
   return (
     <div className="stack">
@@ -51,6 +53,10 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
           hint="Chaque événement peut aussi recevoir sa propre valeur à sa date." />
 
         <h3>Lots de propriété</h3>
+        <SelectField<RepartitionMere> label="Répartition issue de la succession de la mère (2005)" value={repartition}
+          onChange={(r) => { if (r !== 'personnalisee') update((d) => { d.house.lots = lotsForRepartition(r); }); }}
+          options={(Object.keys(REPARTITION_LABEL) as RepartitionMere[]).map((r) => [r, REPARTITION_LABEL[r]])}
+          hint={`${REPARTITION_NOTE[repartition]} Hypothèse : maison détenue pour moitié par chaque époux (séparation de biens). Choisir un préréglage remplace les lots ; modifier un lot passe en « personnalisée ».`} />
         <p className="muted">Chaque lot a un plein propriétaire, ou un couple nu-propriétaire / usufruitier. L’usufruit et la nue-propriété portent sur la même quote-part : ils ne s’additionnent pas en 200 %.</p>
         <div className="table-wrap">
           <table>
@@ -66,7 +72,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
         <p className="muted">Résumé : {summarize(s.house.lots).map((h) => `${HOLDER_LABEL[h.holder]} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
 
         <div className="grid">
-          <SelectField label="Quart du fils prédécédé" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
+          <SelectField label="Part du fils prédécédé (nue-propriété)" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
             options={[['inconnu', quartLabel('inconnu')], ['beneficiaire_conserve', quartLabel('beneficiaire_conserve')], ['personnalise', quartLabel('personnalise')]]}
             hint="La dévolution de cette succession n’est pas calculée par l’outil." />
           {s.house.quartResolution === 'personnalise' && (

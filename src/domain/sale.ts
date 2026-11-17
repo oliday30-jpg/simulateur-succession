@@ -63,7 +63,7 @@ export function splitSale(lots: Lot[], v: Vente, prix: Cents | null): SaleResult
   const warnings: string[] = [];
   if (!v.accordsConfirmes) warnings.push('La vente de toute la pleine propriété suppose l’accord de tous les titulaires (nus-propriétaires et usufruitier) : non confirmé.');
   if (lots.some((l) => l.pp === 'quart' || l.np === 'quart' || l.us === 'quart'))
-    warnings.push('Le quart du fils prédécédé n’est pas clarifié : la part correspondante est attribuée à « titulaire à déterminer ».');
+    warnings.push('La part du fils prédécédé n’est pas clarifiée : la part correspondante est attribuée à « titulaire à déterminer ».');
   const frais = v.frais.cents;
   if (prix === null) reasons.push('Prix de vente non renseigné (et valeur de la maison inconnue)');
   if (frais === null) warnings.push('Frais de vente non renseignés : répartition calculée sans frais (non pris pour 0 dans le total frais compris).');

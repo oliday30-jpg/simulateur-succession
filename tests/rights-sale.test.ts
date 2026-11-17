@@ -5,7 +5,33 @@ import type { Vente } from '../src/model/types';
 import { euros } from '../src/util/money';
 import { eq, frac } from '../src/util/fraction';
 
-const lots = () => sampleSituation().house.lots;
+import { detectRepartition, lotsForRepartition } from '../src/domain/devolution';
+
+// Repères historiques établis avec l'ancienne hypothèse « père 1/2 PP + US 1/2, chaque fils 1/4 NP ».
+const lots = () => lotsForRepartition('legale_moitie');
+
+describe('répartition issue de la succession de la mère', () => {
+  it('acte 2005 (réduction) : père 2/3 PP + US 1/3 ; chaque fils 1/6 NP ; c’est le défaut', () => {
+    const l = sampleSituation().house.lots;
+    expect(detectRepartition(l)).toBe('acte2005_reduction');
+    expect(validateLots(l)).toEqual([]);
+    const s = summarize(l);
+    const pere = s.find((x) => x.holder === 'pere')!;
+    expect(eq(pere.pp, frac(2, 3))).toBe(true);
+    expect(eq(pere.us, frac(1, 3))).toBe(true);
+    expect(eq(s.find((x) => x.holder === 'fils')!.np, frac(1, 6))).toBe(true);
+    expect(eq(s.find((x) => x.holder === 'quart')!.np, frac(1, 6))).toBe(true);
+  });
+  it('tous les préréglages totalisent 100 % et sont reconnus ; une modification devient « personnalisée »', () => {
+    for (const r of ['acte2005_reduction', 'donation_survie_integrale', 'legale_moitie'] as const) {
+      expect(validateLots(lotsForRepartition(r))).toEqual([]);
+      expect(detectRepartition(lotsForRepartition(r))).toBe(r);
+    }
+    const l = lotsForRepartition('acte2005_reduction');
+    l[1] = { ...l[1], np: 'petitFils' };
+    expect(detectRepartition(l)).toBe('personnalisee');
+  });
+});
 
 describe('droits immobiliers par lots', () => {
   it('lots d’exemple : total 100 %, sans chevauchement', () => {

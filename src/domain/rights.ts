@@ -4,9 +4,9 @@ import { add, cmp, eq, isZero, ONE, sub, sum, ZERO, type Frac } from '../util/fr
 export const HOLDER_LABEL: Record<HolderId, string> = {
   pere: 'Père',
   fils: 'Fils survivant',
-  beneficiaire: 'Bénéficiaire du quart (sous réserve)',
+  beneficiaire: 'Bénéficiaire de la part du fils prédécédé (sous réserve)',
   petitFils: 'Petit-fils',
-  quart: 'Titulaire du quart du fils prédécédé (à déterminer)',
+  quart: 'Titulaire de la part du fils prédécédé (à déterminer)',
 };
 
 export interface LotIssue { lotId?: string; message: string }

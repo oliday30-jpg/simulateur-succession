@@ -45,7 +45,7 @@ describe('export CSV', () => {
     const rows = st.scenarios.map((sc) => ({ sc, res: simulate(st.situation, sc), ref: simulate(st.situation, alignedReference(sc)) }));
     const csv = comparisonCsv(rows);
     expect(csv.split('\r\n')).toHaveLength(4);
-    expect(csv).toContain('38425,00');
+    expect(csv).toContain('47675,00'); // référence par défaut (acte 2005), voir simulate.test.ts
     expect(csv).toContain('330,00');
     expect(csv).toContain('a_confirmer');
   });

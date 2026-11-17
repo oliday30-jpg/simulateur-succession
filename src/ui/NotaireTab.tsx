@@ -6,6 +6,9 @@ import { formatEUR } from '../util/money';
 import { formatDate } from '../util/dates';
 import { SOURCES } from '../tax/rules';
 import { CheckField } from './fields';
+import { summarize } from '../domain/rights';
+import { detectRepartition, REPARTITION_LABEL } from '../domain/devolution';
+import { formatFrac } from '../util/fraction';
 
 export function NotaireTab({ state, rows, showNames, setShowNames }: { state: AppState; rows: Row[]; showNames: boolean; setShowNames: (v: boolean) => void }) {
   const who = useWho();
@@ -28,8 +31,9 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
 
         <h3>1. Titres et testament</h3>
         <ul className="checklist">
-          <li>☐ Titres de propriété : {who('pere')} 50 % en pleine propriété et usufruit sur 50 % ; {who('fils')} 25 % en nue-propriété (succession de la mère) — à confirmer.</li>
-          <li>☐ Quart en nue-propriété du fils prédécédé : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.</li>
+          <li>☐ Titres de propriété (répartition simulée : {REPARTITION_LABEL[detectRepartition(s.house.lots)]}) : {summarize(s.house.lots).map((h) => `${who(h.holder)} ${[h.pp.n ? `${formatFrac(h.pp)} en pleine propriété` : '', h.np.n ? `${formatFrac(h.np)} en nue-propriété` : '', h.us.n ? `usufruit sur ${formatFrac(h.us)}` : ''].filter(Boolean).join(' + ')}`).join(' ; ')} — à confirmer.</li>
+          <li>☐ Succession de la mère (acte de notoriété de 2005) : la réduction de la donation de survie a-t-elle été demandée par les deux fils ? La maison était-elle détenue pour moitié par chaque époux ?</li>
+          <li>☐ Part en nue-propriété du fils prédécédé : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.</li>
           <li>☐ Testament du père : qualité d’héritier légal unique de {who('fils')} ; legs éventuel à {who('petitFils')} (20 000 € / 25 000 €), clause d’imputation des dons, droits à charge de qui.</li>
         </ul>
 

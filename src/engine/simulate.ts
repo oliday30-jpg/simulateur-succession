@@ -92,7 +92,7 @@ export function houseValueOf(s: Situation): { cents: Cents | null; provenance: s
 }
 
 export const PERSON_LABEL: Record<PersonId, string> = {
-  pere: 'Père', fils: 'Fils survivant', beneficiaire: 'Bénéficiaire du quart', petitFils: 'Petit-fils', filsPredecede: 'Fils prédécédé',
+  pere: 'Père', fils: 'Fils survivant', beneficiaire: 'Bénéficiaire de la part du fils prédécédé', petitFils: 'Petit-fils', filsPredecede: 'Fils prédécédé',
 };
 
 export function eventLabel(e: SimEvent): string {
@@ -135,7 +135,7 @@ export function simulate(situation: Situation, sc: Scenario): SimResult {
   if (hv.cents === null) add('bloquant', 'Valeur de la maison non renseignée : résultats immobiliers indisponibles.', 'house');
   else if (hv.cents < 0) add('bloquant', 'Valeur de la maison négative.', 'house');
   if (house.valeurDecesFilsPredecede.cents === null) add('a_confirmer', 'Valeur de la maison au 07/10/2026 (décès du fils prédécédé) à confirmer — utile au dossier de succession ouvert.', 'house');
-  if (house.quartResolution === 'inconnu') add('a_confirmer', 'Titulaire du quart du fils prédécédé non déterminé (testament, option successorale de la bénéficiaire).', 'quart');
+  if (house.quartResolution === 'inconnu') add('a_confirmer', 'Titulaire de la part du fils prédécédé non déterminé (testament, option successorale de la bénéficiaire).', 'quart');
   const hp = situation.horsPerimetre;
   const hors: string[] = [];
   if (hp.changementRegion) hors.push('défunt ayant changé de région fiscale');
@@ -522,7 +522,7 @@ export function simulate(situation: Situation, sc: Scenario): SimResult {
       }
     }
     if (death && lotsApres) {
-      details.push({ id: 'rights-death', title: 'Droits sur la maison après le décès simulé', lines: lotsApres.map((l) => `${l.id} — ${formatFrac(l.share)} : ${l.pp ? `PP ${HOLDER_LABEL[l.pp]}` : `NP ${HOLDER_LABEL[l.np!]} / US ${HOLDER_LABEL[l.us!]}`}`), hypotheses: ['L’extinction de l’usufruit ne déclenche ni frais ni droits de succession (notaire.be).', 'Le quart déjà détenu par le fils n’est pas hérité une deuxième fois.'] });
+      details.push({ id: 'rights-death', title: 'Droits sur la maison après le décès simulé', lines: lotsApres.map((l) => `${l.id} — ${formatFrac(l.share)} : ${l.pp ? `PP ${HOLDER_LABEL[l.pp]}` : `NP ${HOLDER_LABEL[l.np!]} / US ${HOLDER_LABEL[l.us!]}`}`), hypotheses: ['L’extinction de l’usufruit ne déclenche ni frais ni droits de succession (notaire.be).', 'La nue-propriété déjà détenue par le fils n’est pas héritée une deuxième fois.'] });
     }
   }
 

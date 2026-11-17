@@ -21,7 +21,8 @@ ce que le père conserve, ce que chacun reçoit, ce qui est payé, quand, et que
 Aucune démarche juridique, fiscale ou financière réelle. Résultats indicatifs, à valider par le notaire.
 
 Cas d'exemple (rôles anonymes) : maison à Gembloux (hypothèse 300 000 €, ancienne estimation 250 000 €) ;
-père 50 % pleine propriété + usufruit sur 50 % ; fils survivant 25 % en nue-propriété ; quart du fils prédécédé
+répartition par défaut selon l'acte de notoriété de 2005 (succession de la mère, séparation de biens, donation de survie
+réduite) : père 2/3 pleine propriété + usufruit sur 1/3 ; fils survivant 1/6 en nue-propriété ; 1/6 en nue-propriété du fils prédécédé
 (décédé le 07/10/2026) en succession ouverte (bénéficiaire potentielle : sa cohabitante légale, jamais certaine par défaut) ;
 avoirs du père ≈ 170 000 € ; créance de 15 000 € moins 4 × 250 € (exclue par défaut) ; petit-fils (legs ou don possible).
 
@@ -44,13 +45,13 @@ npm run dev -- --host      # accès depuis l'iPhone sur le même Wi-Fi (expose s
 |---|---|
 | `src/util/` | `money.ts` (centimes, saisie fr-BE), `fraction.ts` (rationnels), `dates.ts` (dates civiles, délais en années) |
 | `src/model/` | `types.ts`, `sample.ts` (cas anonyme + modèles de scénarios `TEMPLATES`) |
-| `src/domain/` | `rights.ts` (lots PP / NP+US, donation, extinction d'usufruit, cession), `sale.ts` (ventilation de vente) |
+| `src/domain/` | `rights.ts` (lots PP / NP+US, donation, extinction d'usufruit, cession), `sale.ts` (ventilation de vente), `devolution.ts` (préréglages de répartition issus de la succession de la mère) |
 | `src/tax/` | `rules.ts` (profils versionnés + sources), `brackets.ts`, `succession.ts`, `donation.ts` |
 | `src/cash/budget.ts` | réserve du père, déficit mensuel, durée sans rendement |
 | `src/engine/` | `simulate.ts` (moteur pur), `num.ts` (résultats avec statut / fourchette) |
 | `src/persistence/` | `schema.ts` (zod + migrations), `io.ts` (localStorage, export JSON/CSV, partage iOS, rappel de sauvegarde) |
 | `src/ui/` | onglets : Situation, Scénarios, Comparaison, Détail fiscal, Questions pour le notaire |
-| `tests/` | 74 tests (calculs indépendants + parcours interface) |
+| `tests/` | 80 tests (calculs indépendants + parcours interface) |
 | `.github/workflows/deploy.yml` | tests + build puis publication GitHub Pages sur push `main` |
 
 ## Conventions (ne pas casser)
@@ -77,6 +78,8 @@ npm run dev -- --host      # accès depuis l'iPhone sur le même Wi-Fi (expose s
 - **Export sans `confirm()`** : sur iOS, une boîte de dialogue avant `navigator.share` fait perdre l'activation utilisateur → avertissement affiché en texte.
 - **Lecture de fichiers via `FileReader`** (pas `Blob.text()`) : compatibilité jsdom et anciens Safari.
 - **zod 3 conservé** malgré l'avis GHSA-mrhx-c7xc-m3w5 (corrigé seulement en v4) : import plafonné à 2 Mo, fichiers choisis par l'utilisateur.
+
+- **Répartition de la maison** : préréglages (acte 2005 avec réduction = défaut ; donation de survie non réduite ; ancienne hypothèse 1/2 + 1/4 + 1/4) ou lots personnalisés. Le préréglage n'est pas stocké : il est reconnu à partir des lots (pas de changement de format d'export). Les repères historiques (38 425 €…) restent testés sur l'ancienne hypothèse ; avec l'acte 2005 la référence vaut 47 675 €.
 
 ## Publication
 
