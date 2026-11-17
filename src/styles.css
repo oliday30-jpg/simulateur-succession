@@ -50,6 +50,7 @@ a { color: var(--accent); }
 .block { display: block; }
 .ok { color: var(--ok); }
 .warn { background: var(--warn-bg); color: var(--warn-ink); padding: 8px 12px; border-radius: var(--radius); }
+.piste { border-left: 4px solid var(--accent); padding: 4px 12px; margin: 8px 0; }
 .banner { background: var(--info-bg); padding: 8px 12px; border-radius: var(--radius); }
 .na { color: var(--muted); font-style: italic; }
 .url { word-break: break-all; color: var(--muted); }

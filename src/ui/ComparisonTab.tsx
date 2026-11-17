@@ -11,6 +11,7 @@ import { comparisonCsv, shareOrDownload } from '../persistence/io';
 import { datePresets } from './ScenariosTab';
 import { FracField, MoneyField, SelectField } from './fields';
 import { HOLDER_LABEL } from '../domain/rights';
+import { RecommendCard } from './RecommendCard';
 
 export interface Row { sc: Scenario; res: SimResult; ref: SimResult }
 
@@ -49,6 +50,7 @@ export function ComparisonTab({ state, rows }: { state: AppState; rows: Row[] })
   );
   return (
     <div className="stack">
+      <RecommendCard state={state} />
       <section className="card" aria-labelledby="h-cmp">
         <h2 id="h-cmp">Comparaison des variantes</h2>
         {rows.length < 3 && <p className="warn" role="status">Sélectionnez au moins trois variantes dans l’onglet Scénarios pour une comparaison complète ({rows.length} sélectionnée(s)).</p>}
@@ -85,7 +87,7 @@ export function ComparisonTab({ state, rows }: { state: AppState; rows: Row[] })
             </tbody>
           </table>
         </div>
-        <p className="muted small">Aucune option n’est déclarée « meilleure » automatiquement. Personnes : {who('pere')}, {who('fils')}, {who('petitFils')}.</p>
+        <p className="muted small">Ce tableau ne désigne pas de « meilleure » option : voir la piste à étudier ci-dessus et ses réserves. Personnes : {who('pere')}, {who('fils')}, {who('petitFils')}.</p>
       </section>
       <GuidedAnswers situation={state.situation} />
       <Sensitivity state={state} rows={rows} />

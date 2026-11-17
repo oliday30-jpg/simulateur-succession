@@ -120,6 +120,16 @@ describe('parcours interface', () => {
     expect(table.textContent).not.toMatch(/Père|Fils survivant/);
   });
 
+  it('piste à étudier en priorité affichée en tête de la comparaison', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Comparaison' }));
+    const card = screen.getByRole('heading', { name: 'Piste à étudier en priorité' }).parentElement!;
+    // Variantes + modèles : le scénario mixte (donation + don + legs) arrive en tête dans l'exemple.
+    expect(within(card).getByRole('status').textContent).toMatch(/Mixte \(modèle\).*économie estimée : entre/);
+    expect(card.textContent).toMatch(/pas un conseil/);
+  });
+
   it('onglets utilisables au clavier', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
