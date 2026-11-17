@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import type { Row } from './ComparisonTab';
-import { IssueList, Money, NumView, SliceTable, useWho } from './display';
+import { IssueList, Money, NumView, SliceTable, T, useT, useWho } from './display';
 import { SelectField } from './fields';
 import { formatDate } from '../util/dates';
 import { formatEUR } from '../util/money';
 import { formatFrac } from '../util/fraction';
-import { HOLDER_LABEL } from '../domain/rights';
 import { ALL_PROFILES, STATUS_LABEL } from '../tax/rules';
 
 export function DetailTab({ rows, allRows }: { rows: Row[]; allRows: Row[] }) {
   const who = useWho();
+  const t = useT();
   const [id, setId] = useState(rows[0]?.sc.id ?? allRows[0]?.sc.id);
   const row = allRows.find((r) => r.sc.id === id) ?? allRows[0];
   if (!row) return <p>Aucune variante.</p>;
@@ -32,15 +32,15 @@ export function DetailTab({ rows, allRows }: { rows: Row[]; allRows: Row[] }) {
       <section className="card">
         <h3>Chronologie</h3>
         <ol className="timeline">
-          {res.timeline.map((t) => <li key={t.eventId}><strong>{formatDate(t.date)}</strong> (ordre {t.order}) — {t.label}<ul>{t.effects.map((e, i) => <li key={i}>{e}</li>)}</ul></li>)}
-          {sc.deathDate && <li><strong>{formatDate(sc.deathDate)}</strong> — décès simulé du père</li>}
+          {res.timeline.map((ev) => <li key={ev.eventId}><strong>{formatDate(ev.date)}</strong> (ordre {ev.order}) — {t(ev.label)}<ul>{ev.effects.map((e, i) => <li key={i}>{t(e)}</li>)}</ul></li>)}
+          {sc.deathDate && <li><strong>{formatDate(sc.deathDate)}</strong> — <T>décès simulé du père</T></li>}
         </ol>
-        <h3>Trésorerie du père (mode {res.cash.mode})</h3>
+        <h3><T>Trésorerie du père</T> (mode {res.cash.mode})</h3>
         <div className="table-wrap"><table>
           <thead><tr><th scope="col">Date</th><th scope="col">Flux</th><th scope="col">Montant</th></tr></thead>
           <tbody>
             <tr><td>—</td><td>Avoirs liquides de départ</td><td><Money c={res.cash.start} /></td></tr>
-            {res.flows.map((f, i) => <tr key={i}><td>{f.date ? formatDate(f.date) : '—'}</td><td>{f.label} ({who(f.who)})</td><td><Money c={f.amount} /></td></tr>)}
+            {res.flows.map((f, i) => <tr key={i}><td>{f.date ? formatDate(f.date) : '—'}</td><td>{t(f.label)} ({who(f.who)})</td><td><Money c={f.amount} /></td></tr>)}
             <tr><th scope="row" colSpan={2}>Après événements</th><td><Money c={res.cash.afterEvents} /></td></tr>
             {res.cash.mode === 'B' && <tr><th scope="row" colSpan={2}>Solde au décès saisi (mode B)</th><td><Money c={res.cash.atDeath} /></td></tr>}
           </tbody>
@@ -62,7 +62,7 @@ export function DetailTab({ rows, allRows }: { rows: Row[]; allRows: Row[] }) {
         <h3>Coûts du vivant</h3>
         <div className="table-wrap"><table>
           <thead><tr><th scope="col">Date</th><th scope="col">Poste</th><th scope="col">Nature</th><th scope="col">Payé par</th><th scope="col">Montant</th></tr></thead>
-          <tbody>{res.costsToday.map((c, i) => <tr key={i}><td>{formatDate(c.date)}</td><td>{c.label}</td><td>{c.kind === 'fiscal' ? 'fiscal' : 'frais'}</td><td>{who(c.payer)}</td><td><Money c={c.amount} /></td></tr>)}
+          <tbody>{res.costsToday.map((c, i) => <tr key={i}><td>{formatDate(c.date)}</td><td>{t(c.label)}</td><td>{c.kind === 'fiscal' ? 'fiscal' : 'frais'}</td><td>{who(c.payer)}</td><td><Money c={c.amount} /></td></tr>)}
             {!res.costsToday.length && <tr><td colSpan={5} className="muted">Aucun coût du vivant.</td></tr>}</tbody>
         </table></div>
         {res.sale && (
@@ -71,9 +71,9 @@ export function DetailTab({ rows, allRows }: { rows: Row[]; allRows: Row[] }) {
             <p>Prix {formatEUR(res.sale.prix)} ; frais {formatEUR(res.sale.frais)} ; net {formatEUR(res.sale.net)} — statut : {res.sale.status === 'calcule' ? 'calculé' : 'non disponible'}</p>
             {res.sale.pieces.length > 0 && <div className="table-wrap"><table>
               <thead><tr><th scope="col">Lot</th><th scope="col">Droit</th><th scope="col">Titulaire</th><th scope="col">Poids</th><th scope="col">Montant</th></tr></thead>
-              <tbody>{res.sale.pieces.map((p, i) => <tr key={i}><td>{p.lotId}</td><td>{p.droit}</td><td>{HOLDER_LABEL[p.holder]}</td><td>{formatFrac(p.weight)}</td><td>{formatEUR(p.amount)}</td></tr>)}</tbody>
+              <tbody>{res.sale.pieces.map((p, i) => <tr key={i}><td>{p.lotId}</td><td>{p.droit}</td><td>{who(p.holder)}</td><td>{formatFrac(p.weight)}</td><td>{formatEUR(p.amount)}</td></tr>)}</tbody>
             </table></div>}
-            <ul>{[...res.sale.reasons, ...res.sale.warnings].map((w, i) => <li key={i}>{w}</li>)}</ul>
+            <ul>{[...res.sale.reasons, ...res.sale.warnings].map((w, i) => <li key={i}>{t(w)}</li>)}</ul>
           </>
         )}
       </section>
@@ -82,17 +82,17 @@ export function DetailTab({ rows, allRows }: { rows: Row[]; allRows: Row[] }) {
         <h3>Calculs dépliables</h3>
         {res.details.map((d) => (
           <details key={d.id} className="detail">
-            <summary>{d.title}</summary>
-            <ul>{d.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
+            <summary>{t(d.title)}</summary>
+            <ul>{d.lines.map((l, i) => <li key={i}>{t(l)}</li>)}</ul>
             {d.slices && <SliceTable slices={d.slices} caption={d.slicesLabel ?? 'Tranches'} />}
-            {d.extraSlices?.map((x) => <SliceTable key={x.label} slices={x.slices} caption={x.label} />)}
+            {d.extraSlices?.map((x) => <SliceTable key={x.label} slices={x.slices} caption={t(x.label)} />)}
             {d.rounding && <p className="small">Arrondi : {d.rounding}</p>}
             {d.rule && <p className="small">Version de règle : <code>{d.rule.id}</code> — {d.rule.label} — <strong>{d.rule.statut}</strong></p>}
-            {d.hypotheses.length > 0 && <><h4>Hypothèses</h4><ul className="small">{d.hypotheses.map((h, i) => <li key={i}>{h}</li>)}</ul></>}
+            {d.hypotheses.length > 0 && <><h4>Hypothèses</h4><ul className="small">{d.hypotheses.map((h, i) => <li key={i}>{t(h)}</li>)}</ul></>}
             {d.sources && <><h4>Sources</h4><ul className="small">{d.sources.map((s) => <li key={s.url}>{s.titre}{s.article ? ` — ${s.article}` : ''} — consulté le {formatDate(s.consulte)}{s.dateEffet ? ` — effet : ${s.dateEffet}` : ''}<br /><span className="url">{s.url}</span><br />Constat : {s.constat}</li>)}</ul></>}
           </details>
         ))}
-        {res.death.reason && <p className="warn">{res.death.reason}</p>}
+        {res.death.reason && <p className="warn">{t(res.death.reason)}</p>}
       </section>
 
       <section className="card">

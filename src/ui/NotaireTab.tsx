@@ -1,6 +1,6 @@
 import type { AppState } from '../model/types';
 import type { Row } from './ComparisonTab';
-import { NumView, Money, useWho } from './display';
+import { NumView, Money, T, useT, useWho } from './display';
 import { houseValueOf } from '../engine/simulate';
 import { formatEUR } from '../util/money';
 import { formatDate } from '../util/dates';
@@ -12,6 +12,7 @@ import { formatFrac } from '../util/fraction';
 
 export function NotaireTab({ state, rows, showNames, setShowNames }: { state: AppState; rows: Row[]; showNames: boolean; setShowNames: (v: boolean) => void }) {
   const who = useWho();
+  const t = useT();
   const s = state.situation;
   const hv = houseValueOf(s);
   const solde = s.creance.nominal.cents === null ? null : s.creance.nominal.cents - s.creance.remboursements.reduce((a, b) => a + b, 0);
@@ -33,16 +34,16 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
         <ul className="checklist">
           <li>☐ Titres de propriété (répartition simulée : {REPARTITION_LABEL[detectRepartition(s.house.lots)]}) : {summarize(s.house.lots).map((h) => `${who(h.holder)} ${[h.pp.n ? `${formatFrac(h.pp)} en pleine propriété` : '', h.np.n ? `${formatFrac(h.np)} en nue-propriété` : '', h.us.n ? `usufruit sur ${formatFrac(h.us)}` : ''].filter(Boolean).join(' + ')}`).join(' ; ')} — à confirmer.</li>
           <li>☐ Succession de la mère (acte de notoriété de 2005) : la réduction de la donation de survie a-t-elle été demandée par les deux fils ? La maison était-elle détenue pour moitié par chaque époux ?</li>
-          <li>☐ Part en nue-propriété du fils prédécédé : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.</li>
-          <li>☐ Testament du père : qualité d’héritier légal unique de {who('fils')} ; legs éventuel à {who('petitFils')} (20 000 € / 25 000 €), clause d’imputation des dons, droits à charge de qui.</li>
+          <li>☐ <T>Part en nue-propriété du fils prédécédé</T> : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.</li>
+          <li>☐ <T>Testament du père</T> : qualité d’héritier légal unique de {who('fils')} ; legs éventuel à {who('petitFils')} (20 000 € / 25 000 €), clause d’imputation des dons, droits à charge de qui.</li>
         </ul>
 
         <h3>2. Valeurs</h3>
         <ul className="checklist">
           <li>☐ Valeur actuelle de la maison (expertise) : {formatEUR(s.house.valeurExpertise.cents)} — hypothèse utilisée {formatEUR(hv.cents)} ({hv.provenance}).</li>
-          <li>☐ Valeur au {formatDate(s.house.dateDecesFilsPredecede)} (décès du fils prédécédé) : {formatEUR(s.house.valeurDecesFilsPredecede.cents)}.</li>
-          <li>☐ Soldes bancaires et titres du père : {s.postes.filter((p) => ['compte', 'titres', 'autre_avoir'].includes(p.kind)).map((p) => `${p.label} ${formatEUR(p.value.cents)}`).join(' ; ')}.</li>
-          <li>☐ Créance contre la succession du fils prédécédé : nominal {formatEUR(s.creance.nominal.cents)}, solde indicatif {formatEUR(solde)}, montant recouvrable {formatEUR(s.creance.recouvre.cents)} ; traitement fiscal.</li>
+          <li>☐ Valeur au {formatDate(s.house.dateDecesFilsPredecede)} (<T>décès du fils prédécédé</T>) : {formatEUR(s.house.valeurDecesFilsPredecede.cents)}.</li>
+          <li>☐ <T>Soldes bancaires et titres du père</T> : {s.postes.filter((p) => ['compte', 'titres', 'autre_avoir'].includes(p.kind)).map((p) => `${p.label} ${formatEUR(p.value.cents)}`).join(' ; ')}.</li>
+          <li>☐ <T>Créance contre la succession du fils prédécédé</T> : nominal {formatEUR(s.creance.nominal.cents)}, solde indicatif {formatEUR(solde)}, montant recouvrable {formatEUR(s.creance.recouvre.cents)} ; traitement fiscal.</li>
         </ul>
 
         <h3>3. Donation et vente</h3>
@@ -69,12 +70,12 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
 
         <h3>6. Synthèse des variantes comparées</h3>
         <table className="print-table">
-          <thead><tr><th scope="col">Variante</th><th scope="col">Décès</th><th scope="col">Aujourd’hui</th><th scope="col">Au décès</th><th scope="col">Total fiscal</th><th scope="col">Trésorerie du père</th></tr></thead>
-          <tbody>{rows.map((r) => <tr key={r.sc.id}><td>{r.sc.name}</td><td>{r.sc.deathDate ? formatDate(r.sc.deathDate) : '—'}</td><td><NumView n={r.res.totals.fiscalToday} /></td><td><NumView n={r.res.totals.fiscalDeath} /></td><td><NumView n={r.res.totals.fiscalTotal} /></td><td><Money c={r.res.cash.afterEvents} /></td></tr>)}</tbody>
+          <thead><tr><th scope="col">Variante</th><th scope="col">Décès</th><th scope="col">Aujourd’hui</th><th scope="col">Au décès</th><th scope="col">Total fiscal</th><th scope="col"><T>Trésorerie du père</T></th></tr></thead>
+          <tbody>{rows.map((r) => <tr key={r.sc.id}><td><T>{r.sc.name}</T></td><td>{r.sc.deathDate ? formatDate(r.sc.deathDate) : '—'}</td><td><NumView n={r.res.totals.fiscalToday} /></td><td><NumView n={r.res.totals.fiscalDeath} /></td><td><NumView n={r.res.totals.fiscalTotal} /></td><td><Money c={r.res.cash.afterEvents} /></td></tr>)}</tbody>
         </table>
 
         <h3>7. Points en suspens relevés par la simulation</h3>
-        <ul className="small">{pending.slice(0, 30).map((p, i) => <li key={i}>☐ {p}</li>)}</ul>
+        <ul className="small">{pending.slice(0, 30).map((p, i) => <li key={i}>☐ {t(p)}</li>)}</ul>
 
         <h3>Sources consultées (17/11/2026)</h3>
         <ul className="small">{Object.values(SOURCES).map((x) => <li key={x.url}>{x.titre} — {x.url}</li>)}</ul>

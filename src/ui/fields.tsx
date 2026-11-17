@@ -3,14 +3,18 @@ import { centsToInput, parseEUR, type Cents } from '../util/money';
 import { formatDate, parseUserDate, type ISODate } from '../util/dates';
 import { formatFrac, parseFrac, type Frac } from '../util/fraction';
 import type { Certainty, Value } from '../model/types';
+import { useT } from './display';
 
-interface FieldShell { label: string; hint?: string; error?: string | null; id: string; children: ReactNode; className?: string }
-export function Shell({ label, hint, error, id, children, className }: FieldShell) {
+interface FieldShell { label: string; hint?: string; error?: string | null; id: string; children: ReactNode; className?: string; keepRoles?: boolean }
+/** Les libellés et aides affichent les prénoms à la place des rôles (sauf `keepRoles`). */
+export function Shell({ label, hint, error, id, children, className, keepRoles }: FieldShell) {
+  const tr = useT();
+  const t = keepRoles ? (x: string) => x : tr;
   return (
     <div className={`field ${className ?? ''} ${error ? 'has-error' : ''}`}>
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>{t(label)}</label>
       {children}
-      {hint && <small id={`${id}-hint`} className="hint">{hint}</small>}
+      {hint && <small id={`${id}-hint`} className="hint">{t(hint)}</small>}
       {error && <small id={`${id}-err`} className="error" role="alert">⚠ {error}</small>}
     </div>
   );
@@ -90,20 +94,21 @@ export function FracField({ label, value, onChange, hint }: { label: string; val
 }
 
 export function SelectField<T extends string>({ label, value, onChange, options, hint }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][]; hint?: string }) {
+  const t = useT();
   const id = useId();
   return (
     <Shell label={label} hint={hint} id={id}>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)} aria-describedby={hint ? `${id}-hint` : undefined}>
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        {options.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
       </select>
     </Shell>
   );
 }
 
-export function TextField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
+export function TextField({ label, value, onChange, hint, keepRoles }: { label: string; value: string; onChange: (v: string) => void; hint?: string; keepRoles?: boolean }) {
   const id = useId();
   return (
-    <Shell label={label} hint={hint} id={id}>
+    <Shell label={label} hint={hint} id={id} keepRoles={keepRoles}>
       <input id={id} value={value} autoComplete="off" onChange={(e) => onChange(e.target.value)} />
     </Shell>
   );
@@ -111,11 +116,12 @@ export function TextField({ label, value, onChange, hint }: { label: string; val
 
 export function CheckField({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
   const id = useId();
+  const t = useT();
   return (
     <div className="field check">
       <input type="checkbox" id={id} checked={checked} onChange={(e) => onChange(e.target.checked)} aria-describedby={hint ? `${id}-hint` : undefined} />
-      <label htmlFor={id}>{label}</label>
-      {hint && <small id={`${id}-hint`} className="hint">{hint}</small>}
+      <label htmlFor={id}>{t(label)}</label>
+      {hint && <small id={`${id}-hint`} className="hint">{t(hint)}</small>}
     </div>
   );
 }
@@ -124,9 +130,10 @@ export const CERTAINTY_LABEL: Record<Certainty, string> = { approx: '≈ Approxi
 
 /** Montant + degré de fiabilité + provenance. */
 export function ValueField({ label, value, onChange, hint }: { label: string; value: Value; onChange: (v: Value) => void; hint?: string }) {
+  const t = useT();
   return (
     <fieldset className="value-field">
-      <legend>{label}</legend>
+      <legend>{t(label)}</legend>
       <MoneyField label="Montant" value={value.cents} onChange={(c) => onChange({ ...value, cents: c })} hint={hint} />
       <SelectField label="Fiabilité" value={value.certainty} onChange={(c) => onChange({ ...value, certainty: c })}
         options={Object.entries(CERTAINTY_LABEL) as [Certainty, string][]} />

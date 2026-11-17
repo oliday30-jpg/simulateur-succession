@@ -3,22 +3,28 @@ import type { Num, NumStatus } from '../engine/num';
 import type { Issue } from '../engine/simulate';
 import { formatEUR, type Cents } from '../util/money';
 import type { HolderId, PersonId } from '../model/types';
-import { HOLDER_LABEL } from '../domain/rights';
-import { PERSON_LABEL } from '../engine/simulate';
+import { renameText, whoLabel } from './naming';
 import type { SliceDetail } from '../tax/brackets';
 import { formatBp } from '../util/money';
 
 /** Noms affichés (navigateur uniquement). */
 export const NamesContext = createContext<{ names: Record<string, string>; show: boolean }>({ names: {}, show: true });
 
+/** Libellé d'une personne : son prénom s'il est saisi (et affichable), sinon son rôle. */
 export function useWho() {
   const { names, show } = useContext(NamesContext);
-  return (id: PersonId | HolderId | 'succession'): string => {
-    if (id === 'succession') return 'Succession';
-    const base = id === 'quart' ? HOLDER_LABEL.quart : id === 'beneficiaire' ? HOLDER_LABEL.beneficiaire : PERSON_LABEL[id as PersonId];
-    const n = show ? names[id]?.trim() : '';
-    return n ? `${n} (${base})` : base;
-  };
+  return (id: PersonId | HolderId | 'succession'): string => whoLabel(id, show ? names : {});
+}
+
+/** Texte avec les prénoms à la place des rôles (« Trésorerie du père » → « Trésorerie de Marcel »). */
+export function useT() {
+  const { names, show } = useContext(NamesContext);
+  return (text: string): string => (show ? renameText(text, names) : text);
+}
+
+/** Composant pour les textes statiques : <T>Budget du père</T>. */
+export function T({ children }: { children: string }) {
+  return <>{useT()(children)}</>;
 }
 
 export const STATUS_TEXT: Record<NumStatus, { icon: string; text: string }> = {
@@ -57,13 +63,14 @@ export const ISSUE_TEXT: Record<Issue['level'], { icon: string; text: string }> 
 };
 
 export function IssueList({ issues, max }: { issues: Issue[]; max?: number }) {
+  const t = useT();
   const uniq = issues.filter((x, i) => issues.findIndex((y) => y.message === x.message) === i);
   const shown = max ? uniq.slice(0, max) : uniq;
   if (!uniq.length) return <p className="muted">Aucun point en suspens.</p>;
   return (
     <ul className="issues">
       {shown.map((i, k) => (
-        <li key={k} className={`issue lv-${i.level}`}><span className="lv"><span aria-hidden="true">{ISSUE_TEXT[i.level].icon}</span> {ISSUE_TEXT[i.level].text} :</span> {i.message}</li>
+        <li key={k} className={`issue lv-${i.level}`}><span className="lv"><span aria-hidden="true">{ISSUE_TEXT[i.level].icon}</span> {ISSUE_TEXT[i.level].text} :</span> {t(i.message)}</li>
       ))}
       {max && uniq.length > max && <li className="muted">… et {uniq.length - max} autre(s) — voir Détail fiscal.</li>}
     </ul>

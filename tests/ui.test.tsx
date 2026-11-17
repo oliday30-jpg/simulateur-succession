@@ -103,6 +103,23 @@ describe('parcours interface', () => {
     expect(screen.getByText(/^Résumé :/).textContent).not.toMatch(/Fils survivant/);
   });
 
+  it('les prénoms saisis remplacent les rôles dans la simulation', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
+    await user.type(screen.getByLabelText('Prénom — Fils survivant'), 'Olivier');
+    await user.type(screen.getByLabelText('Prénom — Fils prédécédé'), 'Pierre');
+    // Le champ de saisie garde le rôle ; le reste de l'écran prend le prénom.
+    expect(screen.getByRole('heading', { name: 'Budget de Marcel (facultatif)' })).toBeTruthy();
+    await user.click(screen.getByRole('tab', { name: 'Comparaison' }));
+    const table = screen.getByRole('table', { name: /Comparaison des variantes/ });
+    expect(within(table).getByRole('rowheader', { name: /Trésorerie de Marcel après événements/ })).toBeTruthy();
+    expect(within(table).getByRole('rowheader', { name: /Net reçu — Olivier/ })).toBeTruthy();
+    expect(table.textContent).toMatch(/PP Marcel ; 1\/6 \(16,67\s%\) NP Olivier \/ US Marcel/); // espace insécable avant %
+    expect(table.textContent).toContain('Titulaire de la part de Pierre (à déterminer)');
+    expect(table.textContent).not.toMatch(/Père|Fils survivant/);
+  });
+
   it('onglets utilisables au clavier', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import type { AppState, Scenario, Situation, Lot, Vente } from '../model/types';
+import type { AppState, HolderId, Scenario, Situation, Lot, Vente } from '../model/types';
 import { simulate, alignedReference, type SimResult } from '../engine/simulate';
 import { subNum, type Num } from '../engine/num';
-import { NumView, Money, useWho } from './display';
+import { NumView, Money, T, useT, useWho } from './display';
 import { formatEUR, euros, type Cents } from '../util/money';
 import { formatFrac, type Frac } from '../util/fraction';
 import { formatDate } from '../util/dates';
@@ -42,9 +42,10 @@ const deltaNum = (a: Num, b: Num) => subNum(a, b);
 
 export function ComparisonTab({ state, rows }: { state: AppState; rows: Row[] }) {
   const who = useWho();
+  const t = useT();
   const bases = new Set(rows.map((r) => `${r.sc.deathDate}|${r.sc.rulesMode}|${r.sc.valeurMaisonDeces}|${r.sc.reserveProgressivite}`));
   const metric = (label: string, f: (r: Row) => React.ReactNode, help?: string) => (
-    <tr><th scope="row">{label}{help && <small className="hint block">{help}</small>}</th>{rows.map((r) => <td key={r.sc.id}>{f(r)}</td>)}</tr>
+    <tr><th scope="row">{t(label)}{help && <small className="hint block">{t(help)}</small>}</th>{rows.map((r) => <td key={r.sc.id}>{f(r)}</td>)}</tr>
   );
   return (
     <div className="stack">
@@ -60,12 +61,12 @@ export function ComparisonTab({ state, rows }: { state: AppState; rows: Row[] })
         <div className="table-wrap">
           <table className="cmp">
             <caption className="sr-only">Comparaison des variantes sélectionnées</caption>
-            <thead><tr><th scope="col">Indicateur</th>{rows.map((r) => <th key={r.sc.id} scope="col">{r.sc.name}</th>)}</tr></thead>
+            <thead><tr><th scope="col">Indicateur</th>{rows.map((r) => <th key={r.sc.id} scope="col">{t(r.sc.name)}</th>)}</tr></thead>
             <tbody>
               {metric('Décès simulé', (r) => (r.sc.deathDate ? formatDate(r.sc.deathDate) : 'non simulé'))}
               {metric('Règles appliquées', (r) => <span className="small">{r.res.ruleIds.join(' + ') || '—'}{r.sc.rulesMode === 'constant2026' && <strong> (contrefactuel)</strong>}</span>)}
-              {metric('Droits sur la maison avant décès', (r) => <span className="small">{lotsText(r.res.lotsAvantDeces)}</span>)}
-              {metric('Droits sur la maison après décès', (r) => <span className="small">{lotsText(r.res.houseSold ? [] : r.res.lotsApresDeces)}</span>)}
+              {metric('Droits sur la maison avant décès', (r) => <span className="small">{t(lotsText(r.res.lotsAvantDeces))}</span>)}
+              {metric('Droits sur la maison après décès', (r) => <span className="small">{t(lotsText(r.res.houseSold ? [] : r.res.lotsApresDeces))}</span>)}
               {metric('Montant donné du vivant', (r) => <Money c={r.res.beneficiaries.filter((b) => b.id !== 'pere').reduce((a, b) => a + (b.recuVivant ?? 0), 0)} />, 'à part du montant disponible au père')}
               {metric('Trésorerie du père après événements', (r) => <Money c={r.res.cash.afterEvents} />)}
               {metric('Écart à la réserve minimale', (r) => r.res.budget.ecartReserve === null ? <span className="na">non renseigné</span> : <span>{r.res.budget.ecartReserve < 0 ? '⚠ ' : ''}<Money c={r.res.budget.ecartReserve} /></span>)}
@@ -80,7 +81,7 @@ export function ComparisonTab({ state, rows }: { state: AppState; rows: Row[] })
               {metric('Net reçu — petit-fils', (r) => { const b = r.res.beneficiaries.find((x) => x.id === 'petitFils'); return b ? <NumView n={b.net} /> : '—'; })}
               {metric('Vente : part du père', (r) => r.res.sale ? (r.res.sale.status === 'calcule' ? <Money c={r.res.sale.byHolder.pere ?? 0} /> : <span className="na">non disponible (coefficient)</span>) : '—')}
               {metric('Points en suspens', (r) => `${r.res.pending.length}`)}
-              {metric('Compromis', (r) => <ul className="small">{tradeoffs(r.res, r.ref).map((t, i) => <li key={i}>{t}</li>)}</ul>)}
+              {metric('Compromis', (r) => <ul className="small">{tradeoffs(r.res, r.ref).map((x, i) => <li key={i}>{t(x)}</li>)}</ul>)}
             </tbody>
           </table>
         </div>
@@ -114,14 +115,16 @@ function GuidedAnswers({ situation }: { situation: Situation }) {
   }, [situation, coef]);
   const fils = (r: SimResult) => r.death.rows.find((x) => x.id === 'fils')?.droits;
   const pf = (r: SimResult) => r.beneficiaries.find((x) => x.id === 'petitFils');
+  const who = useWho();
+  const t = useT();
   return (
     <section className="card" aria-labelledby="h-qa">
       <h2 id="h-qa">Réponses guidées (modèles appliqués à la situation actuelle)</h2>
       <p className="muted">Les résultats après 2027 utilisent explicitement le barème 2026 constant (contrefactuel) : ce ne sont pas des prédictions.</p>
-      <details open><summary>1. Coût d’un don bancaire enregistré et ce qui reste au père</summary>
+      <details open><summary><T>1. Coût d’un don bancaire enregistré et ce qui reste au père</T></summary>
         <ul>
-          <li>10 000 € : droit <NumView n={a.d10.totals.fiscalToday} /> ; reste au père <Money c={a.d10.cash.afterEvents} /></li>
-          <li>20 000 € : droit <NumView n={a.d20.totals.fiscalToday} /> ; reste au père <Money c={a.d20.cash.afterEvents} /></li>
+          <li>10 000 € : droit <NumView n={a.d10.totals.fiscalToday} /> ; <T>reste au père</T> <Money c={a.d10.cash.afterEvents} /></li>
+          <li>20 000 € : droit <NumView n={a.d20.totals.fiscalToday} /> ; <T>reste au père</T> <Money c={a.d20.cash.afterEvents} /></li>
         </ul></details>
       <details><summary>2. Don non enregistré : décès avant ou après la période de rappel (5 ans)</summary>
         <ul>
@@ -139,29 +142,30 @@ function GuidedAnswers({ situation }: { situation: Situation }) {
         {[['Avant donation', a.vAvant], ['Après donation', a.vApres]].map(([lbl, r]) => {
           const res = r as SimResult;
           return <div key={lbl as string}><strong>{lbl as string}</strong> : {res.sale?.status === 'calcule'
-            ? <>{Object.entries(res.sale.byHolder).map(([h, c]) => `${HOLDER_LABEL[h as keyof typeof HOLDER_LABEL]} ${formatEUR(c as Cents)}`).join(' ; ')} — trésorerie du père ensuite : {formatEUR(res.cash.afterEvents)}</>
+            ? <>{Object.entries(res.sale.byHolder).map(([h, c]) => `${who(h as HolderId)} ${formatEUR(c as Cents)}`).join(' ; ')} — <T>trésorerie du père ensuite :</T> {formatEUR(res.cash.afterEvents)}</>
             : <span className="na">non disponible : saisissez un coefficient convenu.</span>}</div>;
         })}
-        {a.vAvant.sale?.sensitivity && <SensGrid sale={a.vAvant.sale} title="Grille FICTIVE avant donation (part du père)" />}
-        {a.vApres.sale?.sensitivity && <SensGrid sale={a.vApres.sale} title="Grille FICTIVE après donation (part du père)" />}
+        {a.vAvant.sale?.sensitivity && <SensGrid sale={a.vAvant.sale} title={t('Grille FICTIVE avant donation (part du père)')} />}
+        {a.vApres.sale?.sensitivity && <SensGrid sale={a.vApres.sale} title={t('Grille FICTIVE après donation (part du père)')} />}
       </details>
-      <details><summary>5. Petit-fils : legs plutôt que don</summary>
+      <details><summary><T>5. Petit-fils : legs plutôt que don</T></summary>
         <ul>
-          <li>Legs 25 000 € : droits du petit-fils <NumView n={a.l25.death.rows.find((x) => x.id === 'petitFils')?.droits ?? { value: null, status: 'non_disponible', notes: [] }} /> ; net <NumView n={pf(a.l25)?.net ?? { value: null, status: 'non_disponible', notes: [] }} /> ; total familial au décès <NumView n={a.l25.totals.fiscalDeath} />.</li>
+          <li><T>Legs 25 000 € : droits du petit-fils</T> <NumView n={a.l25.death.rows.find((x) => x.id === 'petitFils')?.droits ?? { value: null, status: 'non_disponible', notes: [] }} /> ; net <NumView n={pf(a.l25)?.net ?? { value: null, status: 'non_disponible', notes: [] }} /> ; total familial au décès <NumView n={a.l25.totals.fiscalDeath} />.</li>
           <li>Don enregistré 25 000 € : droit <NumView n={a.don25.totals.fiscalToday} /> aujourd’hui ; net <NumView n={pf(a.don25)?.net ?? { value: null, status: 'non_disponible', notes: [] }} /> ; total familial <NumView n={a.don25.totals.fiscalTotal} />.</li>
-          <li>Pour le fils : droits <NumView n={fils(a.l25) ?? { value: null, status: 'non_disponible', notes: [] }} /> avec legs contre <NumView n={fils(a.ref) ?? { value: null, status: 'non_disponible', notes: [] }} /> sans legs.</li>
+          <li><T>Pour le fils : droits</T> <NumView n={fils(a.l25) ?? { value: null, status: 'non_disponible', notes: [] }} /> avec legs contre <NumView n={fils(a.ref) ?? { value: null, status: 'non_disponible', notes: [] }} /> sans legs.</li>
         </ul></details>
       <details><summary>6. Sensibilité à la valeur de la maison, à l’épargne et à la créance</summary><p>Voir la matrice ci-dessous.</p></details>
       <details><summary>7. Quand une option moins taxée devient moins favorable</summary>
-        <p>Ligne « Compromis » du tableau : frais d’acte supérieurs à l’économie, trésorerie ou réserve du père réduite, perte de la pleine propriété en cas de vente (seule la valeur de l’usufruit revient au père), liquidités insuffisantes pour payer les droits.</p></details>
+        <p><T>Ligne « Compromis » du tableau : frais d’acte supérieurs à l’économie, trésorerie ou réserve du père réduite, perte de la pleine propriété en cas de vente (seule la valeur de l’usufruit revient au père), liquidités insuffisantes pour payer les droits.</T></p></details>
     </section>
   );
 }
 
 function SensGrid({ sale, title }: { sale: NonNullable<SimResult['sale']>; title: string }) {
+  const who = useWho();
   return (
     <table className="slices"><caption>{title}</caption>
-      <thead><tr><th scope="col">Coefficient fictif</th><th scope="col">Père</th></tr></thead>
+      <thead><tr><th scope="col">Coefficient fictif</th><th scope="col">{who('pere')}</th></tr></thead>
       <tbody>{sale.sensitivity!.map((s, i) => <tr key={i}><td>{formatFrac(s.coef)}</td><td>{formatEUR(s.byHolder.pere ?? 0)}</td></tr>)}</tbody>
     </table>
   );
@@ -172,6 +176,7 @@ function Sensitivity({ state, rows }: { state: AppState; rows: Row[] }) {
   const [houseCustom, setHouseCustom] = useState<Cents | null>(null);
   const [savCustom, setSavCustom] = useState<Cents | null>(null);
   const [creance, setCreance] = useState(false);
+  const t = useT();
   const sc = state.scenarios.find((s) => s.id === scId) ?? state.scenarios[0];
   const houses = [250000, 275000, 300000, 325000].map(euros).concat(houseCustom !== null ? [houseCustom] : []);
   const savs = [150000, 170000, 175000].map(euros).concat(savCustom !== null ? [savCustom] : []);
@@ -204,7 +209,7 @@ function Sensitivity({ state, rows }: { state: AppState; rows: Row[] }) {
       </div>
       <div className="table-wrap">
         <table className="matrix">
-          <caption>Total fiscal de « {sc?.name} » (et écart vs référence alignée) — valeur maison × épargne du compte principal</caption>
+          <caption>Total fiscal de « {t(sc?.name ?? '')} » (et écart vs référence alignée) — valeur maison × épargne du compte principal</caption>
           <thead><tr><th scope="col">Maison \ Épargne</th>{savs.map((s) => <th key={s} scope="col">{formatEUR(s, { round: true })}</th>)}</tr></thead>
           <tbody>
             {grid.map((row, i) => (
@@ -218,7 +223,7 @@ function Sensitivity({ state, rows }: { state: AppState; rows: Row[] }) {
       <div className="table-wrap">
         <table className="matrix">
           <caption>Total fiscal selon la date de décès × variante (préréglages autour des seuils de 3 et 5 ans)</caption>
-          <thead><tr><th scope="col">Date de décès</th>{rows.map((r) => <th key={r.sc.id} scope="col">{r.sc.name}</th>)}</tr></thead>
+          <thead><tr><th scope="col">Date de décès</th>{rows.map((r) => <th key={r.sc.id} scope="col">{t(r.sc.name)}</th>)}</tr></thead>
           <tbody>
             {dateGrid.map(({ p, cells }) => (
               <tr key={p.label}><th scope="row">{p.label}<br /><small>{formatDate(p.date)}</small></th>{cells.map((c, i) => <td key={i}><NumView n={c.totals.fiscalTotal} /></td>)}</tr>

@@ -4,7 +4,7 @@ import { CheckField, DateField, FracField, MoneyField, SelectField, TextField } 
 import { eventLabel, sortEvents, type SimResult } from '../engine/simulate';
 import { addDays, addYears, formatDate } from '../util/dates';
 import { HOLDER_LABEL } from '../domain/rights';
-import { IssueList, NumView, useWho } from './display';
+import { IssueList, NumView, T, useT, useWho } from './display';
 import { formatEUR } from '../util/money';
 
 type UpdState = (fn: (s: AppState) => void) => void;
@@ -47,7 +47,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
               const sc = t.build();
               st.scenarios.push(sc); st.activeId = sc.id;
               if (st.selectedIds.length < 4) st.selectedIds.push(sc.id);
-            })}><strong>{t.label}</strong><small>{t.description}</small></button>
+            })}><strong><T>{t.label}</T></strong><small><T>{t.description}</T></small></button>
           ))}
         </div>
       </section>
@@ -125,7 +125,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
                 </li>
               );
             })}
-            {active.deathDate && <li className="death-marker">✝ Décès simulé du père le {formatDate(active.deathDate)} — extinction des usufruits, ouverture de la succession.</li>}
+            {active.deathDate && <li className="death-marker">✝ <T>Décès simulé du père</T> le {formatDate(active.deathDate)} — extinction des usufruits, ouverture de la succession.</li>}
           </ol>
 
           <h3>Legs (dispositions au décès)</h3>
@@ -142,7 +142,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
                 <dt>Coût fiscal aujourd’hui</dt><dd><NumView n={res.totals.fiscalToday} /></dd>
                 <dt>Droits au décès</dt><dd><NumView n={res.totals.fiscalDeath} /></dd>
                 <dt>Total fiscal</dt><dd><NumView n={res.totals.fiscalTotal} /></dd>
-                <dt>Trésorerie du père après événements</dt><dd>{formatEUR(res.cash.afterEvents)}</dd>
+                <dt><T>Trésorerie du père après événements</T></dt><dd>{formatEUR(res.cash.afterEvents)}</dd>
                 <dt>Règles utilisées</dt><dd>{res.ruleIds.join(', ') || '—'}</dd>
               </dl>
               <div className="row">
@@ -179,9 +179,10 @@ function OrderField({ e, onChange }: { e: SimEvent; onChange: (e: SimEvent) => v
 
 function EventEditor({ e, onChange, onRemove }: { e: SimEvent; onChange: (e: SimEvent) => void; onRemove: () => void }) {
   const who = useWho();
+  const t = useT();
   return (
     <fieldset className={`event ev-${e.type}`}>
-      <legend>{formatDate(e.date)} — {eventLabel(e)}</legend>
+      <legend>{formatDate(e.date)} — {t(eventLabel(e))}</legend>
       <div className="grid">
         <DateField label="Date" value={e.date} allowEmpty={false} onChange={(v) => v && onChange({ ...e, date: v })} />
         <OrderField e={e} onChange={onChange} />
@@ -264,9 +265,10 @@ function FluxFields({ e, onChange }: { e: Flux; onChange: (e: SimEvent) => void 
 }
 
 function LegsEditor({ l, onChange, onRemove }: { l: Legs; onChange: (l: Legs) => void; onRemove: () => void }) {
+  const who = useWho();
   return (
     <fieldset className="event">
-      <legend>Legs {formatEUR(l.montant)} — {l.beneficiaire === 'petitFils' ? 'petit-fils' : 'fils'}{l.actif ? '' : ' (désactivé)'}</legend>
+      <legend>Legs {formatEUR(l.montant)} — {who(l.beneficiaire)}{l.actif ? '' : ' (désactivé)'}</legend>
       <div className="grid">
         <MoneyField label="Montant du legs" value={l.montant} onChange={(v) => onChange({ ...l, montant: v })} />
         <SelectField label="Légataire" value={l.beneficiaire} onChange={(v) => onChange({ ...l, beneficiaire: v })} options={DONEES} />

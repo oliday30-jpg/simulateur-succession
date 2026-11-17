@@ -5,7 +5,7 @@ import { houseValueOf, PERSON_LABEL } from '../engine/simulate';
 import { formatFrac } from '../util/fraction';
 import { formatEUR } from '../util/money';
 import { newId } from '../model/sample';
-import { useWho } from './display';
+import { T, useWho } from './display';
 import { detectRepartition, lotsForRepartition, REPARTITION_LABEL, REPARTITION_NOTE, type RepartitionMere } from '../domain/devolution';
 
 type Upd = (fn: (s: Situation) => void) => void;
@@ -25,11 +25,11 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
     <div className="stack">
       <section className="card" aria-labelledby="h-pers">
         <h2 id="h-pers">Personnes (rôles anonymes)</h2>
-        <p className="muted">Les noms éventuels restent dans ce navigateur : ils ne sont ni exportés ni imprimés par défaut.</p>
+        <p className="muted">Les prénoms saisis remplacent les rôles partout à l’écran (« Père » → « Marcel »). Ils restent dans ce navigateur : ils ne sont ni exportés ni imprimés par défaut.</p>
         <div className="grid">
           {s.persons.map((p) => (
             <div key={p.id} className="person">
-              <TextField label={`Nom affiché — ${p.role}`} value={names[p.id] ?? ''} onChange={(v) => setName(p.id, v)} hint={p.lien} />
+              <TextField label={`Prénom — ${p.role}`} value={names[p.id] ?? ''} onChange={(v) => setName(p.id, v)} hint={p.lien} keepRoles />
               {p.id !== 'pere' && p.id !== 'filsPredecede' && (
                 <SelectField label="Héritier légal du père ?" value={p.heritierLegal} onChange={(v) => update((d) => { d.persons.find((x) => x.id === p.id)!.heritierLegal = v; })}
                   options={[['presume', 'Présumé (à vérifier : testament, situation au décès)'], ['a_confirmer', 'À confirmer'], ['non', 'Non']]} />
@@ -41,7 +41,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
 
       <section className="card" aria-labelledby="h-maison">
         <h2 id="h-maison">{s.house.label}</h2>
-        <p>Occupée par le père depuis {s.house.occupationDepuis}. Valeur utilisée par défaut : <strong>{formatEUR(hv.cents)}</strong> — <em>{hv.provenance}</em>.</p>
+        <p><T>Occupée par le père</T> depuis {s.house.occupationDepuis}. Valeur utilisée par défaut : <strong>{formatEUR(hv.cents)}</strong> — <em>{hv.provenance}</em>.</p>
         <div className="grid">
           <ValueField label="Ancienne estimation" value={s.house.valeurAncienne} onChange={(v) => update((d) => { d.house.valeurAncienne = v; })} />
           <ValueField label="Hypothèse de travail" value={s.house.valeurHypothese} onChange={(v) => update((d) => { d.house.valeurHypothese = v; })} />
@@ -69,7 +69,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
         </div>
         <button type="button" onClick={() => update((d) => { d.house.lots.push({ id: `L${d.house.lots.length + 1}`, share: { n: 0, d: 1 }, pp: 'pere', origine: 'Ajout manuel' }); })}>Ajouter un lot</button>
         {lotIssues.length ? <ul className="issues">{lotIssues.map((x, k) => <li key={k} className="issue lv-bloquant"><span className="lv">⛔ Bloquant :</span> {x.message}</li>)}</ul> : <p className="ok">✓ Lots cohérents : total 100 %, sans chevauchement.</p>}
-        <p className="muted">Résumé : {summarize(s.house.lots).map((h) => `${HOLDER_LABEL[h.holder]} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
+        <p className="muted">Résumé : {summarize(s.house.lots).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
 
         <div className="grid">
           <SelectField label="Part du fils prédécédé (nue-propriété)" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
@@ -90,7 +90,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
       </section>
 
       <section className="card" aria-labelledby="h-fin">
-        <h2 id="h-fin">Avoirs, dettes et frais du père</h2>
+        <h2 id="h-fin"><T>Avoirs, dettes et frais du père</T></h2>
         <SelectField label="Mode de bilan financier" value={s.bilanMode} onChange={(v) => update((d) => { d.bilanMode = v; })}
           options={[['A', 'A — Solde de départ auquel on applique les flux'], ['B', 'B — Solde au décès déjà net des flux']]}
           hint="Les deux modes sont incompatibles : en mode B, les donations ne sont pas retirées une seconde fois." />
@@ -106,7 +106,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
       </section>
 
       <section className="card" aria-labelledby="h-cre">
-        <h2 id="h-cre">Créance contre la succession du fils prédécédé</h2>
+        <h2 id="h-cre"><T>Créance contre la succession du fils prédécédé</T></h2>
         <div className="grid">
           <ValueField label="Prêt (nominal)" value={s.creance.nominal} onChange={(v) => update((d) => { d.creance.nominal = v; })} />
           <div>
@@ -126,7 +126,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
       </section>
 
       <section className="card" aria-labelledby="h-bud">
-        <h2 id="h-bud">Budget du père (facultatif)</h2>
+        <h2 id="h-bud"><T>Budget du père (facultatif)</T></h2>
         <p className="muted">Sert à mesurer la réserve préservée. Aucun rendement n’est supposé.</p>
         <div className="grid">
           <MoneyField label="Pension nette mensuelle" value={s.budget.pensionMensuelle.cents} onChange={(c) => update((d) => { d.budget.pensionMensuelle.cents = c; })} />
