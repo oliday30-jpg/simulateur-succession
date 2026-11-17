@@ -135,6 +135,20 @@ describe('parcours interface', () => {
     render(<App initial={defaultState()} />);
     screen.getByRole('tab', { name: 'Situation et sources' }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'Scénarios' })).toHaveProperty('ariaSelected', 'true');
+    expect(screen.getByRole('tab', { name: 'Rapport simple' })).toHaveProperty('ariaSelected', 'true');
+  });
+
+  it('rapport simple : chiffres de la référence, piste, conseils et prénoms', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
+    await user.click(screen.getByRole('tab', { name: 'Rapport simple' }));
+    const art = screen.getByRole('article');
+    // Référence de l'exemple (acte 2005, maison 300 000 €, épargne 170 000 €) : 47 675 € de droits.
+    expect(art.textContent).toMatch(/la famille paiera environ 47.675,00.€/);
+    expect(art.textContent).toMatch(/Marcel est pleinement propriétaire de deux tiers de la maison \(environ 200.000.€\)/);
+    expect(art.textContent).toMatch(/Option 1 : Mixte/);
+    expect(art.textContent).toMatch(/les besoins de Marcel passent en premier/);
+    expect(art.textContent).toMatch(/Usufruit/);
   });
 });

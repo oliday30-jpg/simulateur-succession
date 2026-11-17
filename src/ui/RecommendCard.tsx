@@ -17,14 +17,19 @@ function candidates(state: AppState): { sc: Scenario; fromTemplate: boolean }[] 
 
 const saving = (c: Candidate) => (c.saveMin === c.saveMax ? formatEUR(c.saveMax) : `entre ${formatEUR(c.saveMin)} et ${formatEUR(c.saveMax)}`);
 
-export function RecommendCard({ state }: { state: AppState }) {
-  const t = useT();
-  const { rec, templ } = useMemo(() => {
+/** Classement des variantes + modèles (partagé par la Comparaison et le Rapport). */
+export function useRecommendation(state: AppState) {
+  return useMemo(() => {
     const list = candidates(state);
     const templ = new Set(list.filter((x) => x.fromTemplate).map((x) => x.sc.id));
     const rows = list.map(({ sc }) => ({ sc, res: simulate(state.situation, sc), ref: simulate(state.situation, alignedReference(sc)) }));
     return { rec: recommend(rows), templ };
   }, [state]);
+}
+
+export function RecommendCard({ state }: { state: AppState }) {
+  const t = useT();
+  const { rec, templ } = useRecommendation(state);
   const name = (sc: Scenario) => `${t(sc.name)}${templ.has(sc.id) ? ' (modèle)' : ''}`;
   const p = rec.piste;
   return (

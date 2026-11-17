@@ -157,3 +157,7 @@ code { font-size: 0.85em; }
   thead th { position: static; }
   .table-wrap { overflow: visible; }
 }
+.rapport h3 { margin-top: 1.4em; }
+.rapport .option { border-left: 4px solid var(--accent); padding: 4px 12px; margin: 12px 0; }
+.rapport .glossary dt { font-weight: 600; margin-top: 6px; }
+.rapport .glossary dd { margin: 0 0 4px 0; }

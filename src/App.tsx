@@ -10,10 +10,12 @@ import { ScenariosTab } from './ui/ScenariosTab';
 import { ComparisonTab, type Row } from './ui/ComparisonTab';
 import { DetailTab } from './ui/DetailTab';
 import { NotaireTab } from './ui/NotaireTab';
+import { RapportTab } from './ui/RapportTab';
 import { CheckField } from './ui/fields';
 
 const TABS = [
   { id: 'situation', label: 'Situation et sources' },
+  { id: 'rapport', label: 'Rapport simple' },
   { id: 'scenarios', label: 'Scénarios' },
   { id: 'comparaison', label: 'Comparaison' },
   { id: 'detail', label: 'Détail fiscal' },
@@ -104,6 +106,7 @@ export function App({ initial }: { initial?: AppState } = {}) {
         )}
         {msg && <p className="banner" role="status">{msg} <button type="button" className="link" onClick={() => setMsg(null)}>Fermer</button></p>}
         {tab === 'situation' && <SituationTab s={state.situation} update={updateSituation} names={names} setName={(id, n) => { setNames((p) => ({ ...p, [id]: n })); touched(); }} />}
+        {tab === 'rapport' && <RapportTab state={state} />}
         {tab === 'scenarios' && <ScenariosTab state={state} update={update} results={results} />}
         {tab === 'comparaison' && <ComparisonTab state={state} rows={rows} />}
         {tab === 'detail' && <DetailTab rows={rows} allRows={allRows} />}

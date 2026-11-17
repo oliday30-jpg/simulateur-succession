@@ -22,6 +22,12 @@ export function useT() {
   return (text: string): string => (show ? renameText(text, names) : text);
 }
 
+/** Prénoms affichables (vide à l'impression si les noms sont exclus). */
+export function useNames(): Record<string, string> {
+  const { names, show } = useContext(NamesContext);
+  return show ? names : {};
+}
+
 /** Composant pour les textes statiques : <T>Budget du père</T>. */
 export function T({ children }: { children: string }) {
   return <>{useT()(children)}</>;
