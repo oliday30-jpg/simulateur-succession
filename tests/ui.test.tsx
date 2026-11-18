@@ -93,11 +93,11 @@ describe('parcours interface', () => {
   it('sélection de la répartition de la succession de la mère', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
-    const sel = screen.getByLabelText(/Répartition issue de la succession de la mère/) as HTMLSelectElement;
+    const sel = screen.getByLabelText(/^Répartition issue de la succession de la mère/) as HTMLSelectElement;
     expect(sel.value).toBe('acte2005_reduction');
     expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 2\/3/);
-    await user.selectOptions(sel, 'legale_moitie');
-    expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 1\/2 /);
+    // L'ancienne hypothèse 1/2 + 1/4 + 1/4 n'est plus proposée : l'acte de 2005 est la situation réelle.
+    expect([...sel.options].map((o) => o.value)).not.toContain('legale_moitie');
     await user.selectOptions(sel, 'donation_survie_integrale');
     expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 100/);
     expect(screen.getByText(/^Résumé :/).textContent).not.toMatch(/Fils survivant/);
@@ -110,7 +110,7 @@ describe('parcours interface', () => {
     // Valeurs par défaut : hypothèse prudente chiffrée (50 000 € en PP, sans supplément) → 1 750 € si elle accepte
     const acc = within(card).getByRole('article', { name: /accepte le legs/ });
     expect(acc.textContent).toMatch(/1.750,00.€/);
-    await user.selectOptions(screen.getByLabelText(/Part du fils prédécédé \(nue-propriété\)/), 'renonciation');
+    await user.selectOptions(screen.getByLabelText(/^Part du fils prédécédé \(nue-propriété\)/), 'renonciation');
     const ren = within(card).getByRole('article', { name: /renonce/ });
     expect(ren.textContent).toMatch(/option retenue/);
     expect(ren.textContent).toMatch(/10.000,00.€/); // 37 500 € entre frères et sœurs

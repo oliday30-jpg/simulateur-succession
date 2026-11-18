@@ -8,7 +8,7 @@ import { formatEUR } from '../util/money';
 import { newId } from '../model/sample';
 import { T, useWho } from './display';
 import { SuccFilsPredecedeCard } from './SuccFilsPredecedeCard';
-import { detectRepartition, lotsForRepartition, REPARTITION_LABEL, REPARTITION_NOTE, type RepartitionMere } from '../domain/devolution';
+import { detectRepartition, lotsForRepartition, REPARTITION_LABEL, REPARTITION_NOTE, REPARTITIONS_PROPOSEES, type RepartitionMere } from '../domain/devolution';
 
 type Upd = (fn: (s: Situation) => void) => void;
 
@@ -36,7 +36,8 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
               <TextField label={`Prénom — ${p.role}`} value={names[p.id] ?? ''} onChange={(v) => setName(p.id, v)} hint={p.lien} keepRoles />
               {p.id !== 'pere' && p.id !== 'filsPredecede' && (
                 <SelectField label="Héritier légal du père ?" value={p.heritierLegal} onChange={(v) => update((d) => { d.persons.find((x) => x.id === p.id)!.heritierLegal = v; })}
-                  options={[['presume', 'Présumé (à vérifier : testament, situation au décès)'], ['a_confirmer', 'À confirmer'], ['non', 'Non']]} />
+                  options={[['presume', 'Présumé (à vérifier)'], ['a_confirmer', 'À confirmer'], ['non', 'Non']]}
+                  hint="À vérifier : testament, situation au décès." />
               )}
             </div>
           ))}
@@ -47,19 +48,19 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
         <h2 id="h-maison">{s.house.label}</h2>
         <p><T>Occupée par le père</T> depuis {s.house.occupationDepuis}. Valeur utilisée par défaut : <strong>{formatEUR(hv.cents)}</strong> — <em>{hv.provenance}</em>.</p>
         <div className="grid">
-          <ValueField label="Ancienne estimation" value={s.house.valeurAncienne} essential={hk === 'valeurAncienne'} onChange={(v) => update((d) => { d.house.valeurAncienne = v; })} />
-          <ValueField label="Hypothèse de travail" value={s.house.valeurHypothese} essential={hk === 'valeurHypothese'} onChange={(v) => update((d) => { d.house.valeurHypothese = v; })} />
-          <ValueField label="Valeur d’expertise actuelle" value={s.house.valeurExpertise} essential={hk === 'valeurExpertise'} onChange={(v) => update((d) => { d.house.valeurExpertise = v; })} />
-          <ValueField label="Valeur au 07/10/2026 (décès du fils prédécédé)" value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
+          <ValueField label="Ancienne estimation" help="valeurMaison" value={s.house.valeurAncienne} essential={hk === 'valeurAncienne'} onChange={(v) => update((d) => { d.house.valeurAncienne = v; })} />
+          <ValueField label="Hypothèse de travail" help="valeurMaison" value={s.house.valeurHypothese} essential={hk === 'valeurHypothese'} onChange={(v) => update((d) => { d.house.valeurHypothese = v; })} />
+          <ValueField label="Valeur d’expertise actuelle" help="valeurMaison" value={s.house.valeurExpertise} essential={hk === 'valeurExpertise'} onChange={(v) => update((d) => { d.house.valeurExpertise = v; })} />
+          <ValueField label="Valeur au 07/10/2026 (décès du fils prédécédé)" help="valeurDecesFilsPredecede" value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
         </div>
-        <SelectField label="Valeur à utiliser par défaut (donation, vente, décès)" value={s.house.sourceValeurCourante} onChange={(v) => update((d) => { d.house.sourceValeurCourante = v; })}
+        <SelectField label="Valeur à utiliser par défaut (donation, vente, décès)" help="sourceValeur" value={s.house.sourceValeurCourante} onChange={(v) => update((d) => { d.house.sourceValeurCourante = v; })}
           options={[['hypothese', 'Hypothèse de travail'], ['expertise', 'Valeur d’expertise'], ['ancienne', 'Ancienne estimation']]}
           hint="Chaque événement peut aussi recevoir sa propre valeur à sa date." />
 
         <h3>Lots de propriété</h3>
-        <SelectField<RepartitionMere> label="Répartition issue de la succession de la mère (2005)" value={repartition} essential filled={lotIssues.length === 0}
+        <SelectField<RepartitionMere> label="Répartition issue de la succession de la mère (2005)" help="repartition" value={repartition} essential filled={lotIssues.length === 0}
           onChange={(r) => { if (r !== 'personnalisee') update((d) => { d.house.lots = lotsForRepartition(r); }); }}
-          options={(Object.keys(REPARTITION_LABEL) as RepartitionMere[]).map((r) => [r, REPARTITION_LABEL[r]])}
+          options={(REPARTITIONS_PROPOSEES.includes(repartition) ? REPARTITIONS_PROPOSEES : [...REPARTITIONS_PROPOSEES, repartition]).map((r) => [r, REPARTITION_LABEL[r]])}
           hint={`${REPARTITION_NOTE[repartition]} Hypothèse : maison détenue pour moitié par chaque époux (séparation de biens). Choisir un préréglage remplace les lots ; modifier un lot passe en « personnalisée ».`} />
         <p className="muted">Chaque lot a un plein propriétaire, ou un couple nu-propriétaire / usufruitier. L’usufruit et la nue-propriété portent sur la même quote-part : ils ne s’additionnent pas en 200 %.</p>
         <div className="table-wrap">
@@ -76,7 +77,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
         <p className="muted">Résumé : {summarize(s.house.lots).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
 
         <div className="grid">
-          <SelectField label="Part du fils prédécédé (nue-propriété)" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
+          <SelectField label="Part du fils prédécédé (nue-propriété)" help="quartResolution" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
             options={(['inconnu', 'beneficiaire_conserve', 'renonciation', 'personnalise'] as const).map((r) => [r, quartLabel(r)])}
             hint="Les droits de cette succession sont estimés plus bas (bloc « Succession du fils prédécédé »)." />
           {s.house.quartResolution === 'personnalise' && (
@@ -88,7 +89,7 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
           {s.house.quartResolution !== 'inconnu' && (
             <p className="small">Après l’option retenue : {summarize(resolveLots(s.house.lots, s.house)).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
           )}
-          <SelectField label="Taux réduit « logement familial »" value={s.house.logementEligibilite} onChange={(v) => update((d) => { d.house.logementEligibilite = v; })}
+          <SelectField label="Taux réduit « logement familial »" help="logementEligibilite" value={s.house.logementEligibilite} onChange={(v) => update((d) => { d.house.logementEligibilite = v; })}
             options={[['hypothese_eligible', 'Hypothèse : éligible (à confirmer)'], ['eligible_confirme', 'Éligibilité confirmée par le notaire'], ['non_eligible', 'Non éligible'], ['inconnu', 'Inconnu (afficher une fourchette)']]}
             hint="L’ancienneté d’occupation ne suffit pas à garantir le taux réduit." />
           <SelectField label="Situation du logement" value={s.house.logementSituation} onChange={(v) => update((d) => { d.house.logementSituation = v; })}
@@ -100,10 +101,10 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
 
       <section className="card" aria-labelledby="h-fin">
         <h2 id="h-fin"><T>Avoirs, dettes et frais du père</T></h2>
-        <SelectField label="Mode de bilan financier" value={s.bilanMode} onChange={(v) => update((d) => { d.bilanMode = v; })}
+        <SelectField label="Mode de bilan financier" help="bilanMode" value={s.bilanMode} onChange={(v) => update((d) => { d.bilanMode = v; })}
           options={[['A', 'A — Solde de départ auquel on applique les flux'], ['B', 'B — Solde au décès déjà net des flux']]}
           hint="Les deux modes sont incompatibles : en mode B, les donations ne sont pas retirées une seconde fois." />
-        {s.bilanMode === 'B' && <ValueField label="Solde financier au décès (déjà net des donations et flux)" value={s.soldeAuDecesB} essential onChange={(v) => update((d) => { d.soldeAuDecesB = v; })} />}
+        {s.bilanMode === 'B' && <ValueField label="Solde financier au décès (déjà net des donations et flux)" help="soldeB" value={s.soldeAuDecesB} essential onChange={(v) => update((d) => { d.soldeAuDecesB = v; })} />}
         <div className="postes">
           {s.postes.map((p, i) => <PosteEditor key={p.id} p={p} onChange={(np) => update((d) => { d.postes[i] = np; })} onRemove={() => update((d) => { d.postes.splice(i, 1); })} />)}
         </div>
@@ -117,15 +118,15 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
       <section className="card" aria-labelledby="h-cre">
         <h2 id="h-cre"><T>Créance contre la succession du fils prédécédé</T></h2>
         <div className="grid">
-          <ValueField label="Prêt (nominal)" value={s.creance.nominal} essential={s.creance.inclusion === 'solde_nominal'} onChange={(v) => update((d) => { d.creance.nominal = v; })} />
+          <ValueField label="Prêt (nominal)" help="creanceNominal" value={s.creance.nominal} essential={s.creance.inclusion === 'solde_nominal'} onChange={(v) => update((d) => { d.creance.nominal = v; })} />
           <div>
             <p>Remboursements annoncés : {s.creance.remboursements.map((r) => formatEUR(r)).join(' + ') || 'aucun'}</p>
             <p>Solde nominal indicatif : <strong>{formatEUR(soldeCreance)}</strong> (à vérifier)</p>
             <button type="button" onClick={() => update((d) => { d.creance.remboursements.push(25000); })}>+ remboursement de 250 €</button>{' '}
             <button type="button" onClick={() => update((d) => { d.creance.remboursements.pop(); })} disabled={!s.creance.remboursements.length}>− retirer le dernier</button>
           </div>
-          <ValueField label="Montant finalement recouvré" value={s.creance.recouvre} essential={s.creance.inclusion === 'montant_recouvre'} onChange={(v) => update((d) => { d.creance.recouvre = v; })} />
-          <SelectField label="Prise en compte" value={s.creance.inclusion} onChange={(v) => update((d) => { d.creance.inclusion = v; })}
+          <ValueField label="Montant finalement recouvré" help="creanceRecouvre" value={s.creance.recouvre} essential={s.creance.inclusion === 'montant_recouvre'} onChange={(v) => update((d) => { d.creance.recouvre = v; })} />
+          <SelectField label="Prise en compte" help="creanceInclusion" value={s.creance.inclusion} onChange={(v) => update((d) => { d.creance.inclusion = v; })}
             options={[['exclue', 'Exclue (par défaut)'], ['solde_nominal', 'Solde nominal comme actif (non liquide)'], ['montant_recouvre', 'Montant recouvré en liquidités']]} />
           <CheckField label="Le montant recouvré est déjà crédité sur les comptes" checked={s.creance.dejaEncaisse} onChange={(v) => update((d) => { d.creance.dejaEncaisse = v; })} hint="Évite de compter à la fois la créance et le cash encaissé." />
           <SelectField label="Traitement fiscal" value={s.creance.traitementFiscal} onChange={(v) => update((d) => { d.creance.traitementFiscal = v; })}
@@ -138,10 +139,10 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
         <h2 id="h-bud"><T>Budget du père (facultatif)</T></h2>
         <p className="muted">Sert à mesurer la réserve préservée. Aucun rendement n’est supposé.</p>
         <div className="grid">
-          <MoneyField label="Pension nette mensuelle" value={s.budget.pensionMensuelle.cents} onChange={(c) => update((d) => { d.budget.pensionMensuelle.cents = c; })} />
-          <MoneyField label="Dépenses mensuelles" value={s.budget.depensesMensuelles.cents} onChange={(c) => update((d) => { d.budget.depensesMensuelles.cents = c; })} />
+          <MoneyField label="Pension nette mensuelle" help="budgetMensuel" value={s.budget.pensionMensuelle.cents} onChange={(c) => update((d) => { d.budget.pensionMensuelle.cents = c; })} />
+          <MoneyField label="Dépenses mensuelles" help="budgetMensuel" value={s.budget.depensesMensuelles.cents} onChange={(c) => update((d) => { d.budget.depensesMensuelles.cents = c; })} />
           <MoneyField label="Soins / hébergement mensuels" value={s.budget.soinsMensuels.cents} onChange={(c) => update((d) => { d.budget.soinsMensuels.cents = c; })} />
-          <MoneyField label="Réserve minimale à préserver" value={s.budget.reserveMinimale.cents} onChange={(c) => update((d) => { d.budget.reserveMinimale.cents = c; })} />
+          <MoneyField label="Réserve minimale à préserver" help="reserveMinimale" value={s.budget.reserveMinimale.cents} onChange={(c) => update((d) => { d.budget.reserveMinimale.cents = c; })} />
           <MoneyField label="Travaux" value={s.budget.travaux.cents} onChange={(c) => update((d) => { d.budget.travaux.cents = c; })} />
           <MoneyField label="Relogement : prix (ou coût mensuel si durée)" value={s.budget.prixRelogement.cents} onChange={(c) => update((d) => { d.budget.prixRelogement.cents = c; })} />
           <TextField label="Durée du relogement (mois)" value={s.budget.dureeMois === null ? '' : String(s.budget.dureeMois)} onChange={(v) => update((d) => { const n = parseInt(v, 10); d.budget.dureeMois = Number.isFinite(n) && n >= 0 ? n : null; })} />
@@ -186,8 +187,8 @@ function PosteEditor({ p, onChange, onRemove }: { p: Poste; onChange: (p: Poste)
       <legend>{KIND_LABEL[p.kind]} — {p.label}</legend>
       <div className="grid">
         <TextField label="Libellé" value={p.label} onChange={(v) => onChange({ ...p, label: v })} />
-        <MoneyField label="Montant" value={p.value.cents} onChange={(c) => onChange({ ...p, value: { ...p.value, cents: c } })} hint={p.value.note} essential={isAvoir(p.kind)} />
-        <SelectField label="Fiabilité" value={p.value.certainty} onChange={(c) => onChange({ ...p, value: { ...p.value, certainty: c } })} options={[['approx', '≈ Approximatif'], ['manuel', '✎ Saisi manuellement'], ['verifie', '✓ Vérifié']]} />
+        <MoneyField label="Montant" help={isAsset ? 'posteAvoir' : isCharge ? 'posteCharge' : undefined} value={p.value.cents} onChange={(c) => onChange({ ...p, value: { ...p.value, cents: c } })} hint={p.value.note} essential={isAvoir(p.kind)} />
+        <SelectField label="Fiabilité" help="fiabilite" value={p.value.certainty} onChange={(c) => onChange({ ...p, value: { ...p.value, certainty: c } })} options={[['approx', '≈ Approximatif'], ['manuel', '✎ Saisi manuellement'], ['verifie', '✓ Vérifié']]} />
         <TextField label="Provenance" value={p.value.source} onChange={(v) => onChange({ ...p, value: { ...p.value, source: v } })} />
         {isAsset && <CheckField label="Mobilisable sans vendre (liquide)" checked={p.liquide} onChange={(v) => onChange({ ...p, liquide: v })} />}
         {isCharge && <SelectField label="Déductible fiscalement au décès" value={p.deductible} onChange={(v) => onChange({ ...p, deductible: v })} options={[['oui', 'Oui'], ['a_confirmer', 'À confirmer'], ['non', 'Non (trésorerie seulement)']]} />}

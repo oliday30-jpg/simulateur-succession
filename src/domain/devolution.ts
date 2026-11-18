@@ -62,3 +62,19 @@ export function detectRepartition(lots: Lot[]): RepartitionMere {
   }
   return 'personnalisee';
 }
+
+/**
+ * Préréglages proposés dans l'interface. L'ancienne hypothèse (1/2 + 1/4 + 1/4) n'est plus proposée :
+ * la situation réelle est celle de l'acte de notoriété de 2005. Elle reste disponible pour les tests de repères.
+ */
+export const REPARTITIONS_PROPOSEES: RepartitionMere[] = ['acte2005_reduction', 'donation_survie_integrale', 'personnalisee'];
+
+/**
+ * Données enregistrées avant la lecture de l'acte : si les lots sont exactement ceux de l'ancienne hypothèse,
+ * ils sont remplacés par la répartition de l'acte de 2005. Toute autre répartition (personnalisée…) est conservée.
+ */
+export function migrerAncienneRepartition(lots: Lot[]): { lots: Lot[]; migre: boolean } {
+  return detectRepartition(lots) === 'legale_moitie'
+    ? { lots: lotsForRepartition('acte2005_reduction'), migre: true }
+    : { lots, migre: false };
+}

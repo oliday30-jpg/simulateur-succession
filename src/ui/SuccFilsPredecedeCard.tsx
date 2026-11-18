@@ -24,18 +24,18 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
         Les deux options sont toujours calculées pour pouvoir les comparer ; l’option retenue se choisit dans « Part du fils prédécédé » ci-dessus. Estimation indicative, à valider par le notaire.
       </p>
       <div className="grid">
-        <SelectField label="Testament" value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}
+        <SelectField label="Testament" help="sfpTestament" value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}
           options={[['inconnu', 'Inconnu'], ['legs_beneficiaire', t('Oui, en faveur de la bénéficiaire')], ['aucun', 'Pas de testament']]} />
         <SelectField label="Descendants du fils prédécédé" value={o.descendants} onChange={(v) => set((x) => { x.descendants = v; })}
           options={[['inconnu', 'Inconnu'], ['aucun', 'Aucun enfant'], ['oui', 'Un ou plusieurs enfants']]} />
         <SelectField label="La maison était-elle leur résidence commune ?" value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
           options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]} hint="Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés)." />
-        <ValueField label="Autres biens nets de cette succession" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })}
+        <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })}
           hint="Comptes, voiture… moins les dettes et frais (y compris la créance du père). Supposés suivre la même dévolution que la maison." />
-        <SelectField label="Base taxable de la nue-propriété" value={o.baseNP} onChange={(v) => set((x) => { x.baseNP = v; })}
+        <SelectField label="Base taxable de la nue-propriété" help="sfpBaseNP" value={o.baseNP} onChange={(v) => set((x) => { x.baseNP = v; })}
           options={[['a_confirmer', 'À confirmer (fourchette)'], ['pleine_propriete', 'Valeur de la pleine propriété'], ['nue_propriete', 'Valeur de la nue-propriété (coefficient)']]}
           hint="Le père garde l’usufruit : la règle d’évaluation n’a pas été trouvée dans les sources consultées." />
-        <FracField label="Valeur de la nue-propriété (% de la pleine propriété)" value={o.coefNP} onChange={(f) => set((x) => { x.coefNP = f; })}
+        <FracField label="Valeur de la nue-propriété (% de la pleine propriété)" help="sfpCoefNP" value={o.coefNP} onChange={(f) => set((x) => { x.coefNP = f; })}
           hint="Donné par le notaire (dépend notamment de l’âge du père). Ex. « 60 % »." />
         <SelectField label="Exemption supplémentaire de 12 500 € pour la cohabitante" value={o.supplementCohabitant} onChange={(v) => set((x) => { x.supplementCohabitant = v; })}
           options={[['inconnu', 'À confirmer (fourchette)'], ['appliquer', 'Oui (confirmé)'], ['ne_pas_appliquer', 'Non (confirmé)']]}
@@ -59,7 +59,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
       <details>
         <summary>Montants calculés par le notaire (remplacent l’estimation)</summary>
         <div className="grid">
-          <MoneyField label={`Droits — ${who('beneficiaire')} (si elle accepte)`} value={o.droitsNotaire.beneficiaire} onChange={(c) => set((x) => { x.droitsNotaire.beneficiaire = c; })} />
+          <MoneyField help="sfpDroitsNotaire" label={`Droits — ${who('beneficiaire')} (si elle accepte)`} value={o.droitsNotaire.beneficiaire} onChange={(c) => set((x) => { x.droitsNotaire.beneficiaire = c; })} />
           <MoneyField label={`Droits — ${who('pere')} (si renonciation)`} value={o.droitsNotaire.pere} onChange={(c) => set((x) => { x.droitsNotaire.pere = c; })} />
           <MoneyField label={`Droits — ${who('fils')} (si renonciation)`} value={o.droitsNotaire.fils} onChange={(c) => set((x) => { x.droitsNotaire.fils = c; })} />
         </div>

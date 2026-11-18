@@ -63,9 +63,28 @@ a { color: var(--accent); }
 /* Champs */
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .field label { font-weight: 600; font-size: 0.9rem; }
-.field.check { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+.field-head { display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-width: 0; }
+.field-foot { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.field-foot:empty, .field-head:empty { display: none; }
+.label-row { display: flex; align-items: center; gap: 6px; }
+.field.check .field-ctl { display: flex; align-items: center; gap: 8px; min-height: 44px; }
 .field.check label { font-weight: 500; }
-.field.check .hint { flex-basis: 100%; }
+
+/* Alignement en grille : chaque champ occupe 3 lignes partagées avec ses voisins
+   (en-tête / case / aide), si bien que les cases d'une même rangée sont au même niveau
+   même quand un libellé ou une aide tient sur deux lignes. */
+.grid { row-gap: 0; }
+.grid > * { grid-row: span 3; margin-bottom: 16px; }
+.grid > .field, .grid > .person > .field {
+  display: grid; grid-template-rows: subgrid; grid-row: span 3; gap: 0; align-content: start;
+}
+:is(.grid > .field, .grid > .person > .field) > .field-head { display: flex; align-self: end; padding-bottom: 4px; }
+:is(.grid > .field, .grid > .person > .field) > .field-ctl { align-self: start; }
+:is(.grid > .field, .grid > .person > .field) > .field-foot { display: flex; align-self: start; padding-top: 4px; }
+/* Bloc « personne » (prénom + héritier) : ses deux champs suivent aussi les lignes de la grille. */
+.grid > .person { display: grid; grid-template-rows: subgrid; grid-row: span 6; gap: 0; margin-bottom: 0; min-width: 0; }
+.grid > .person > .field { margin-bottom: 16px; }
+.grid > .person > .field:only-child { grid-row: 1 / span 3; }
 input, select, button, textarea { font: inherit; color: inherit; }
 input:not([type='checkbox']), select { min-height: 44px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); width: 100%; min-width: 0; font-size: 16px; }
 input[type='checkbox'] { width: 22px; height: 22px; accent-color: var(--accent); }
@@ -88,7 +107,17 @@ input[type='checkbox'] { width: 22px; height: 22px; accent-color: var(--accent);
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin: 0; min-width: 0; }
 legend { font-weight: 700; padding: 0 6px; }
-.value-field { display: grid; gap: 8px; }
+.value-field { display: grid; gap: 8px; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; min-width: 0; }
+.value-title { font-weight: 700; }
+.value-head { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+/* Dans une grille : titre (1 ligne) + 3 champs (3 lignes chacun) + note = 11 lignes partagées entre blocs voisins. */
+.grid > .value-field { grid-template-rows: subgrid; grid-row: span 11; gap: 0; align-content: start; }
+.grid > .value-field > .value-head { align-self: end; padding-bottom: 10px; }
+.grid > .value-field > .field { display: grid; grid-template-rows: subgrid; grid-row: span 3; gap: 0; margin-bottom: 8px; }
+.grid > .value-field > .field > .field-head { display: flex; align-self: end; padding-bottom: 4px; }
+.grid > .value-field > .field > .field-ctl { align-self: start; }
+.grid > .value-field > .field > .field-foot { display: flex; align-self: start; padding-top: 4px; }
+.grid > .value-field > .value-note { grid-row: 11; }
 
 button { min-height: 44px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--accent); background: var(--card); color: var(--accent); cursor: pointer; }
 button:hover { background: var(--info-bg); }
@@ -179,3 +208,16 @@ code { font-size: 0.85em; }
 .rapport .option { border-left: 4px solid var(--accent); padding: 4px 12px; margin: 12px 0; }
 .rapport .glossary dt { font-weight: 600; margin-top: 6px; }
 .rapport .glossary dd { margin: 0 0 4px 0; }
+
+/* Aide « ? » des cases importantes (panneau déplié au toucher) */
+.label-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+button.help-btn { min-height: 32px; min-width: 32px; padding: 0; border-radius: 999px; font-weight: 700; line-height: 1; flex: none; }
+legend button.help-btn { margin-left: 4px; vertical-align: middle; }
+button.help-btn[aria-expanded='true'] { background: var(--accent); color: var(--accent-ink); }
+.help-panel { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--info-bg); color: var(--text); font-size: 0.9rem; }
+.help-panel dl { margin: 0; }
+.help-panel dt { font-weight: 700; margin-top: 6px; }
+.help-panel dt:first-child { margin-top: 0; }
+.help-panel dd { margin: 2px 0 0; }
+.field.check .help-panel { flex-basis: 100%; }
+@media print { .help-btn, .help-panel { display: none; } }

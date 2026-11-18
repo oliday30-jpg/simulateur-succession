@@ -1,4 +1,5 @@
-import { buildExport, comparisonCsv, parseImport } from '../src/persistence/io';
+import { buildExport, comparisonCsv, loadState, parseImport, saveState } from '../src/persistence/io';
+import { detectRepartition, lotsForRepartition } from '../src/domain/devolution';
 import { defaultState } from '../src/model/sample';
 import { simulate, alignedReference } from '../src/engine/simulate';
 
@@ -9,6 +10,25 @@ describe('export / import JSON versionné', () => {
     const r = parseImport(json);
     expect(r.ok).toBe(true);
     if (r.ok) expect(r.state).toEqual(st);
+  });
+  it('ancienne hypothèse 1/2 + 1/4 + 1/4 remplacée par l’acte de 2005 à l’import et au chargement', () => {
+    const st = defaultState();
+    st.situation.house.lots = lotsForRepartition('legale_moitie');
+    const r = parseImport(JSON.stringify(buildExport(st, '2026-11-18')));
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(detectRepartition(r.state.situation.house.lots)).toBe('acte2005_reduction');
+      expect(r.note).toMatch(/acte de notoriété de 2005/);
+    }
+    saveState(st);
+    expect(detectRepartition(loadState()!.situation.house.lots)).toBe('acte2005_reduction');
+    // Une répartition personnalisée est conservée telle quelle.
+    const perso = defaultState();
+    perso.situation.house.lots[1] = { ...perso.situation.house.lots[1], np: 'petitFils' };
+    const r2 = parseImport(JSON.stringify(buildExport(perso, '2026-11-18')));
+    expect(r2.ok && r2.state.situation.house.lots).toEqual(perso.situation.house.lots);
+    expect(r2.ok && r2.note).toBeFalsy();
+    window.localStorage.clear();
   });
   it('noms exclus par défaut, inclus sur demande', () => {
     const st = defaultState();

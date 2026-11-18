@@ -4,6 +4,7 @@ import { defaultState } from '../model/sample';
 import { APP_ID, exportSchema, migrate, migrateV0, SCHEMA_VERSION, stateSchema, type ExportFile } from './schema';
 import type { SimResult } from '../engine/simulate';
 import type { Num } from '../engine/num';
+import { migrerAncienneRepartition } from '../domain/devolution';
 
 const KEY_STATE = 'sim-succession:state';
 const KEY_NAMES = 'sim-succession:noms';
@@ -36,7 +37,7 @@ export function loadState(): AppState | null {
     const raw = ls()?.getItem(KEY_STATE);
     if (!raw) return null;
     const parsed = stateSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? (parsed.data as AppState) : null;
+    return parsed.success ? versActe2005(parsed.data as AppState).state : null;
   } catch { return null; }
 }
 
@@ -79,7 +80,17 @@ export function parseImport(text: string): { ok: true; state: AppState; names?: 
   }
   const ids = new Set(p.data.state.scenarios.map((s) => s.id));
   if (ids.size !== p.data.state.scenarios.length) return { ok: false, error: 'Identifiants de scénarios dupliqués.' };
-  return { ok: true, state: p.data.state as AppState, names: p.data.noms };
+  const conv = versActe2005(p.data.state as AppState);
+  return { ok: true, state: conv.state, names: p.data.noms, ...(conv.migre ? { note: NOTE_ACTE2005 } : {}) };
+}
+
+export const NOTE_ACTE2005 = 'répartition de la maison mise à jour selon l’acte de notoriété de 2005 (ancienne hypothèse 1/2 + 1/4 + 1/4 remplacée)';
+
+/** Remplace l'ancienne hypothèse de répartition (1/2 + 1/4 + 1/4) par celle de l'acte de 2005. */
+export function versActe2005(st: AppState): { state: AppState; migre: boolean } {
+  const m = migrerAncienneRepartition(st.situation.house.lots);
+  if (!m.migre) return { state: st, migre: false };
+  return { state: { ...st, situation: { ...st.situation, house: { ...st.situation.house, lots: m.lots } } }, migre: true };
 }
 
 const numCsv = (n: Num) => {
