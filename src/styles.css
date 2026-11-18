@@ -209,15 +209,19 @@ code { font-size: 0.85em; }
 .rapport .glossary dt { font-weight: 600; margin-top: 6px; }
 .rapport .glossary dd { margin: 0 0 4px 0; }
 
-/* Aide « ? » des cases importantes (panneau déplié au toucher) */
+/* Aide « ? » des cases importantes : petit cercle + fenêtre flottante (ne décale pas la page) */
 .label-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-button.help-btn { min-height: 32px; min-width: 32px; padding: 0; border-radius: 999px; font-weight: 700; line-height: 1; flex: none; }
-legend button.help-btn { margin-left: 4px; vertical-align: middle; }
+button.help-btn { position: relative; min-height: 0; width: 20px; height: 20px; padding: 0; border-radius: 999px; font-size: 0.75rem; font-weight: 700; line-height: 1; flex: none; vertical-align: middle; }
+/* zone tactile élargie (≈ 44 px) sans prendre de place dans la mise en page */
+button.help-btn::after { content: ''; position: absolute; inset: -12px; }
+legend button.help-btn { margin-left: 4px; }
 button.help-btn[aria-expanded='true'] { background: var(--accent); color: var(--accent-ink); }
-.help-panel { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--info-bg); color: var(--text); font-size: 0.9rem; }
-.help-panel dl { margin: 0; }
-.help-panel dt { font-weight: 700; margin-top: 6px; }
-.help-panel dt:first-child { margin-top: 0; }
-.help-panel dd { margin: 2px 0 0; }
-.field.check .help-panel { flex-basis: 100%; }
-@media print { .help-btn, .help-panel { display: none; } }
+.help-pop { position: fixed; z-index: 1000; max-height: min(70vh, 480px); overflow-y: auto; padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--accent); background: var(--card); color: var(--text); font-size: 0.85rem; font-weight: 400; text-align: left; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25); }
+.help-pop:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.help-pop-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.help-pop-head button.link { flex: none; }
+.help-pop dl { margin: 0; }
+.help-pop dt { font-weight: 700; margin-top: 6px; }
+.help-pop dt:first-child { margin-top: 0; }
+.help-pop dd { margin: 2px 0 0; }
+@media print { .help-btn, .help-pop { display: none; } }

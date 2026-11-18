@@ -1,4 +1,5 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { centsToInput, parseEUR, type Cents } from '../util/money';
 import { formatDate, parseUserDate, type ISODate } from '../util/dates';
 import { formatFrac, parseFrac, type Frac } from '../util/fraction';
@@ -32,20 +33,23 @@ const needClass = ({ essential, filled }: Need) => (essential ? `essentiel ${fil
 
 /**
  * Bouton « ? » et panneau d'aide d'une case : ce qu'il faut mettre, où le trouver, exemple, effet d'une case vide.
- * Panneau déplié au toucher (pas de bulle au survol, inutilisable sur iPhone).
+ * Fenêtre ouverte au toucher (pas de bulle au survol, inutilisable sur iPhone).
  */
 export function useHelp(key: HelpKey | undefined, label: string) {
   const t = useT();
   const id = useId();
   const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
   if (!key) return { button: null, panel: null };
   const h: { quoi: string; ou: string; exemple?: string; siVide: string; certitude?: string } = HELP[key];
+  const name = `Aide : ${t(label)}`;
   const button = (
-    <button type="button" className="help-btn" aria-expanded={open} aria-controls={`${id}-aide`}
-      aria-label={`Aide : ${t(label)}`} title="Aide" onClick={() => setOpen((o) => !o)}>?</button>
+    <button ref={btnRef} type="button" className="help-btn" aria-expanded={open} aria-haspopup="dialog"
+      aria-controls={open ? `${id}-aide` : undefined} aria-label={name} title="Aide" onClick={() => setOpen((o) => !o)}>?</button>
   );
+  const close = (refocus: boolean) => { setOpen(false); if (refocus) btnRef.current?.focus(); };
   const panel = open ? (
-    <div id={`${id}-aide`} className="help-panel" role="note" aria-label={`Aide : ${t(label)}`}>
+    <HelpPopover id={`${id}-aide`} name={name} anchor={btnRef} onClose={close}>
       <dl>
         <dt>Quoi mettre</dt><dd>{t(h.quoi)}</dd>
         <dt>Où le trouver</dt><dd>{t(h.ou)}</dd>
@@ -53,10 +57,60 @@ export function useHelp(key: HelpKey | undefined, label: string) {
         <dt>Si la case reste vide</dt><dd>{t(h.siVide)}</dd>
         {h.certitude && <><dt>Fiabilité</dt><dd>{t(h.certitude)}</dd></>}
       </dl>
-      <button type="button" className="link" onClick={() => setOpen(false)}>Fermer l’aide</button>
-    </div>
+    </HelpPopover>
   ) : null;
   return { button, panel };
+}
+
+/**
+ * Petite fenêtre d'aide flottante, rendue dans <body> : elle ne décale ni la case ni le tableau.
+ * Placée sous le bouton « ? » (au-dessus s'il manque de place), toujours gardée dans l'écran.
+ * Se ferme par « Fermer », Échap, un toucher à l'extérieur, un défilement de la page ou un redimensionnement.
+ */
+function HelpPopover({ id, name, anchor, onClose, children }: { id: string; name: string; anchor: RefObject<HTMLButtonElement>; onClose: (refocus: boolean) => void; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  const [pos, setPos] = useState<CSSProperties>({ visibility: 'hidden' });
+  useLayoutEffect(() => {
+    const a = anchor.current?.getBoundingClientRect();
+    const el = ref.current;
+    if (!a || !el) return;
+    const vw = window.innerWidth || 390, vh = window.innerHeight || 800, m = 8;
+    const width = Math.min(340, vw - 2 * m);
+    const left = Math.max(m, Math.min(a.left - 12, vw - width - m));
+    const hgt = el.offsetHeight;
+    const below = a.bottom + 6;
+    const top = below + hgt > vh - m && a.top - 6 - hgt >= m ? a.top - 6 - hgt : Math.max(m, Math.min(below, vh - m - hgt));
+    setPos({ top, left, width });
+    el.focus({ preventScroll: true });
+  }, [anchor]);
+  useEffect(() => {
+    const inside = (n: EventTarget | null) => !!n && (ref.current?.contains(n as Node) || anchor.current?.contains(n as Node));
+    const outside = (e: Event) => { if (!inside(e.target)) closeRef.current(false); };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current(true); };
+    const scroll = (e: Event) => { if (!ref.current?.contains(e.target as Node)) closeRef.current(false); };
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('keydown', key);
+    window.addEventListener('scroll', scroll, true);
+    window.addEventListener('resize', scroll);
+    return () => {
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('keydown', key);
+      window.removeEventListener('scroll', scroll, true);
+      window.removeEventListener('resize', scroll);
+    };
+  }, [anchor]);
+  return createPortal(
+    <div ref={ref} id={id} className="help-pop" role="dialog" aria-label={name} tabIndex={-1} style={pos}>
+      <div className="help-pop-head">
+        <strong>{name}</strong>
+        <button type="button" className="link" onClick={() => closeRef.current(true)}>Fermer</button>
+      </div>
+      {children}
+    </div>,
+    document.body,
+  );
 }
 
 /** Les libellés et aides affichent les prénoms à la place des rôles (sauf `keepRoles`). */

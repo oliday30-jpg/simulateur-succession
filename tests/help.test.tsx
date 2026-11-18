@@ -27,17 +27,31 @@ describe('aide des cases', () => {
     }
   });
 
-  it('le bouton ouvre et ferme le panneau, avec les prénoms', async () => {
+  it('le bouton ouvre une fenêtre flottante hors de la case, fermée par « Fermer », Échap ou un toucher ailleurs', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
     const btn = screen.getByRole('button', { name: /Aide : Répartition issue de la succession/ });
     expect(btn.getAttribute('aria-expanded')).toBe('false');
     await user.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
-    const panel = screen.getByRole('note', { name: /Aide : Répartition/ });
+    const panel = screen.getByRole('dialog', { name: /Aide : Répartition/ });
+    // rendue directement dans <body> : rien n'est inséré dans la case, le tableau ne bouge pas
+    expect(panel.parentElement).toBe(document.body);
+    expect(btn.closest('.field')!.contains(panel)).toBe(false);
     expect(within(panel).getByText('Où le trouver')).toBeTruthy();
     expect(within(panel).getByText(/Acte de notoriété de 2005/)).toBeTruthy();
-    await user.click(within(panel).getByRole('button', { name: 'Fermer l’aide' }));
-    expect(screen.queryByRole('note', { name: /Aide : Répartition/ })).toBeNull();
+    await user.click(within(panel).getByRole('button', { name: 'Fermer' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(btn);
+    await user.click(btn);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await user.click(btn);
+    await user.click(document.body);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // un second toucher sur « ? » referme aussi
+    await user.click(btn);
+    await user.click(btn);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
