@@ -39,6 +39,12 @@ Détails de la session de création : [docs/session-2026-11-17.md](docs/session-
   en jaune « ★ Indispensable — à remplir », en vert « ✓ Indispensable — renseigné » (texte + couleur) ; légende avec le nombre de cases restantes.
   Liste dans `src/ui/essentials.ts` (valeur de maison retenue, lots, avoirs, solde mode B, créance si incluse, date de décès, montants des dons/flux/legs actifs, fraction donnée, coefficient de vente, droits manuels).
   _18/11/2026 — commit 0d4eb99. 112 tests + build OK sur une copie isolée (sans la « donation sur mesure » en cours, non incluse). Poussé._
+- [x] **Tâche A — Aide « ? » par case** (onglets Situation, Scénarios, bloc « Succession du fils prédécédé ») : panneau déplié au toucher
+  (quoi mettre, où le trouver, exemple, si la case reste vide, fiabilité) ; textes centralisés dans `src/ui/help.ts` (rôles → prénoms à l'affichage) ; masqué à l'impression.
+  Tests : chaque entrée complète, chaque case indispensable a son « ? », ouverture / fermeture.
+  _18/11/2026 — commit 81e0893 (avec l'alignement des cases et le passage automatique à l'acte de 2005, faits dans une session parallèle). 119 tests + build OK. Poussé._
+  Suggestions suivantes (non décidées) : D — noter les réponses du notaire sous chaque question ; E — frise des dates clés ; B — liste des documents à rassembler ;
+  H — questions pour la banque ; F — 3 options côte à côte imprimables ; I — courbe de la réserve du père ; J — mode présentation.
 
 ## Tâche en cours
 
