@@ -83,6 +83,22 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   « Autres biens nets » négatifs saisissables ; avertissement « succession déficitaire » : en cas de renonciation, père et fils survivant héritent des dettes
   (bénéfice d'inventaire). Questions ajoutées à la fiche notaire. Tests à partir de calculs écrits à la main.
   _18/11/2026 — commit cc74cc1. 127 tests + build OK. Poussé._
+- [ ] **T11 — Suites de la déclaration de succession de la mère (projet 2005)** (proposée le 18/11/2026, non commencée)
+  Le projet de déclaration confirme : maison détenue pour **1/2 par chaque époux** ; séparation de biens ; donation de survie réductible ;
+  « en cas de demande en réduction » : conjoint 1/3 PP + 2/3 US, chaque fils 1/3 NP → répartition `acte2005_reduction` inchangée.
+  Points nouveaux à intégrer (fiche notaire + bloc « Succession du fils prédécédé ») :
+  - **Quasi-usufruit** du père sur les avoirs bancaires de la mère (sa moitié des comptes ≈ 7 200 € + titres non chiffrés) :
+    à son décès, chaque fils (ou la succession du fils prédécédé) aurait une **créance de restitution** ≈ 1/3 de ces avoirs
+    (dette déductible dans la succession du père ; actif dans celle du fils prédécédé). À confirmer par le notaire.
+  - **Autres immeubles** reçus par la mère en nue-propriété (une quote-part d'une maison et d'une terre agricole, usufruit d'une aïeule) :
+    sort actuel inconnu (usufruit éteint ? biens vendus ?) ; une part peut se trouver dans la succession du fils prédécédé (« autres biens »).
+    Le projet indique « 1/6 » en titre et « 1/16 » dans le texte pour la maison : incohérence à vérifier sur l'acte signé.
+  - La déclaration est « purement fiscale sans effets civils » et ce n'est qu'un projet : demander la **version enregistrée** et une preuve que la réduction a bien été demandée.
+  - L'**acte de notoriété** (24/06/2005, enregistré le 29/06/2005) est lui aussi **conditionnel** (« en cas de demande en réduction ») :
+    aucun des deux documents ne prouve que la réduction a été demandée. Afficher le préréglage `acte2005_reduction` comme « hypothèse à confirmer »
+    (et non comme fait établi) ; pistes de preuve : MyMinfin « Mes biens immobiliers » / extrait cadastral du fils survivant (nue-propriétaire 1/6 ?),
+    déclaration enregistrée avec droits payés par les fils, acte ultérieur sur un des biens. Question notaire : sans demande formelle, la réduction
+    peut-elle encore être demandée (succession ouverte avant la réforme du 01/09/2018 : délai à confirmer) ?
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 
 ## Idées en attente (non décidées)
