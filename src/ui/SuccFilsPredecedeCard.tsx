@@ -32,7 +32,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
           options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]}
           hint="Non s’ils vivaient dans leur propre logement (celui-ci va dans « Autres biens nets »). Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés, calcul indisponible)." />
         <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })} allowNegative
-          hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent." />
+          hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Plus ce qui vient de la succession de la mère hors maison (créance de restitution du quasi-usufruit, quotes-parts d’autres immeubles). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent." />
         <ValueField label="Assurance groupe / vie versée à la bénéficiaire" help="sfpAssurance" value={o.assurance} onChange={(v) => set((x) => { x.assurance = v; })}
           hint="Capital versé directement par l’assureur : hors succession, les dettes ne s’y imputent pas. Mettre 0 s’il n’y en a pas." />
         <SelectField label="Assurance soumise aux droits de succession ?" help="sfpAssuranceTaxee" value={o.assuranceTaxee} onChange={(v) => set((x) => { x.assuranceTaxee = v; })}

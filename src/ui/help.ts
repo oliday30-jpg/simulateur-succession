@@ -41,7 +41,7 @@ export const HELP = {
   },
   repartition: {
     quoi: 'Qui possède quoi dans la maison aujourd’hui : pleine propriété (PP), ou nue-propriété (NP) d’un côté et usufruit (US) de l’autre.',
-    ou: 'Acte de notoriété de 2005 (succession de la mère) et contrat de mariage (séparation de biens). Demander au notaire de confirmer les fractions.',
+    ou: 'Acte de notoriété de 2005 (succession de la mère), contrat de mariage (séparation de biens) et MyMinfin → « Mes biens immobiliers » (cadastre : reprend la déclaration enregistrée, sans valeur de titre). Demander au notaire de confirmer les fractions.',
     exemple: 'Acte 2005 : père 2/3 en PP + usufruit sur 1/3 ; fils survivant 1/6 en NP ; part du fils prédécédé 1/6 en NP.',
     siVide: 'Si les lots ne font pas 100 % ou se chevauchent : ' + VIDE_BLOQUE,
     certitude: 'Une fois l’acte relu par le notaire, le préréglage peut être considéré comme confirmé.',
@@ -198,8 +198,10 @@ export const HELP = {
     siVide: '« Inconnu » : les deux options sont chiffrées, sans certitude sur la bénéficiaire.',
   },
   sfpAutresBiens: {
-    quoi: 'Ce que laisse le fils prédécédé en dehors de la maison de Gembloux (sa part de son propre logement, comptes, voiture…), moins ses dettes et frais, dont la dette envers le père. Sans les assurances groupe / vie (case suivante). Montant négatif si les dettes dépassent ces biens.',
-    ou: 'Notaire de sa succession ; extraits de ses comptes au jour du décès ; décompte du crédit (et de l’éventuelle assurance solde restant dû).',
+    quoi: 'Ce que laisse le fils prédécédé en dehors de la maison de Gembloux (sa part de son propre logement, comptes, voiture…), moins ses dettes et frais, dont la dette envers le père. Y ajouter ce qu’il avait recueilli dans la succession de la mère hors maison : '
+      + 'sa créance de restitution envers le père (quasi-usufruit sur les comptes et titres de la mère, environ 1/3 de ceux-ci, exigible au décès du père) '
+      + 'et ses quotes-parts d’autres immeubles de la mère (souvent quelques centaines d’euros). Sans les assurances groupe / vie (case suivante). Montant négatif si les dettes dépassent ces biens.',
+    ou: 'Notaire de sa succession ; extraits de ses comptes au jour du décès ; décompte du crédit (et de l’éventuelle assurance solde restant dû) ; déclaration enregistrée de la succession de la mère ; MyMinfin (cadastre) pour les immeubles.',
     exemple: '150 000 (moitié du logement) − 150 000 (dettes) + 10 000 (comptes) = 10 000 ; ou « -40 000 »',
     siVide: 'Le calcul suppose 0 € d’autres biens, avec une mention « à confirmer ».',
   },

@@ -25,8 +25,9 @@ export const REPARTITION_LABEL: Record<RepartitionMere, string> = {
 };
 
 export const REPARTITION_NOTE: Record<RepartitionMere, string> = {
-  acte2005_reduction: 'Acte de notoriété du 24/06/2005 : donation de survie réduite (art. 913 ancien C. civ.) — la mère laisse 1/3 PP + 2/3 US au conjoint, 1/3 NP au fils survivant et 1/3 NP au fils prédécédé.',
-  donation_survie_integrale: 'Si aucun enfant n’a demandé la réduction, la donation de survie attribue au père toute la part de la mère : ni le fils survivant ni le fils prédécédé ne détiennent rien aujourd’hui.',
+  acte2005_reduction: 'Acte de notoriété du 24/06/2005 : donation de survie réduite (art. 913 ancien C. civ.) — la mère laisse 1/3 PP + 2/3 US au conjoint, 1/3 NP au fils survivant et 1/3 NP au fils prédécédé. '
+    + 'Situation reprise par le cadastre (MyMinfin, consulté le 18/11/2026 : père PP 4/6 + usufruit 2/6, chaque fils NP 1/6) ; le cadastre n’est pas un titre de propriété mais reprend la déclaration enregistrée.',
+  donation_survie_integrale: 'Si aucun enfant n’a demandé la réduction, la donation de survie attribue au père toute la part de la mère : ni le fils survivant ni le fils prédécédé ne détiennent rien aujourd’hui. Le cadastre (consulté le 18/11/2026) indique au contraire que la réduction a été appliquée.',
   legale_moitie: 'Hypothèse utilisée avant la lecture de l’acte (usufruit sur toute la moitié de la mère).',
   personnalisee: 'Répartition modifiée à la main : vérifier qu’elle correspond aux titres.',
 };

@@ -33,7 +33,14 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
         <h3>1. Titres et testament</h3>
         <ul className="checklist">
           <li>☐ Titres de propriété (répartition simulée : {REPARTITION_LABEL[detectRepartition(s.house.lots)]}) : {summarize(s.house.lots).map((h) => `${who(h.holder)} ${[h.pp.n ? `${formatFrac(h.pp)} en pleine propriété` : '', h.np.n ? `${formatFrac(h.np)} en nue-propriété` : '', h.us.n ? `usufruit sur ${formatFrac(h.us)}` : ''].filter(Boolean).join(' + ')}`).join(' ; ')} — à confirmer.</li>
-          <li>☐ Succession de la mère (acte de notoriété de 2005) : la réduction de la donation de survie a-t-elle été demandée par les deux fils ? La maison était-elle détenue pour moitié par chaque époux ?</li>
+          <li>☐ Succession de la mère (acte de notoriété de 2005) : la réduction de la donation de survie a-t-elle été demandée par les deux fils ? La maison était-elle détenue pour moitié par chaque époux ?
+            <ul>
+              <li>☐ L’acte de notoriété et le projet de déclaration sont rédigés « en cas de demande en réduction » : obtenir la <strong>déclaration enregistrée</strong> définitive et une preuve que la réduction a été demandée. Le cadastre (MyMinfin) reprend déjà <T>père PP 4/6 + usufruit 2/6, chaque fils NP 1/6</T> : cela suffit-il ?</li>
+              <li>☐ <strong>Quasi-usufruit</strong> <T>du père</T> sur les comptes et titres de la mère : à son décès, <T>chaque fils</T> (ou la succession <T>du fils prédécédé</T>) a-t-il une <strong>créance de restitution</strong> d’environ 1/3 de ces avoirs ? Montant de référence (valeur en 2005, sans intérêts ?) ; dette déductible dans la succession <T>du père</T> ; actif à déclarer dans la succession <T>du fils prédécédé</T> ?</li>
+              <li>☐ <strong>Autres immeubles</strong> reçus par la mère en nue-propriété (quote-part d’une autre maison, d’une terre agricole ; usufruit d’une aïeule) : usufruit éteint ? biens vendus (prix partagé ?) ; fraction exacte (le projet indique deux fractions différentes : vérifier sur l’acte signé) ; part à reprendre dans la succession <T>du fils prédécédé</T>.</li>
+              <li>☐ Terre agricole : le cadastre inscrit <T>le père</T> en nue-propriété et <T>chaque fils</T> en pleine propriété + usufruit, l’inverse de ce que donne l’acte de 2005 → erreur d’inscription ou autre origine ? Rectification utile (enjeu financier minime) ?</li>
+            </ul>
+          </li>
           <li>☐ <T>Part en nue-propriété du fils prédécédé</T> : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.
             <ul>
               <li>☐ Testament : legs à {who('beneficiaire')} (universel ou particulier ?), clause prévue si elle renonce ? Descendants : aucun ? Le couple ne vivait pas dans la maison familiale (celle <T>du père</T>) ?</li>

@@ -134,6 +134,24 @@ describe('parcours interface', () => {
     expect(acc.textContent).toMatch(/38.250,00.€/);
   });
 
+  it('suites de la succession de la mère : source cadastre, quasi-usufruit, autres immeubles', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    // Préréglage par défaut (acte 2005) : la note cite le cadastre comme confirmation.
+    expect(document.body.textContent).toMatch(/Situation reprise par le cadastre \(MyMinfin, consulté le 18\/11\/2026/);
+    // Bloc du fils prédécédé : les « autres biens » rappellent la créance de restitution.
+    const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
+    expect(card.textContent).toMatch(/créance de restitution du quasi-usufruit/);
+    await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
+    await user.click(screen.getByRole('tab', { name: 'Questions pour le notaire' }));
+    const fiche = screen.getByRole('article', { name: 'Questions à valider avec le notaire' });
+    expect(fiche.textContent).toMatch(/déclaration enregistrée/);
+    expect(fiche.textContent).toMatch(/Quasi-usufruit de Marcel sur les comptes et titres de la mère/);
+    expect(fiche.textContent).toMatch(/chaque fils \(ou la succession du fils prédécédé\) a-t-il une créance de restitution/);
+    expect(fiche.textContent).toMatch(/Autres immeubles reçus par la mère en nue-propriété/);
+    expect(fiche.textContent).toMatch(/Terre agricole : le cadastre inscrit Marcel en nue-propriété/);
+  });
+
   it('les prénoms saisis remplacent les rôles dans la simulation', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
