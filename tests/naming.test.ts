@@ -27,6 +27,10 @@ describe('Prénoms à la place des rôles (affichage)', () => {
   it('« fils » ne touche ni « petit-fils » ni « fils prédécédé », et les mots proches restent intacts', () => {
     expect(renameText('Petit-fils, fils prédécédé, fils', { fils: 'Olivier' })).toBe('Petit-fils, fils prédécédé, Olivier');
     expect(renameText('repère, pères, filsx', N)).toBe('repère, pères, filsx');
+    // Un pluriel ne devient jamais un seul prénom (bug « chaque Olivier »).
+    expect(renameText('chaque fils 1/6 en NP ; les deux fils ; Les fils', N)).toBe('chaque fils 1/6 en NP ; les deux fils ; Les fils');
+    expect(renameText('père 2/3 PP + usufruit sur 1/3 ; fils survivant 1/6 en NP ; fils prédécédé 1/6 en NP', N))
+      .toBe('Marcel 2/3 PP + usufruit sur 1/3 ; Olivier 1/6 en NP ; Pierre 1/6 en NP');
   });
   it('whoLabel', () => {
     expect(whoLabel('pere', N)).toBe('Marcel');

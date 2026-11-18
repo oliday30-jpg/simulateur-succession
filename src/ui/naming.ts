@@ -37,7 +37,10 @@ const FORMS: { id: PersonId; labels: string[]; noun: string }[] = [
 export function renameText(text: string, names: Names): string {
   const n = clean(names);
   if (!Object.keys(n).length || !text) return text;
-  let s = text;
+  // Pluriels (« chaque fils », « les deux fils »…) : ils désignent plusieurs personnes,
+  // on ne les remplace jamais par un seul prénom (marqueur provisoire, restauré à la fin).
+  const PLURAL = '\u0000';
+  let s = text.replace(word(`(?:chaque|Chaque|les|Les|des|Des|aux|Aux|ces|Ces|ses|Ses|leurs|Leurs)(?: deux)? fils`), (m) => m.replace(/fils$/, PLURAL));
   for (const f of FORMS) {
     const name = n[f.id];
     if (!name) continue;
@@ -53,7 +56,7 @@ export function renameText(text: string, names: Names): string {
       .replace(word(`(?:le|Le) ${nouns}`), name)
       .replace(word(nouns), name);
   }
-  return s;
+  return s.split(PLURAL).join('fils');
 }
 
 export const ROLE_LABEL: Record<PersonId | HolderId, string> = {
