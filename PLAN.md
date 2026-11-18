@@ -94,11 +94,15 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
     sort actuel inconnu (usufruit éteint ? biens vendus ?) ; une part peut se trouver dans la succession du fils prédécédé (« autres biens »).
     Le projet indique « 1/6 » en titre et « 1/16 » dans le texte pour la maison : incohérence à vérifier sur l'acte signé.
   - La déclaration est « purement fiscale sans effets civils » et ce n'est qu'un projet : demander la **version enregistrée** et une preuve que la réduction a bien été demandée.
-  - L'**acte de notoriété** (24/06/2005, enregistré le 29/06/2005) est lui aussi **conditionnel** (« en cas de demande en réduction ») :
-    aucun des deux documents ne prouve que la réduction a été demandée. Afficher le préréglage `acte2005_reduction` comme « hypothèse à confirmer »
-    (et non comme fait établi) ; pistes de preuve : MyMinfin « Mes biens immobiliers » / extrait cadastral du fils survivant (nue-propriétaire 1/6 ?),
-    déclaration enregistrée avec droits payés par les fils, acte ultérieur sur un des biens. Question notaire : sans demande formelle, la réduction
-    peut-elle encore être demandée (succession ouverte avant la réforme du 01/09/2018 : délai à confirmer) ?
+  - L'**acte de notoriété** (24/06/2005, enregistré le 29/06/2005) est lui aussi **conditionnel** (« en cas de demande en réduction »).
+    **Confirmé le 18/11/2026 par MyMinfin (cadastre)** : père PP 4/6 + usufruit 2/6, chaque fils NP 1/6 → préréglage `acte2005_reduction`
+    = situation enregistrée (le cadastre n'est pas un titre de propriété, mais il reprend la déclaration enregistrée). Afficher cette source dans la note du préréglage.
+    Le fils prédécédé y figure encore (mise à jour après la déclaration de sa succession).
+  - La **terre agricole** de la succession de la mère (654 m², revenu cadastral 4 €, 17 copropriétaires) figure dans MyMinfin.
+    Part de la mère : 1/24 (usufruit de l'aïeule éteint). Cadastre : père NP 10/720 (= 1/72) ; chaque fils PP 1/72 + usufruit 1/144.
+    Attendu selon l'acte 2005 : père PP 1/72 + usufruit 1/36 ; chaque fils NP 1/72 → **inscription inversée ou autre origine** (à demander au notaire).
+    Valeur de la part de chaque fils : quelques dizaines à quelques centaines d'euros → négligeable dans les calculs ;
+    à mentionner seulement dans la succession du fils prédécédé. L'autre maison n'y figure pas (vendue ?).
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 
 ## Idées en attente (non décidées)
