@@ -83,7 +83,10 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   « Autres biens nets » négatifs saisissables ; avertissement « succession déficitaire » : en cas de renonciation, père et fils survivant héritent des dettes
   (bénéfice d'inventaire). Questions ajoutées à la fiche notaire. Tests à partir de calculs écrits à la main.
   _18/11/2026 — commit cc74cc1. 127 tests + build OK. Poussé._
-- [ ] **T11 — Suites de la déclaration de succession de la mère (projet 2005)** (proposée le 18/11/2026, non commencée)
+- [x] **T11 — Suites de la déclaration de succession de la mère (projet 2005)**
+  _18/11/2026 — commit 9ef0c87. 128 tests + build OK. Textes seulement (moteur inchangé) : note du préréglage acte 2005 avec la source cadastre ;
+  4 questions ajoutées à la fiche notaire (déclaration enregistrée, créance de restitution, autres immeubles, terre agricole) ;
+  « Autres biens nets » du fils prédécédé : créance de restitution + quotes-parts d'autres immeubles. Poussé._
   Le projet de déclaration confirme : maison détenue pour **1/2 par chaque époux** ; séparation de biens ; donation de survie réductible ;
   « en cas de demande en réduction » : conjoint 1/3 PP + 2/3 US, chaque fils 1/3 NP → répartition `acte2005_reduction` inchangée.
   Points nouveaux à intégrer (fiche notaire + bloc « Succession du fils prédécédé ») :
