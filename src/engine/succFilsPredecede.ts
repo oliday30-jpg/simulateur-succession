@@ -142,7 +142,7 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
 
   if (!profil) return indispo(res.ok ? '' : res.reason);
   if (partPP === null) return indispo('Valeur de la maison non renseignée.');
-  if (o.residenceCommune === 'oui') return indispo('La maison était la résidence commune : usufruit légal du cohabitant et exemption du logement familial non modélisés. Validation par le notaire requise.');
+  if (o.residenceCommune === 'oui') return indispo('Le couple habitait la maison familiale (résidence commune) : usufruit légal du cohabitant et exemption du logement familial non modélisés. Validation par le notaire requise.');
   if (o.baseNP === 'nue_propriete' && o.coefNP === null && lotsNP.length) return indispo('Base « valeur de la nue-propriété » choisie, mais le coefficient n’est pas saisi.');
 
   // Hypothèses calculées.

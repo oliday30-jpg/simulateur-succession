@@ -28,8 +28,9 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
           options={[['inconnu', 'Inconnu'], ['legs_beneficiaire', t('Oui, en faveur de la bénéficiaire')], ['aucun', 'Pas de testament']]} />
         <SelectField label="Descendants du fils prédécédé" value={o.descendants} onChange={(v) => set((x) => { x.descendants = v; })}
           options={[['inconnu', 'Inconnu'], ['aucun', 'Aucun enfant'], ['oui', 'Un ou plusieurs enfants']]} />
-        <SelectField label="La maison était-elle leur résidence commune ?" value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
-          options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]} hint="Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés)." />
+        <SelectField label={t('Le fils prédécédé et sa cohabitante habitaient-ils la maison familiale (celle du père) ?')} value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
+          options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]}
+          hint="Non s’ils vivaient dans leur propre logement (celui-ci va dans « Autres biens nets »). Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés, calcul indisponible)." />
         <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })} allowNegative
           hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent." />
         <ValueField label="Assurance groupe / vie versée à la bénéficiaire" help="sfpAssurance" value={o.assurance} onChange={(v) => set((x) => { x.assurance = v; })}
