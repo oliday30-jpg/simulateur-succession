@@ -76,12 +76,13 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 - [ ] **T7 — Intégrer les réponses du notaire** (dépend du rendez-vous)
   Mettre à jour `src/tax/rules.ts` (statuts, notes, sources) et les réglages par défaut ; ajouter un test par règle validée.
   Questions : voir la fiche « Questions pour le notaire » et `docs/session-2026-11-17.md` § « Points à valider ».
-- [ ] **T10 — Assurances du fils prédécédé** (bloc « Succession du fils prédécédé »)
+- [x] **T10 — Assurances du fils prédécédé** (bloc « Succession du fils prédécédé »)
   Case « assurance groupe / vie versée à la bénéficiaire » (montant + « taxée en droits de succession ? » oui / non / à confirmer → fourchette).
   Capital hors succession civile (les dettes ne s'y imputent pas), ajouté à la part taxable de la bénéficiaire (art. 8 C. succ., à confirmer) ;
   si elle renonce, elle garde l'assurance et paie les droits sur ce capital ; plancher art. 68 limité à la part renoncée.
   « Autres biens nets » négatifs saisissables ; avertissement « succession déficitaire » : en cas de renonciation, père et fils survivant héritent des dettes
   (bénéfice d'inventaire). Questions ajoutées à la fiche notaire. Tests à partir de calculs écrits à la main.
+  _18/11/2026 — commit cc74cc1. 127 tests + build OK. Poussé._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 
 ## Idées en attente (non décidées)
