@@ -165,4 +165,26 @@ describe('parcours interface', () => {
     expect(art.textContent).toMatch(/les besoins de Marcel passent en premier/);
     expect(art.textContent).toMatch(/Usufruit/);
   });
+  it('donation sur mesure : montant libre et bénéficiaire au choix', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Scénarios' }));
+    // Les modèles à montant figé ne sont plus proposés en un clic.
+    expect(screen.queryByRole('button', { name: /Don bancaire 10 000/ })).toBeNull();
+    const box = screen.getByRole('heading', { name: 'Donation sur mesure' }).parentElement!;
+    const create = within(box).getByRole('button', { name: 'Créer la variante' });
+    expect(create).toHaveProperty('disabled', true);
+    await user.type(within(box).getByRole('group', { name: /Ligne 1/ }).querySelector('input')!, '12 500');
+    await user.tab();
+    await user.click(within(box).getByRole('button', { name: /Autre bénéficiaire/ }));
+    const l2 = within(box).getByRole('group', { name: /Ligne 2/ });
+    expect(within(l2).getByLabelText('Bénéficiaire')).toHaveProperty('value', 'petitFils');
+    await user.type(within(l2).getByLabelText('Montant'), '3 000');
+    await user.tab();
+    expect(within(box).getByRole('status').textContent).toMatch(/12.500,00.€ → Fils survivant ; 3.000,00.€ → Petit-fils/);
+    await user.click(create);
+    expect(screen.getByRole('heading', { name: /Variante : Don enregistré 12.500,00.€ au fils survivant \+ Don enregistré 3.000,00.€ au petit-fils/ })).toBeTruthy();
+    // 12 500 × 3,3 % + 3 000 × 3,3 % = 412,50 + 99 = 511,50 €
+    expect(screen.getByText('Coût fiscal aujourd’hui').nextElementSibling!.textContent).toMatch(/511,50/);
+  });
 });

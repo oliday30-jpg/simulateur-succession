@@ -1,5 +1,5 @@
 import { simulate, alignedReference } from '../src/engine/simulate';
-import { sampleSituation, TEMPLATES, mkDonBancaire, mkDonationImmo, mkLegs, mkVente } from '../src/model/sample';
+import { sampleSituation, TEMPLATES, mkDonBancaire, mkDonationImmo, mkLegs, mkVente, buildCustomScenario } from '../src/model/sample';
 import type { Scenario, Situation, Vente, DonBancaire } from '../src/model/types';
 import { euros } from '../src/util/money';
 import { frac } from '../src/util/fraction';
@@ -234,5 +234,36 @@ describe('comparaison alignée et changement de barème', () => {
     const sc = { ...tpl('reference'), events: [mkDonationImmo('2026-12-15'), { ...v, order: 0 }] };
     const r = simulate(sit(), sc);
     expect(r.pending.join(' ')).toMatch(/sans ordre explicite/);
+  });
+});
+
+describe('donation sur mesure', () => {
+  it('montants libres répartis entre fils et petit-fils', () => {
+    // Don enregistré 15 000 € au fils : 15 000 × 3,3 % = 495 €
+    // Don enregistré 7 500 € au petit-fils : 7 500 × 3,3 % = 247,50 €
+    // Coût aujourd'hui : 495 + 247,50 = 742,50 € ; reste au père : 170 000 − 15 000 − 7 500 − 742,50 = 146 757,50 €
+    const sc = buildCustomScenario([
+      { kind: 'don_enr', donataire: 'fils', montant: E(15000) },
+      { kind: 'don_enr', donataire: 'petitFils', montant: E(7500) },
+      { kind: 'legs', donataire: 'petitFils', montant: null }, // sans montant : ignorée
+    ], '2026-12-20');
+    expect(sc.events).toHaveLength(2);
+    expect(sc.legs).toHaveLength(0);
+    expect(sc.events.every((e) => e.date === '2026-12-20')).toBe(true);
+    expect(sc.name).toMatch(/^Don enregistré 15.000,00.€ au fils survivant \+ Don enregistré 7.500,00.€ au petit-fils$/);
+    const r = simulate(sit(), sc);
+    expect(r.totals.fiscalToday.value).toBe(74250);
+    expect(r.cash.afterEvents).toBe(E(146757.5));
+  });
+  it('legs libre et don non enregistré', () => {
+    const sc = buildCustomScenario([
+      { kind: 'legs', donataire: 'fils', montant: E(12345) },
+      { kind: 'don_nenr', donataire: 'fils', montant: E(8000) },
+    ]);
+    expect(sc.legs[0]).toMatchObject({ beneficiaire: 'fils', montant: E(12345), actif: true });
+    const d = sc.events[0] as DonBancaire;
+    expect(d).toMatchObject({ montant: E(8000), statut: 'realise_non_enregistre', dateEnregistrement: null });
+    // Non enregistré : aucun droit immédiat.
+    expect(simulate(sit(), sc).totals.fiscalToday.value).toBe(0);
   });
 });

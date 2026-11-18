@@ -1,8 +1,9 @@
-import { euros } from '../util/money';
+import { euros, formatEUR, type Cents } from '../util/money';
 import { frac } from '../util/fraction';
 import { lotsForRepartition } from '../domain/devolution';
 import { defaultSuccFilsPredecede } from '../persistence/schema';
-import type { AppState, Scenario, Situation, Value, SimEvent, Legs } from './types';
+import type { AppState, Scenario, Situation, Value, SimEvent, Legs, DonBancaire, Donee } from './types';
+import type { ISODate } from '../util/dates';
 
 const v = (e: number | null, certainty: Value['certainty'], source: string, note?: string): Value => ({
   cents: e === null ? null : euros(e),
@@ -159,4 +160,35 @@ export function defaultState(): AppState {
   const don = TEMPLATES.find((t) => t.id === 'don10k_enr')!.build();
   const immo = TEMPLATES.find((t) => t.id === 'donation_immo')!.build();
   return { schemaVersion: 1, situation: sampleSituation(), scenarios: [ref, don, immo], selectedIds: [ref.id, don.id, immo.id], activeId: immo.id };
+}
+
+// ───────────── Donation sur mesure (montants et bénéficiaires libres) ─────────────
+
+/** Nature d'une ligne : don bancaire enregistré, don bancaire non enregistré, legs au décès. */
+export type CustomGiftKind = 'don_enr' | 'don_nenr' | 'legs';
+export interface CustomGiftLine { kind: CustomGiftKind; donataire: Donee; montant: Cents | null }
+
+const DONEE_NOUN: Record<Donee, string> = { fils: 'fils survivant', petitFils: 'petit-fils' };
+const KIND_NOUN: Record<CustomGiftKind, string> = { don_enr: 'Don enregistré', don_nenr: 'Don non enregistré', legs: 'Legs' };
+
+/** Une ligne est utilisable si son montant est renseigné et strictement positif. */
+export const customLineValid = (l: CustomGiftLine) => l.montant !== null && l.montant > 0;
+
+/** Nom lisible et anonyme (rôles, pas de prénoms) : « Don enregistré 15 000 € au fils survivant + Legs 5 000 € au petit-fils ». */
+export function customScenarioName(lines: CustomGiftLine[]): string {
+  return lines.map((l) => `${KIND_NOUN[l.kind]} ${formatEUR(l.montant)} au ${DONEE_NOUN[l.donataire]}`).join(' + ');
+}
+
+/**
+ * Variante composée librement : chaque ligne devient un don bancaire (à la date choisie, ordre = rang de saisie)
+ * ou un legs. Les lignes sans montant valide sont ignorées.
+ */
+export function buildCustomScenario(lines: CustomGiftLine[], date: ISODate = DEFAULT_ACT_DATE): Scenario {
+  const ok = lines.filter(customLineValid);
+  const s = baseScenario('sur_mesure', customScenarioName(ok) || 'Donation sur mesure');
+  ok.forEach((l, i) => {
+    if (l.kind === 'legs') s.legs.push({ ...mkLegs(0), beneficiaire: l.donataire, montant: l.montant });
+    else s.events.push({ ...(mkDonBancaire(0, l.kind === 'don_enr', l.donataire, date) as DonBancaire), montant: l.montant, order: i });
+  });
+  return s;
 }

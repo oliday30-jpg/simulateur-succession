@@ -1,5 +1,6 @@
 import type { AppState, Scenario, SimEvent, DonBancaire, DonationImmo, Vente, Cession, Flux, Legs, HolderId, RulesMode, PersonId, Donee } from '../model/types';
-import { TEMPLATES, newId, mkDonBancaire, mkDonationImmo, mkVente, mkFlux, mkCession, mkLegs, DEFAULT_ACT_DATE } from '../model/sample';
+import { TEMPLATES, newId, mkDonBancaire, mkDonationImmo, mkVente, mkFlux, mkCession, mkLegs, DEFAULT_ACT_DATE, buildCustomScenario, customLineValid, type CustomGiftKind, type CustomGiftLine } from '../model/sample';
+import { useState } from 'react';
 import { CheckField, DateField, FracField, MoneyField, NeedLegend, SelectField, TextField } from './fields';
 import { countMissing, petitFilsInherits, scenarioNeeds } from './essentials';
 import { eventLabel, sortEvents, type SimResult } from '../engine/simulate';
@@ -20,6 +21,61 @@ const RULES_OPTS: [RulesMode, string][] = [
 const DONEES: [Donee, string][] = [['fils', 'Fils survivant'], ['petitFils', 'Petit-fils']];
 const PAYERS: [PersonId, string][] = [['pere', 'Père'], ['fils', 'Fils survivant'], ['petitFils', 'Petit-fils']];
 const HOLDERS: [HolderId, string][] = (Object.keys(HOLDER_LABEL) as HolderId[]).map((h) => [h, HOLDER_LABEL[h]]);
+
+/** Modèles à montant figé (dons 10 000 / 20 000 €, legs 20 000 / 25 000 €) : remplacés par la donation sur mesure. */
+const FIXED_AMOUNT_TPL = /^(don\d+k_|legs\d+k$)/;
+
+const KINDS: [CustomGiftKind, string][] = [
+  ['don_enr', 'Don bancaire enregistré (droit payé aujourd’hui)'],
+  ['don_nenr', 'Don bancaire non enregistré (rappel si décès dans le délai)'],
+  ['legs', 'Legs (au décès, par testament)'],
+];
+const newLine = (donataire: Donee = 'fils'): CustomGiftLine => ({ kind: 'don_enr', donataire, montant: null });
+
+/** Composer une variante : montants libres, bénéficiaire au choix, plusieurs lignes possibles. */
+function DonationComposer({ update }: { update: UpdState }) {
+  const who = useWho();
+  const [lines, setLines] = useState<CustomGiftLine[]>([newLine()]);
+  const [date, setDate] = useState<string>(DEFAULT_ACT_DATE);
+  const set = (i: number, patch: Partial<CustomGiftLine>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const valid = lines.filter(customLineValid);
+  const totals = DONEES.map(([d]) => [d, valid.filter((l) => l.donataire === d).reduce((a, l) => a + (l.montant ?? 0), 0)] as const).filter(([, t]) => t > 0);
+  const hasDon = lines.some((l) => l.kind !== 'legs');
+  return (
+    <section className="card" aria-labelledby="h-compose">
+      <h2 id="h-compose">Donation sur mesure</h2>
+      <p className="muted">Choisissez librement le montant et le bénéficiaire. Ajoutez plusieurs lignes pour répartir entre plusieurs personnes (ex. 15 000 € au fils et 5 000 € au petit-fils). Une nouvelle variante est créée et ajoutée à la comparaison.</p>
+      {lines.map((l, i) => (
+        <fieldset key={i} className="event">
+          <legend>Ligne {i + 1}{customLineValid(l) ? ` — ${formatEUR(l.montant)} → ${who(l.donataire)}` : ''}</legend>
+          <div className="grid">
+            <MoneyField label="Montant" value={l.montant} onChange={(v) => set(i, { montant: v })} hint={l.montant === null ? 'Saisir le montant souhaité, ex. 15 000' : undefined} />
+            <SelectField label="Bénéficiaire" value={l.donataire} onChange={(v) => set(i, { donataire: v })} options={DONEES} />
+            <SelectField label="Type" value={l.kind} onChange={(v) => set(i, { kind: v })} options={KINDS} />
+          </div>
+          {lines.length > 1 && <button type="button" className="link danger" onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}>Retirer la ligne {i + 1}</button>}
+        </fieldset>
+      ))}
+      <div className="row">
+        <button type="button" onClick={() => setLines((ls) => [...ls, newLine(ls[ls.length - 1]?.donataire === 'fils' ? 'petitFils' : 'fils')])}>+ Autre bénéficiaire / autre montant</button>
+      </div>
+      {hasDon && <div className="grid"><DateField label="Date des dons" value={date} allowEmpty={false} onChange={(v) => v && setDate(v)} /></div>}
+      {totals.length > 0 && <p className="small" role="status">Total : {totals.map(([d, t]) => `${formatEUR(t)} → ${who(d)}`).join(' ; ')}</p>}
+      <p className="muted small"><T>Bénéficiaires couverts par le calcul : fils survivant et petit-fils (ligne directe). Une donation à la bénéficiaire de la part du fils prédécédé relève d’un autre barème, non modélisé.</T></p>
+      <div className="row">
+        <button type="button" disabled={valid.length === 0} onClick={() => {
+          update((st) => {
+            const sc = buildCustomScenario(lines, date);
+            st.scenarios.push(sc); st.activeId = sc.id;
+            if (st.selectedIds.length < 4) st.selectedIds.push(sc.id);
+          });
+          setLines([newLine()]);
+        }}>Créer la variante</button>
+        {valid.length === 0 && <small className="hint">Saisir au moins un montant.</small>}
+      </div>
+    </section>
+  );
+}
 
 export function datePresets(sc: Scenario): { label: string; date: string }[] {
   const anchor = sortEvents(sc.events).find((e) => e.type === 'donation_immobiliere' || e.type === 'don_bancaire')?.date ?? DEFAULT_ACT_DATE;
@@ -43,7 +99,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
       <section className="card" aria-labelledby="h-tpl">
         <h2 id="h-tpl">Modèles en un clic</h2>
         <div className="tpl-grid">
-          {TEMPLATES.map((t) => (
+          {TEMPLATES.filter((t) => !FIXED_AMOUNT_TPL.test(t.id)).map((t) => (
             <button key={t.id} type="button" className="tpl" title={t.description} onClick={() => update((st) => {
               const sc = t.build();
               st.scenarios.push(sc); st.activeId = sc.id;
@@ -52,6 +108,8 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
           ))}
         </div>
       </section>
+
+      <DonationComposer update={update} />
 
       <section className="card" aria-labelledby="h-list">
         <h2 id="h-list">Mes variantes</h2>
@@ -110,7 +168,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
 
           <h3>Chronologie (événements du vivant)</h3>
           <div className="row">
-            <button type="button" onClick={() => upd((s) => { s.events.push(mkDonBancaire(10000, true)); })}>+ Don bancaire</button>
+            <button type="button" onClick={() => upd((s) => { s.events.push({ ...(mkDonBancaire(0, true) as DonBancaire), montant: null }); })}>+ Don bancaire</button>
             <button type="button" onClick={() => upd((s) => { s.events.push(mkDonationImmo()); })}>+ Donation immobilière</button>
             <button type="button" onClick={() => upd((s) => { s.events.push(mkVente('2027-06-01')); })}>+ Vente</button>
             <button type="button" onClick={() => upd((s) => { s.events.push(mkCession('2027-01-15')); })}>+ Cession / rachat</button>
@@ -132,7 +190,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
 
           <h3>Legs (dispositions au décès)</h3>
           <p className="muted">Un legs n’est pas une sortie du vivant : il est délivré par l’héritier à l’ouverture de la succession.</p>
-          <button type="button" onClick={() => upd((s) => { s.legs.push(mkLegs(20000)); })}>+ Legs</button>
+          <button type="button" onClick={() => upd((s) => { s.legs.push({ ...mkLegs(0), montant: null }); })}>+ Legs</button>
           {active.legs.map((l, i) => <LegsEditor key={l.id} l={l} onChange={(nl) => upd((s) => { s.legs[i] = nl; })} onRemove={() => upd((s) => { s.legs.splice(i, 1); })} />)}
 
           <TextField label="Notes" value={active.notes} onChange={(v) => upd((s) => { s.notes = v; })} />
