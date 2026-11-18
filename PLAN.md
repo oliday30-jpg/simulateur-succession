@@ -35,6 +35,10 @@ Détails de la session de création : [docs/session-2026-11-17.md](docs/session-
   plancher art. 68 à confirmer), hypothèse prudente toujours chiffrée, montants du notaire prioritaires ; questions ajoutées à la fiche notaire.
   _18/11/2026 — commit « T9 ». 109 tests + build OK (vérifiés sur une copie isolée du travail en cours « donation sur mesure / cases indispensables », non inclus).
   Cas d'exemple : acceptation 1 250 … 1 750 € ; renonciation ≈ 10 000 €._
+- [x] **Cases indispensables à l'estimation** (onglets Situation et Scénarios) : champs dont l'absence rend le moteur « bloquant »
+  en jaune « ★ Indispensable — à remplir », en vert « ✓ Indispensable — renseigné » (texte + couleur) ; légende avec le nombre de cases restantes.
+  Liste dans `src/ui/essentials.ts` (valeur de maison retenue, lots, avoirs, solde mode B, créance si incluse, date de décès, montants des dons/flux/legs actifs, fraction donnée, coefficient de vente, droits manuels).
+  _18/11/2026 — commit 0d4eb99. 112 tests + build OK sur une copie isolée (sans la « donation sur mesure » en cours, non incluse). Poussé._
 
 ## Tâche en cours
 
