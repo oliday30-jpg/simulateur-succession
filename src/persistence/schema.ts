@@ -16,6 +16,24 @@ const donee = z.enum(['fils', 'petitFils']);
 
 const lot = z.object({ id: z.string(), share: fracS, pp: holder.optional(), np: holder.optional(), us: holder.optional(), origine: z.string() });
 
+/** Ajouté le 18/11/2026 : valeur par défaut pour les données enregistrées avant (pas de changement de version). */
+export const defaultSuccFilsPredecede = () => ({
+  testament: 'inconnu' as const, descendants: 'inconnu' as const, residenceCommune: 'inconnu' as const,
+  autresBiensNets: { cents: null, certainty: 'approx' as const, source: 'Succession du fils prédécédé (notaire)' },
+  baseNP: 'a_confirmer' as const, coefNP: null, supplementCohabitant: 'inconnu' as const,
+  droitsNotaire: { beneficiaire: null, pere: null, fils: null },
+});
+const succFilsPredecede = z.object({
+  testament: z.enum(['inconnu', 'legs_beneficiaire', 'aucun']),
+  descendants: z.enum(['inconnu', 'aucun', 'oui']),
+  residenceCommune: z.enum(['inconnu', 'non', 'oui']),
+  autresBiensNets: value,
+  baseNP: z.enum(['a_confirmer', 'pleine_propriete', 'nue_propriete']),
+  coefNP: fracS.nullable(),
+  supplementCohabitant: z.enum(['inconnu', 'appliquer', 'ne_pas_appliquer']),
+  droitsNotaire: z.object({ beneficiaire: ncents, pere: ncents, fils: ncents }),
+});
+
 const situation = z.object({
   region: z.literal('wallonie'),
   persons: z.array(z.object({ id: person, role: z.string(), lien: z.string(), heritierLegal: z.enum(['presume', 'non', 'a_confirmer']) })),
@@ -25,7 +43,7 @@ const situation = z.object({
     dateDecesFilsPredecede: iso,
     sourceValeurCourante: z.enum(['hypothese', 'expertise', 'ancienne']),
     lots: z.array(lot),
-    quartResolution: z.enum(['inconnu', 'beneficiaire_conserve', 'personnalise']),
+    quartResolution: z.enum(['inconnu', 'beneficiaire_conserve', 'renonciation', 'personnalise']),
     quartPersonnalise: z.object({ holder, note: z.string() }),
     logementEligibilite: z.enum(['inconnu', 'hypothese_eligible', 'eligible_confirme', 'non_eligible']),
     logementSituation: z.enum(['conserve', 'demenagement_volontaire', 'depart_justifie', 'inconnu']),
@@ -46,6 +64,7 @@ const situation = z.object({
     dureeMois: z.number().int().nonnegative().nullable(),
   }),
   horsPerimetre: z.object({ changementRegion: z.boolean(), indivisionLitigieuse: z.boolean(), chargesParticulieres: z.boolean(), decesDonataireAvantDonateur: z.boolean(), plusValueCession: z.boolean() }),
+  succFilsPredecede: succFilsPredecede.default(defaultSuccFilsPredecede),
 });
 
 const evBase = { id: z.string(), date: iso, order: z.number().int(), note: z.string().optional() };

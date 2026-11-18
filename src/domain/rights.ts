@@ -1,5 +1,5 @@
 import type { HolderId, Lot, QuartResolution, House } from '../model/types';
-import { add, cmp, eq, isZero, ONE, sub, sum, ZERO, type Frac } from '../util/fraction';
+import { add, cmp, eq, frac, isZero, mul, ONE, sub, sum, ZERO, type Frac } from '../util/fraction';
 
 export const HOLDER_LABEL: Record<HolderId, string> = {
   pere: 'Père',
@@ -37,7 +37,29 @@ export function resolveHolder(h: HolderId, house: Pick<House, 'quartResolution' 
   return 'quart';
 }
 
+/**
+ * Dévolution légale supposée si la bénéficiaire renonce au legs : pas de descendant, mère prédécédée,
+ * un seul frère → père 1/4, frère 3/4 (à confirmer par le notaire au vu du testament).
+ */
+export const PARTS_RENONCIATION: { holder: HolderId; part: Frac; label: string }[] = [
+  { holder: 'pere', part: frac(1, 4), label: '1/4 au père' },
+  { holder: 'fils', part: frac(3, 4), label: '3/4 au fils survivant' },
+];
+
+/** Partage d'un lot du « quart » entre les héritiers légaux ; le père usufruitier qui recueille la NP redevient plein propriétaire. */
+function splitRenonciation(l: Lot): Lot[] {
+  if (l.pp !== 'quart' && l.np !== 'quart' && l.us !== 'quart') return [l];
+  return PARTS_RENONCIATION.map(({ holder, part, label }) => {
+    const base = { id: `${l.id}-${holder}`, share: mul(l.share, part), origine: `${l.origine} → renonciation : ${label}` };
+    if (l.pp === 'quart') return { ...base, pp: holder };
+    const np = l.np === 'quart' ? holder : l.np!;
+    const us = l.us === 'quart' ? holder : l.us!;
+    return np === us ? { ...base, pp: np, origine: `${base.origine} (consolidation : pleine propriété)` } : { ...base, np, us };
+  });
+}
+
 export function resolveLots(lots: Lot[], house: Pick<House, 'quartResolution' | 'quartPersonnalise'>): Lot[] {
+  if (house.quartResolution === 'renonciation') return lots.flatMap(splitRenonciation);
   return lots.map((l) => ({
     ...l,
     pp: l.pp && resolveHolder(l.pp, house),
@@ -46,8 +68,13 @@ export function resolveLots(lots: Lot[], house: Pick<House, 'quartResolution' | 
   }));
 }
 
-export const quartLabel = (r: QuartResolution) =>
-  r === 'inconnu' ? 'inconnu (succession du fils prédécédé ouverte)' : r === 'beneficiaire_conserve' ? 'recueilli et conservé par la bénéficiaire (hypothèse)' : 'répartition personnalisée validée par le notaire';
+const QUART_LABEL: Record<QuartResolution, string> = {
+  inconnu: 'inconnu (succession du fils prédécédé ouverte)',
+  beneficiaire_conserve: 'la bénéficiaire accepte le legs et conserve la part (hypothèse)',
+  renonciation: 'la bénéficiaire renonce : 1/4 au père, 3/4 au fils survivant (hypothèse)',
+  personnalise: 'répartition personnalisée validée par le notaire',
+};
+export const quartLabel = (r: QuartResolution) => QUART_LABEL[r];
 
 export interface HolderSummary { holder: HolderId; pp: Frac; np: Frac; us: Frac }
 

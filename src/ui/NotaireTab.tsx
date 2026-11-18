@@ -34,7 +34,14 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
         <ul className="checklist">
           <li>☐ Titres de propriété (répartition simulée : {REPARTITION_LABEL[detectRepartition(s.house.lots)]}) : {summarize(s.house.lots).map((h) => `${who(h.holder)} ${[h.pp.n ? `${formatFrac(h.pp)} en pleine propriété` : '', h.np.n ? `${formatFrac(h.np)} en nue-propriété` : '', h.us.n ? `usufruit sur ${formatFrac(h.us)}` : ''].filter(Boolean).join(' + ')}`).join(' ; ')} — à confirmer.</li>
           <li>☐ Succession de la mère (acte de notoriété de 2005) : la réduction de la donation de survie a-t-elle été demandée par les deux fils ? La maison était-elle détenue pour moitié par chaque époux ?</li>
-          <li>☐ <T>Part en nue-propriété du fils prédécédé</T> : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.</li>
+          <li>☐ <T>Part en nue-propriété du fils prédécédé</T> : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.
+            <ul>
+              <li>☐ Testament : legs à {who('beneficiaire')} (universel ou particulier ?), clause prévue si elle renonce ? Descendants : aucun ? La maison n’était pas leur résidence commune ?</li>
+              <li>☐ Si elle accepte : barème du cohabitant légal (ligne directe) ; exemption supplémentaire de 12 500 € (part ≤ 125 000 €) applicable au cohabitant ?</li>
+              <li>☐ Si elle renonce : dévolution légale (<T>1/4 au père, 3/4 au fils survivant</T> ?), barème entre frères et sœurs, plancher « pas moins que le renonçant » (art. 68 C. succ.) et sa répartition.</li>
+              <li>☐ Base taxable de la nue-propriété dont <T>le père</T> garde l’usufruit (valeur de la pleine propriété ou de la nue-propriété ? coefficient ?) ; autres biens et dettes de cette succession ; délai de la déclaration (4 mois ?) et de l’option.</li>
+            </ul>
+          </li>
           <li>☐ <T>Testament du père</T> : qualité d’héritier légal unique de {who('fils')} ; legs éventuel à {who('petitFils')} (20 000 € / 25 000 €), clause d’imputation des dons, droits à charge de qui.</li>
         </ul>
 
@@ -77,8 +84,8 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
         <h3>7. Points en suspens relevés par la simulation</h3>
         <ul className="small">{pending.slice(0, 30).map((p, i) => <li key={i}>☐ {t(p)}</li>)}</ul>
 
-        <h3>Sources consultées (17/11/2026)</h3>
-        <ul className="small">{Object.values(SOURCES).map((x) => <li key={x.url}>{x.titre} — {x.url}</li>)}</ul>
+        <h3>Sources consultées</h3>
+        <ul className="small">{Object.values(SOURCES).map((x) => <li key={x.titre}>{x.titre} — {x.url} (consulté le {formatDate(x.consulte)})</li>)}</ul>
       </article>
     </div>
   );

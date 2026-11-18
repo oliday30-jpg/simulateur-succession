@@ -47,6 +47,12 @@ export const SOURCES = {
     dateEffet: 'Annoncé pour le 01/01/2028 — texte juridique non identifié',
     constat: 'Annonce (lue partiellement via résumé) : exonération des 75 000 premiers euros de la part nette de chaque bénéficiaire dès 2028, au-delà « aux taux actuels » ; maintien de la baisse des droits de donation votée en 2024. Pas d’information sur logement, legs, délais ni réserve de progressivité.',
   },
+  spfTarifsAutres: {
+    titre: 'SPF Finances — Payer les droits de succession (Wallonie) : taux par lien de parenté',
+    url: 'https://fin.belgium.be/fr/particuliers/famille/deces/droits-succession/bruxelles-wallonie/calcul-paiement',
+    consulte: '2026-11-18',
+    constat: 'Un seul barème « entre conjoints, cohabitants légaux et héritiers en ligne directe ». Frères et sœurs : 20 % jusqu’à 12 500 €, 25 % jusqu’à 25 000 €, 35 % jusqu’à 75 000 €, 50 % jusqu’à 175 000 €, 65 % au-delà. Exemption de la première tranche de 12 500 € pour « le conjoint, cohabitant légal ou héritier en ligne directe » ; supplément de 12 500 € (part nette ≤ 125 000 €) formulé pour « l’héritier en ligne directe » seulement. Aucun abattement pour les frères et sœurs. Rien sur la renonciation ni sur l’évaluation de la nue-propriété.',
+  },
   notaire: {
     titre: 'Notaire.be — Usufruit et nue-propriété',
     url: 'https://www.notaire.be/usufruit-et-nue-propriete',
@@ -166,6 +172,19 @@ export const SUCC_CONSTANT_2026: SuccessionProfile = {
   notes: ['CONTREFACTUEL : barème actuel appliqué quelle que soit la date du décès. Ce n’est pas une prédiction du droit applicable après 2027.', ...SUCC_ACTUEL.notes],
 };
 
+/** Succession entre frères et sœurs (profil en vigueur) : pas d'exemption art. 54, pas de taux réduit logement. */
+export const SUCC_FRERES_SOEURS: SuccessionProfile = {
+  ...SUCC_ACTUEL,
+  id: 'WAL-SUCC-FRERES-SOEURS',
+  label: 'Wallonie — droits de succession entre frères et sœurs (barème actuel)',
+  ordinaire: [b(12500, 20), b(25000, 25), b(75000, 35), b(175000, 50), b(null, 65)],
+  logement: null,
+  abattement: { base: 0, supplement: null, supplementStatut: 'verifie', reserveHeritierLegal: 'a_confirmer' },
+  sources: [SOURCES.spfTarifsAutres],
+  notes: ['Barème lu sur la page SPF Finances le 18/11/2026 ; aucun abattement prévu entre frères et sœurs.'],
+  postesCouverts: ['succession entre frères et sœurs'],
+};
+
 export const DON_ACTUEL: DonationProfile = {
   id: 'WAL-DON-ACTUEL',
   label: 'Wallonie — droits de donation, profil en vigueur',
@@ -193,7 +212,7 @@ export const DON_2028: DonationProfile = {
 
 export const DON_CONSTANT_2026: DonationProfile = { ...DON_ACTUEL, id: 'CF-DON-CONSTANT-2026', statut: 'contrefactuel', validTo: null, label: 'Donation à barème 2026 constant (contrefactuel)' };
 
-export const ALL_PROFILES = [SUCC_ACTUEL, SUCC_DECRET_2024, SUCC_ANNONCE_2026, SUCC_CONSTANT_2026, DON_ACTUEL, DON_2028, DON_CONSTANT_2026];
+export const ALL_PROFILES = [SUCC_ACTUEL, SUCC_FRERES_SOEURS, SUCC_DECRET_2024, SUCC_ANNONCE_2026, SUCC_CONSTANT_2026, DON_ACTUEL, DON_2028, DON_CONSTANT_2026];
 
 export const REFORM_DATE = '2028-01-01';
 

@@ -1,0 +1,109 @@
+import type { Situation, SuccessionFilsPredecede } from '../model/types';
+import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario } from '../engine/succFilsPredecede';
+import { FracField, MoneyField, SelectField, ValueField } from './fields';
+import { NumView, SliceTable, T, useT, useWho } from './display';
+import { formatEUR } from '../util/money';
+import { formatFrac } from '../util/fraction';
+import { formatDate } from '../util/dates';
+
+type Upd = (fn: (s: Situation) => void) => void;
+
+/** Succession du fils prédécédé : hypothèses et droits estimés selon l'option de la bénéficiaire. */
+export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd }) {
+  const who = useWho();
+  const t = useT();
+  const o = s.succFilsPredecede;
+  const set = (fn: (o: SuccessionFilsPredecede) => void) => update((d) => fn(d.succFilsPredecede));
+  const r = computeSuccFilsPredecede(s);
+  const ecart = ecartRenonciation(r);
+  return (
+    <section className="card" aria-labelledby="h-sfp">
+      <h2 id="h-sfp"><T>Succession du fils prédécédé : droits selon l’option de la bénéficiaire</T></h2>
+      <p className="muted">
+        {t(`Droits de succession dus sur la succession du fils prédécédé (décès du ${formatDate(r.dateDeces)}), pas sur celle du père.`)}{' '}
+        Les deux options sont toujours calculées pour pouvoir les comparer ; l’option retenue se choisit dans « Part du fils prédécédé » ci-dessus. Estimation indicative, à valider par le notaire.
+      </p>
+      <div className="grid">
+        <SelectField label="Testament" value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}
+          options={[['inconnu', 'Inconnu'], ['legs_beneficiaire', t('Oui, en faveur de la bénéficiaire')], ['aucun', 'Pas de testament']]} />
+        <SelectField label="Descendants du fils prédécédé" value={o.descendants} onChange={(v) => set((x) => { x.descendants = v; })}
+          options={[['inconnu', 'Inconnu'], ['aucun', 'Aucun enfant'], ['oui', 'Un ou plusieurs enfants']]} />
+        <SelectField label="La maison était-elle leur résidence commune ?" value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
+          options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]} hint="Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés)." />
+        <ValueField label="Autres biens nets de cette succession" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })}
+          hint="Comptes, voiture… moins les dettes et frais (y compris la créance du père). Supposés suivre la même dévolution que la maison." />
+        <SelectField label="Base taxable de la nue-propriété" value={o.baseNP} onChange={(v) => set((x) => { x.baseNP = v; })}
+          options={[['a_confirmer', 'À confirmer (fourchette)'], ['pleine_propriete', 'Valeur de la pleine propriété'], ['nue_propriete', 'Valeur de la nue-propriété (coefficient)']]}
+          hint="Le père garde l’usufruit : la règle d’évaluation n’a pas été trouvée dans les sources consultées." />
+        <FracField label="Valeur de la nue-propriété (% de la pleine propriété)" value={o.coefNP} onChange={(f) => set((x) => { x.coefNP = f; })}
+          hint="Donné par le notaire (dépend notamment de l’âge du père). Ex. « 60 % »." />
+        <SelectField label="Exemption supplémentaire de 12 500 € pour la cohabitante" value={o.supplementCohabitant} onChange={(v) => set((x) => { x.supplementCohabitant = v; })}
+          options={[['inconnu', 'À confirmer (fourchette)'], ['appliquer', 'Oui (confirmé)'], ['ne_pas_appliquer', 'Non (confirmé)']]}
+          hint="Le SPF l’écrit pour l’héritier en ligne directe seulement." />
+      </div>
+
+      <p>
+        Part de la maison : <strong>{formatFrac(r.quotePart)}</strong> × {formatEUR(r.valeurMaison.cents)} <span className="small muted">({r.valeurMaison.provenance})</span>
+        {' '}= <strong>{formatEUR(r.partPP)}</strong> en pleine propriété{r.partNP !== null && <> ; {formatEUR(r.partNP)} avec le coefficient de nue-propriété</>}.
+      </p>
+      {r.avertissements.length > 0 && (
+        <ul className="issues">{r.avertissements.map((a, i) => <li key={i} className="issue lv-a_confirmer"><span className="lv"><span aria-hidden="true">?</span> À confirmer :</span> {t(a)}</li>)}</ul>
+      )}
+
+      <div className="sfp-grid">
+        {r.scenarios.map((sc) => <ScenarioBlock key={sc.key} sc={sc} />)}
+      </div>
+      <p className="small muted">{t(r.hypothesePrudente)}</p>
+      {ecart && <p><strong>{ecart}</strong></p>}
+
+      <details>
+        <summary>Montants calculés par le notaire (remplacent l’estimation)</summary>
+        <div className="grid">
+          <MoneyField label={`Droits — ${who('beneficiaire')} (si elle accepte)`} value={o.droitsNotaire.beneficiaire} onChange={(c) => set((x) => { x.droitsNotaire.beneficiaire = c; })} />
+          <MoneyField label={`Droits — ${who('pere')} (si renonciation)`} value={o.droitsNotaire.pere} onChange={(c) => set((x) => { x.droitsNotaire.pere = c; })} />
+          <MoneyField label={`Droits — ${who('fils')} (si renonciation)`} value={o.droitsNotaire.fils} onChange={(c) => set((x) => { x.droitsNotaire.fils = c; })} />
+        </div>
+      </details>
+      <p className="small muted">Sources : {r.sources.map((x) => `${x.titre} (consulté le ${formatDate(x.consulte)})`).join(' ; ')}.</p>
+    </section>
+  );
+}
+
+function ScenarioBlock({ sc }: { sc: SfpScenario }) {
+  const who = useWho();
+  const t = useT();
+  return (
+    <article className="sfp-scenario" aria-label={t(sc.titre)}>
+      <h3><T>{sc.titre}</T>{sc.retenu && <span className="badge st-calcule"> <span aria-hidden="true">✓</span> option retenue</span>}</h3>
+      {!sc.disponible ? <p><span aria-hidden="true">—</span> Non calculé : {t(sc.raison ?? '')}</p> : (
+        <>
+          <div className="table-wrap">
+            <table>
+              <caption className="sr-only">Droits par personne — {t(sc.titre)}</caption>
+              <thead><tr><th scope="col">Personne</th><th scope="col">Part taxable</th><th scope="col">Droits (fourchette)</th><th scope="col">Hypothèse prudente</th></tr></thead>
+              <tbody>
+                {sc.rows.map((row) => (
+                  <tr key={row.id}>
+                    <th scope="row">{who(row.id)}<div className="small muted">{t(row.bareme)}</div></th>
+                    <td><NumView n={row.part} showStatus={false} /></td>
+                    <td><NumView n={row.droits} /></td>
+                    <td>{formatEUR(row.prudent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot><tr><th scope="row">Total{sc.plancherApplique && ' (plancher art. 68)'}</th><td /><td><NumView n={sc.total} /></td><td><strong>{formatEUR(sc.totalPrudent)}</strong></td></tr></tfoot>
+            </table>
+          </div>
+          <ul className="small">{sc.notes.map((n, i) => <li key={i}>{t(n)}</li>)}</ul>
+          {sc.rows.map((row) => row.detail && row.manual === null && (
+            <details key={row.id}>
+              <summary>Détail du calcul — {who(row.id)} (hypothèse prudente)</summary>
+              <p className="small">Part nette {formatEUR(row.detail.partNette)} ; avant exemption {formatEUR(row.detail.avantAbattement)} ; exemption {formatEUR(row.detail.abattementMontant)} (−{formatEUR(row.detail.abattementReduction)}) ; droits {formatEUR(row.detail.droits)}.</p>
+              <SliceTable slices={row.detail.ordinaireSlices} caption="Tranches du barème" />
+            </details>
+          ))}
+        </>
+      )}
+    </article>
+  );
+}

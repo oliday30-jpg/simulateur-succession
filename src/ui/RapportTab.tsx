@@ -147,7 +147,13 @@ export function RapportTab({ state }: { state: AppState }) {
         <p>La maison (« {s.house.label} ») est estimée à <strong>{formatEUR(hv.cents)}</strong>. Elle appartient à plusieurs personnes, suite à la succession de la mère en 2005 :</p>
         <ul>{holders.map((h) => <li key={h.holder}>{ownership(h)}</li>)}</ul>
         <p>{say.Le('pere')} dispose en plus d’environ <strong>{formatEUR(ref.cash.start)}</strong> d’épargne.</p>
-        <p className="small muted">{t('La part du fils prédécédé n’est pas encore attribuée : le notaire dira à qui elle revient (testament, cohabitante légale…).')}</p>
+        <p className="small muted">{t(s.house.quartResolution === 'inconnu'
+          ? 'La part du fils prédécédé n’est pas encore attribuée : le notaire dira à qui elle revient (testament, cohabitante légale…).'
+          : s.house.quartResolution === 'renonciation'
+            ? 'Hypothèse retenue : la cohabitante légale renonce ; la part du fils prédécédé revient pour 1/4 au père et 3/4 au fils survivant (à confirmer par le notaire).'
+            : s.house.quartResolution === 'beneficiaire_conserve'
+              ? 'Hypothèse retenue : la cohabitante légale accepte le legs et garde la part du fils prédécédé (à confirmer par le notaire).'
+              : 'La part du fils prédécédé suit une répartition saisie à la main (à confirmer par le notaire).')}</p>
 
         <h3>3. {t('Si on ne fait rien')}</h3>
         <p>{t(`Au décès du père, ses biens passent à ses héritiers, qui paient des « droits de succession » à la Région wallonne. Plus la part reçue est grande, plus le taux grimpe (de 3 % à 30 % par tranches).`)}</p>

@@ -100,6 +100,9 @@ table.slices { margin: 8px 0; max-width: 560px; }
 table.slices td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
 caption { text-align: left; font-weight: 600; padding: 4px 0; }
 .num strong { font-variant-numeric: tabular-nums; }
+.sfp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px 16px; margin-top: 12px; }
+.sfp-scenario { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; min-width: 0; }
+.sfp-scenario h3 { margin-top: 0; }
 
 /* Badges de statut : icône + texte, jamais la couleur seule */
 .badge { display: inline-block; font-size: 0.75rem; padding: 1px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }

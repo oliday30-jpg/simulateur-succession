@@ -1,11 +1,12 @@
 import type { Situation, Poste, PosteKind, HolderId, Lot, PersonId } from '../model/types';
 import { CheckField, DateField, FracField, MoneyField, SelectField, TextField, ValueField } from './fields';
-import { HOLDER_LABEL, quartLabel, summarize, validateLots } from '../domain/rights';
+import { HOLDER_LABEL, quartLabel, resolveLots, summarize, validateLots } from '../domain/rights';
 import { houseValueOf, PERSON_LABEL } from '../engine/simulate';
 import { formatFrac } from '../util/fraction';
 import { formatEUR } from '../util/money';
 import { newId } from '../model/sample';
 import { T, useWho } from './display';
+import { SuccFilsPredecedeCard } from './SuccFilsPredecedeCard';
 import { detectRepartition, lotsForRepartition, REPARTITION_LABEL, REPARTITION_NOTE, type RepartitionMere } from '../domain/devolution';
 
 type Upd = (fn: (s: Situation) => void) => void;
@@ -73,13 +74,16 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
 
         <div className="grid">
           <SelectField label="Part du fils prédécédé (nue-propriété)" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
-            options={[['inconnu', quartLabel('inconnu')], ['beneficiaire_conserve', quartLabel('beneficiaire_conserve')], ['personnalise', quartLabel('personnalise')]]}
-            hint="La dévolution de cette succession n’est pas calculée par l’outil." />
+            options={(['inconnu', 'beneficiaire_conserve', 'renonciation', 'personnalise'] as const).map((r) => [r, quartLabel(r)])}
+            hint="Les droits de cette succession sont estimés plus bas (bloc « Succession du fils prédécédé »)." />
           {s.house.quartResolution === 'personnalise' && (
             <>
               <SelectField label="Titulaire validé par le notaire" value={s.house.quartPersonnalise.holder} onChange={(v) => update((d) => { d.house.quartPersonnalise.holder = v; })} options={HOLDERS} />
               <TextField label="Fondement (cession, renonciation…)" value={s.house.quartPersonnalise.note} onChange={(v) => update((d) => { d.house.quartPersonnalise.note = v; })} />
             </>
+          )}
+          {s.house.quartResolution !== 'inconnu' && (
+            <p className="small">Après l’option retenue : {summarize(resolveLots(s.house.lots, s.house)).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>
           )}
           <SelectField label="Taux réduit « logement familial »" value={s.house.logementEligibilite} onChange={(v) => update((d) => { d.house.logementEligibilite = v; })}
             options={[['hypothese_eligible', 'Hypothèse : éligible (à confirmer)'], ['eligible_confirme', 'Éligibilité confirmée par le notaire'], ['non_eligible', 'Non éligible'], ['inconnu', 'Inconnu (afficher une fourchette)']]}
@@ -88,6 +92,8 @@ export function SituationTab({ s, update, names, setName }: { s: Situation; upda
             options={[['conserve', 'Conservé et occupé'], ['demenagement_volontaire', 'Déménagement volontaire'], ['depart_justifie', 'Départ justifié (soins, hébergement)'], ['inconnu', 'Inconnu']]} />
         </div>
       </section>
+
+      <SuccFilsPredecedeCard s={s} update={update} />
 
       <section className="card" aria-labelledby="h-fin">
         <h2 id="h-fin"><T>Avoirs, dettes et frais du père</T></h2>

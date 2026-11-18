@@ -42,7 +42,7 @@ export interface Lot {
 }
 
 export type HouseValueSource = 'hypothese' | 'expertise' | 'ancienne';
-export type QuartResolution = 'inconnu' | 'beneficiaire_conserve' | 'personnalise';
+export type QuartResolution = 'inconnu' | 'beneficiaire_conserve' | 'renonciation' | 'personnalise';
 export type LogementEligibilite = 'inconnu' | 'hypothese_eligible' | 'eligible_confirme' | 'non_eligible';
 export type LogementSituation = 'conserve' | 'demenagement_volontaire' | 'depart_justifie' | 'inconnu';
 
@@ -101,6 +101,28 @@ export interface Budget {
   dureeMois: number | null;
 }
 
+/**
+ * Succession du fils prédécédé (décès du 07/10/2026) : hypothèses utiles à l'estimation des droits
+ * selon que la bénéficiaire accepte ou renonce. La dévolution complète n'est pas calculée :
+ * seule la part de la maison et un total « autres biens nets » sont pris en compte.
+ */
+export interface SuccessionFilsPredecede {
+  testament: 'inconnu' | 'legs_beneficiaire' | 'aucun';
+  descendants: 'inconnu' | 'aucun' | 'oui';
+  /** La maison était-elle la résidence commune du couple ? (usufruit légal du cohabitant, exemption logement) */
+  residenceCommune: 'inconnu' | 'non' | 'oui';
+  /** Autres biens nets de la succession (après dettes), supposés suivre la même dévolution que la part de maison. */
+  autresBiensNets: Value;
+  /** Base taxable de la nue-propriété recueillie (règle d'évaluation non trouvée dans les sources consultées). */
+  baseNP: 'a_confirmer' | 'pleine_propriete' | 'nue_propriete';
+  /** Valeur de la nue-propriété en fraction de la pleine propriété (fournie par le notaire). */
+  coefNP: Frac | null;
+  /** Exemption supplémentaire de 12 500 € pour la cohabitante légale (formulée pour la ligne directe seulement). */
+  supplementCohabitant: TriState;
+  /** Droits calculés par le notaire : remplacent l'estimation. */
+  droitsNotaire: { beneficiaire: Cents | null; pere: Cents | null; fils: Cents | null };
+}
+
 export interface HorsPerimetre {
   changementRegion: boolean;
   indivisionLitigieuse: boolean;
@@ -120,6 +142,7 @@ export interface Situation {
   soldeAuDecesB: Value;
   budget: Budget;
   horsPerimetre: HorsPerimetre;
+  succFilsPredecede: SuccessionFilsPredecede;
 }
 
 // ───────────── Scénarios et événements ─────────────

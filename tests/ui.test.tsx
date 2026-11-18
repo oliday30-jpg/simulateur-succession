@@ -103,6 +103,20 @@ describe('parcours interface', () => {
     expect(screen.getByText(/^Résumé :/).textContent).not.toMatch(/Fils survivant/);
   });
 
+  it('succession du fils prédécédé : renonciation retenue, partage des lots et droits comparés', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
+    // Valeurs par défaut : hypothèse prudente chiffrée (50 000 € en PP, sans supplément) → 1 750 € si elle accepte
+    const acc = within(card).getByRole('article', { name: /accepte le legs/ });
+    expect(acc.textContent).toMatch(/1.750,00.€/);
+    await user.selectOptions(screen.getByLabelText(/Part du fils prédécédé \(nue-propriété\)/), 'renonciation');
+    const ren = within(card).getByRole('article', { name: /renonce/ });
+    expect(ren.textContent).toMatch(/option retenue/);
+    expect(ren.textContent).toMatch(/10.000,00.€/); // 37 500 € entre frères et sœurs
+    expect(screen.getByText(/^Après l’option retenue :/).textContent).toMatch(/Père — PP 17\/24/);
+  });
+
   it('les prénoms saisis remplacent les rôles dans la simulation', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);

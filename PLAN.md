@@ -29,6 +29,12 @@ Détails de la session de création : [docs/session-2026-11-17.md](docs/session-
 - [x] **Onglet « Rapport simple »** (après Situation) : synthèse en langage courant pour un non-spécialiste — l'essentiel, qui possède quoi,
   si on ne fait rien, 3 meilleures options (explication, chiffres, vigilances), conseils « en bon père de famille », prochaines étapes, lexique. Imprimable.
   _17/11/2026 — commit ae0ec6f. 95 tests + build OK. Poussé ; déploiement GitHub Pages vert._
+- [x] **T9 — Option successorale de la bénéficiaire** (succession du fils prédécédé) : option « renonciation » (père 1/4 → consolidation en PP, fils 3/4 en NP) ;
+  bloc « Succession du fils prédécédé » (onglet Situation) : testament, descendants, résidence commune, autres biens nets, base de la NP (fourchette PP / coefficient),
+  supplément d'exemption de la cohabitante ; droits estimés des deux options (cohabitante = barème ligne directe ; frère = barème frères et sœurs, source SPF lue le 18/11/2026 ;
+  plancher art. 68 à confirmer), hypothèse prudente toujours chiffrée, montants du notaire prioritaires ; questions ajoutées à la fiche notaire.
+  _18/11/2026 — commit « T9 ». 109 tests + build OK (vérifiés sur une copie isolée du travail en cours « donation sur mesure / cases indispensables », non inclus).
+  Cas d'exemple : acceptation 1 250 … 1 750 € ; renonciation ≈ 10 000 €._
 
 ## Tâche en cours
 
@@ -60,15 +66,6 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 - [ ] **T7 — Intégrer les réponses du notaire** (dépend du rendez-vous)
   Mettre à jour `src/tax/rules.ts` (statuts, notes, sources) et les réglages par défaut ; ajouter un test par règle validée.
   Questions : voir la fiche « Questions pour le notaire » et `docs/session-2026-11-17.md` § « Points à valider ».
-- [ ] **T9 — Option successorale de la bénéficiaire (succession du fils prédécédé)** (indépendante ; ajoutée le 18/11/2026)
-  Hypothèses à saisir (anonymes) : testament en faveur de la bénéficiaire, pas de descendant, maison non affectée à la résidence commune.
-  - Choix « renonciation » : partage automatique de la part (père 1/4 → consolidation en PP ; fils survivant 3/4 en NP, usufruit du père), sans passer par les lots personnalisés.
-  - Estimation des droits de succession **de la succession du fils prédécédé** (décès 07/10/2026, règles en vigueur) par scénario :
-    acceptation (bénéficiaire, tarif cohabitant légal = ligne directe en Wallonie, exemption art. 54 à confirmer) ;
-    renonciation (père : ligne directe ; fils survivant : tarif frères et sœurs) + plancher art. 68 C. succ. (pas moins que le renonçant).
-  - Base : valeur de la part (NP évaluée en fourchette : valeur NP … valeur PP, à confirmer) + autres biens nets saisis de la succession du fils prédécédé (progressivité).
-  - Champ « droits calculés par le notaire » qui remplace l'estimation ; questions ajoutées à la fiche notaire.
-  - Tests à partir de calculs indépendants en commentaire.
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 
 ## Idées en attente (non décidées)

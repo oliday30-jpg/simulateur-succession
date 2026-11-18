@@ -1,6 +1,7 @@
 import { euros } from '../util/money';
 import { frac } from '../util/fraction';
 import { lotsForRepartition } from '../domain/devolution';
+import { defaultSuccFilsPredecede } from '../persistence/schema';
 import type { AppState, Scenario, Situation, Value, SimEvent, Legs } from './types';
 
 const v = (e: number | null, certainty: Value['certainty'], source: string, note?: string): Value => ({
@@ -67,6 +68,7 @@ export function sampleSituation(): Situation {
       decesDonataireAvantDonateur: false,
       plusValueCession: false,
     },
+    succFilsPredecede: defaultSuccFilsPredecede(),
   };
 }
 
