@@ -16,6 +16,19 @@ Détails de la session de création : [docs/session-2026-11-17.md](docs/session-
   _17/11/2026 — hors connexion vérifié en servant le site depuis un sous-dossier puis en coupant le serveur._
 - [x] **Git + GitHub Pages** : dépôt public `oliday30-jpg/simulateur-succession`, e-mail noreply local, branche `main`, push, Pages activé, déploiement réussi.
   _17/11/2026 — https://oliday30-jpg.github.io/simulateur-succession/_
+- [x] **Répartition selon l'acte de notoriété de 2005** (succession de la mère) + sélecteur de préréglage
+  (acte 2005 avec réduction = défaut ; donation de survie non réduite ; ancienne hypothèse 1/2 + 1/4 + 1/4 ; personnalisée).
+  _17/11/2026 — commit 12b9597. 80 tests + build OK ; déploiement GitHub Pages vert. Référence 2027 : 47 675 € (contre 38 425 € avec l'ancienne hypothèse).
+  Sur l'iPhone, les données déjà enregistrées gardent l'ancienne répartition : choisir le préréglage dans l'onglet Situation._
+- [x] **Prénoms à la place des rôles** (« Père » → « Marcel », « du père » → « de Marcel », part du fils prédécédé → « Titulaire de la part de Pierre ») dans tous les onglets.
+  Affichage seulement (`src/ui/naming.ts`) : moteur, CSV et exports restent anonymes ; impression sans prénoms sauf case cochée (onglet Notaire).
+  _17/11/2026 — commit 89d735a. 86 tests + build OK. Poussé ; déploiement GitHub Pages vert._
+- [x] **Piste à étudier en priorité** (onglet Comparaison) : classement prudent (économie minimale vs référence alignée, frais connus déduits)
+  des variantes + modèles non créés ; écarte celles qui entament la réserve du père ou ont un point bloquant ; vigilances affichées.
+  _17/11/2026 — commit ce9199a. 94 tests + build OK. Poussé ; déploiement vert._
+- [x] **Onglet « Rapport simple »** (après Situation) : synthèse en langage courant pour un non-spécialiste — l'essentiel, qui possède quoi,
+  si on ne fait rien, 3 meilleures options (explication, chiffres, vigilances), conseils « en bon père de famille », prochaines étapes, lexique. Imprimable.
+  _17/11/2026 — commit ae0ec6f. 95 tests + build OK. Poussé ; déploiement GitHub Pages vert._
 
 ## Tâche en cours
 
@@ -47,6 +60,15 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 - [ ] **T7 — Intégrer les réponses du notaire** (dépend du rendez-vous)
   Mettre à jour `src/tax/rules.ts` (statuts, notes, sources) et les réglages par défaut ; ajouter un test par règle validée.
   Questions : voir la fiche « Questions pour le notaire » et `docs/session-2026-11-17.md` § « Points à valider ».
+- [ ] **T9 — Option successorale de la bénéficiaire (succession du fils prédécédé)** (indépendante ; ajoutée le 18/11/2026)
+  Hypothèses à saisir (anonymes) : testament en faveur de la bénéficiaire, pas de descendant, maison non affectée à la résidence commune.
+  - Choix « renonciation » : partage automatique de la part (père 1/4 → consolidation en PP ; fils survivant 3/4 en NP, usufruit du père), sans passer par les lots personnalisés.
+  - Estimation des droits de succession **de la succession du fils prédécédé** (décès 07/10/2026, règles en vigueur) par scénario :
+    acceptation (bénéficiaire, tarif cohabitant légal = ligne directe en Wallonie, exemption art. 54 à confirmer) ;
+    renonciation (père : ligne directe ; fils survivant : tarif frères et sœurs) + plancher art. 68 C. succ. (pas moins que le renonçant).
+  - Base : valeur de la part (NP évaluée en fourchette : valeur NP … valeur PP, à confirmer) + autres biens nets saisis de la succession du fils prédécédé (progressivité).
+  - Champ « droits calculés par le notaire » qui remplace l'estimation ; questions ajoutées à la fiche notaire.
+  - Tests à partir de calculs indépendants en commentaire.
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 
 ## Idées en attente (non décidées)
