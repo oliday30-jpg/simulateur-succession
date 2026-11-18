@@ -13,7 +13,9 @@ import { houseValueOf } from './simulate';
  * la bénéficiaire (cohabitante légale, légataire par testament) accepte ou renonce.
  *
  * Périmètre : la part de la maison détenue par le fils prédécédé + un total « autres biens nets »
- * saisi, supposés suivre la même dévolution. Pas de logement familial (maison non affectée à la
+ * saisi (négatif si les dettes dépassent les avoirs), supposés suivre la même dévolution.
+ * Assurance groupe / vie versée à la bénéficiaire : hors succession, ajoutée à sa part taxable
+ * (art. 8 C. succ., à confirmer) ; conservée et taxée seule si elle renonce. Pas de logement familial (maison non affectée à la
  * résidence commune), pas de donation antérieure, pas de réserve de progressivité.
  *
  * Hypothèses non tranchées → toutes les combinaisons sont calculées (fourchette) :
@@ -72,7 +74,8 @@ export interface SfpResult {
   hypothesePrudente: string;
 }
 
-interface Variant { base: 'pp' | 'np'; supplement: boolean }
+/** `ins` : capital d'assurance taxé dans le chef de la bénéficiaire (0 si non compté). */
+interface Variant { base: 'pp' | 'np'; supplement: boolean; ins: Cents }
 
 const taxOf = (p: SuccessionProfile, id: string, part: Cents) =>
   computeBeneficiaryTax(p, { id, partLogement: 0, partAutre: part, rappel: 0, baseReserve: 0, abattementEligible: true });
@@ -118,11 +121,16 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   const autres = o.autresBiensNets.cents;
   if (autres === null) avertissements.push('Autres biens nets de la succession du fils prédécédé non renseignés : les droits affichés sont un minimum (part de maison seule).');
   if (autres !== null && autres < 0) avertissements.push('Autres biens nets négatifs (dettes supérieures aux avoirs) : ils réduisent la part taxable de la maison.');
+  /** Passif non couvert par la part de maison (en pleine propriété) et les autres biens. */
+  const deficit = autres === null || partPP === null ? null : -(partPP + autres);
+  if (deficit !== null && deficit > 0) avertissements.push(`Succession déficitaire : les dettes dépassent les biens d’environ ${formatEUR(deficit)}. Les héritiers qui acceptent purement et simplement en répondent sur leurs propres biens : bénéfice d’inventaire ou renonciation à examiner avec le notaire.`);
+  const ass = o.assurance.cents;
+  if (ass === null) avertissements.push('Assurance groupe / vie versée à la bénéficiaire non renseignée : non comptée (si elle existe, ses droits sont sous-estimés).');
 
   const sources = [SOURCES.spfSuccession, SOURCES.spfTarifsAutres];
   const res = resolveSuccession(dateDeces, 'auto');
   const profil = res.ok ? res.profile : null;
-  const hypothesePrudente = `Hypothèse prudente : nue-propriété taxée sur ${o.baseNP === 'nue_propriete' ? 'la valeur de la nue-propriété (coefficient saisi)' : 'la valeur de la pleine propriété'}, sans exemption supplémentaire pour la cohabitante, autres biens ${autres === null ? 'non comptés (non renseignés)' : `de ${formatEUR(autres)}`}.`;
+  const hypothesePrudente = `Hypothèse prudente : nue-propriété taxée sur ${o.baseNP === 'nue_propriete' ? 'la valeur de la nue-propriété (coefficient saisi)' : 'la valeur de la pleine propriété'}, sans exemption supplémentaire pour la cohabitante, autres biens ${autres === null ? 'non comptés (non renseignés)' : `de ${formatEUR(autres)}`}${ass && o.assuranceTaxee !== 'non' ? `, assurance de ${formatEUR(ass)} taxée` : ''}.`;
   const base: Omit<SfpResult, 'scenarios'> = { dateDeces, valeurMaison, quotePart, partPP, partNP, autres, profil, avertissements, sources, hypothesePrudente };
 
   const indispo = (raison: string): SfpResult => ({
@@ -142,13 +150,21 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   // La base la plus basse possible est-elle calculée ? (sinon on n'affiche qu'un maximum)
   const baseLoOk = bases.includes('np') || !lotsNP.length || o.baseNP === 'pleine_propriete';
   const supps = o.supplementCohabitant === 'appliquer' ? [true] : o.supplementCohabitant === 'ne_pas_appliquer' ? [false] : [true, false];
-  const variants: Variant[] = bases.flatMap((b) => supps.map((supplement) => ({ base: b, supplement })));
+  // Assurance : comptée (taxée), non comptée, ou les deux (fourchette) ; la valeur la plus haute d'abord (hypothèse prudente).
+  const insVals: Cents[] = !ass || o.assuranceTaxee === 'non' ? [0] : o.assuranceTaxee === 'oui' ? [ass] : [ass, 0];
+  const avecAssurance = insVals.some((x) => x > 0);
+  const variants: Variant[] = bases.flatMap((b) => supps.flatMap((supplement) => insVals.map((ins) => ({ base: b, supplement, ins }))));
   const hiOk = autres !== null;
+  /** Part recueillie dans la succession (jamais négative : un passif net ne se reporte pas sur l'assurance, hypothèse prudente). */
   const partOf = (v: Variant) => Math.max(0, (v.base === 'pp' ? partPP : partNP!) + (autres ?? 0));
-  // Hypothèse prudente détaillée : base la plus haute (pleine propriété si calculée), sans supplément d'exemption.
-  const prudentV = variants.find((v) => v.base === bases[0] && !v.supplement) ?? variants[0];
+  // Hypothèse prudente détaillée : base la plus haute, sans supplément d'exemption, assurance comptée si possible.
+  const prudentV = variants.find((v) => v.base === bases[0] && !v.supplement && v.ins === insVals[0]) ?? variants[0];
 
-  const benefTax = (v: Variant) => taxOf(v.supplement ? profil : sansSupplement(profil), 'beneficiaire', partOf(v));
+  const profilOf = (v: Variant) => (v.supplement ? profil : sansSupplement(profil));
+  /** Bénéficiaire qui accepte : part de succession + capital d'assurance, taxés ensemble (progressivité). */
+  const benefTax = (v: Variant) => taxOf(profilOf(v), 'beneficiaire', partOf(v) + v.ins);
+  /** Bénéficiaire qui renonce : capital d'assurance seul. */
+  const insTax = (v: Variant) => taxOf(profilOf(v), 'beneficiaire', v.ins);
   const denom = PARTS_RENONCIATION.reduce((a, p) => a * p.part.d, 1);
   const split = (v: Variant) => allocate(partOf(v), PARTS_RENONCIATION.map((p) => (p.part.n * denom) / p.part.d));
   const pereTax = (v: Variant) => taxOf(profil, 'pere', split(v)[0]);
@@ -156,8 +172,7 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
 
   const partNum = (f: (v: Variant) => Cents) => numFrom(variants.map(f), baseLoOk, hiOk);
   const notaire = o.droitsNotaire;
-  const row = (id: SfpWho, bareme: string, part: Num, calc: (v: Variant) => BenefTaxResult): SfpRow => {
-    const manual = notaire[id];
+  const row = (id: SfpWho, bareme: string, part: Num, calc: (v: Variant) => BenefTaxResult, manual: Cents | null = notaire[id]): SfpRow => {
     const droits = manual !== null ? exact(manual, 'manuel', ['Montant saisi d’après le notaire.']) : numFrom(variants.map((v) => calc(v).droits ?? 0), baseLoOk, hiOk);
     const detail = calc(prudentV);
     return { id, bareme, part, droits, prudent: manual ?? detail.droits, detail, manual };
@@ -167,6 +182,8 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
     `Décès du ${formatDate(dateDeces)} : ${profil.label}.`,
     bases.length > 1 ? `Nue-propriété taxée sur la valeur de la pleine propriété ou sur ${formatPct(o.coefNP!)} de celle-ci : règle à confirmer, la fourchette couvre les deux.` : '',
     !baseLoOk ? 'La nue-propriété pourrait être taxée sur une valeur plus basse que la pleine propriété : saisissez le coefficient fourni par le notaire pour obtenir le minimum.' : '',
+    avecAssurance && insVals.length > 1 ? `Assurance groupe / vie de ${formatEUR(ass)} : soumission aux droits de succession à confirmer (art. 8 C. succ., non lu dans les sources consultées) ; la fourchette couvre les deux cas.` : '',
+    avecAssurance ? 'Montant de l’assurance : brut ou net des retenues (INAMI, solidarité, impôt) à confirmer ; les dettes de la succession ne s’imputent pas sur ce capital (hypothèse prudente).' : '',
   ].filter(Boolean);
 
   // ── Acceptation : la cohabitante légale recueille la part (barème ligne directe en Wallonie).
@@ -174,16 +191,17 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   if (o.testament === 'aucun') {
     acceptation = { key: 'acceptation', titre: TITRES.acceptation, disponible: false, raison: 'Pas de testament : la cohabitante légale ne recueille pas cette part (la maison n’était pas la résidence commune).', rows: [], total: { value: null, status: 'non_disponible', notes: [] }, totalPrudent: null, plancherApplique: false, notes: [], retenu: retenuOf(s, 'acceptation') };
   } else {
-    const r = row('beneficiaire', 'Cohabitante légale : barème « conjoints, cohabitants légaux et ligne directe »', partNum(partOf), benefTax);
+    const r = row('beneficiaire', `Cohabitante légale : barème « conjoints, cohabitants légaux et ligne directe »${avecAssurance ? ' ; part de succession + assurance' : ''}`, partNum((v) => partOf(v) + v.ins), benefTax);
     acceptation = {
       key: 'acceptation', titre: TITRES.acceptation, disponible: true, rows: [r], total: r.droits, totalPrudent: r.prudent, plancherApplique: false, retenu: retenuOf(s, 'acceptation'),
       notes: [
         ...notesCommunes,
+        avecAssurance ? 'Le capital d’assurance s’ajoute à sa part : la part de maison est taxée dans des tranches plus élevées, et l’exemption supplémentaire (part ≤ 125 000 €) peut être perdue.' : '',
         'Exemption de 12 500 € appliquée (confirmée pour le cohabitant légal par la source SPF).',
         o.supplementCohabitant === 'inconnu' ? 'Exemption supplémentaire de 12 500 € (part ≤ 125 000 €) : écrite pour la ligne directe seulement ; la fourchette couvre les deux cas.' : o.supplementCohabitant === 'appliquer' ? 'Exemption supplémentaire de 12 500 € appliquée (choix saisi).' : 'Exemption supplémentaire de 12 500 € non appliquée (choix saisi).',
         o.testament === 'inconnu' ? 'Existence du testament à confirmer.' : 'Legs par testament en faveur de la cohabitante légale.',
         'Au décès du père, l’usufruit s’éteint sans droits : la bénéficiaire devient pleine propriétaire de la part.',
-      ],
+      ].filter(Boolean),
     };
   }
 
@@ -194,36 +212,55 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   } else {
     const rp = row('pere', 'Père (1/4) : ligne directe, exemption art. 54', partNum((v) => split(v)[0]), pereTax);
     const rf = row('fils', 'Fils survivant (3/4) : barème entre frères et sœurs, sans exemption', partNum((v) => split(v)[1]), filsTax);
+    // La bénéficiaire garde l'assurance (droit propre) : elle paie les droits sur ce capital seul.
+    // Le montant du notaire « si elle accepte » ne s'applique pas ici.
+    const rb = avecAssurance ? row('beneficiaire', 'Bénéficiaire : assurance seule (conservée malgré la renonciation)', partNum((v) => v.ins), insTax, null) : null;
+    const insDroits = (v: Variant) => (rb ? insTax(v).droits ?? 0 : 0);
+    /** Droits de la renonçante attribuables à la part renoncée (plancher art. 68). */
+    const renoncantPart = (v: Variant) => (benefTax(v).droits ?? 0) - insDroits(v);
     const anyManual = rp.manual !== null || rf.manual !== null;
     let plancherApplique = false;
     let total: Num;
     const heirsPrudent = (rp.prudent ?? 0) + (rf.prudent ?? 0);
-    const totalPrudent = anyManual ? heirsPrudent : Math.max(heirsPrudent, benefTax(prudentV).droits ?? 0);
+    const rbPrudent = rb?.prudent ?? 0;
+    const totalPrudent = (anyManual ? heirsPrudent : Math.max(heirsPrudent, renoncantPart(prudentV))) + rbPrudent;
     if (anyManual) {
       const vals = [rp.droits, rf.droits];
-      total = vals.every((n) => n.value !== null)
-        ? exact(vals.reduce((a, n) => a + n.value!, 0), 'manuel', ['Somme des montants saisis ; plancher de l’art. 68 non recalculé.'])
-        : { value: null, status: 'partiel', lo: undefined, notes: ['Saisissez les deux montants du notaire (ou aucun) pour obtenir le total.'] };
+      if (!vals.every((n) => n.value !== null)) {
+        total = { value: null, status: 'partiel', lo: undefined, notes: ['Saisissez les deux montants du notaire (ou aucun) pour obtenir le total.'] };
+      } else {
+        const m = vals.reduce((a, n) => a + n.value!, 0);
+        const notes = ['Somme des montants saisis ; plancher de l’art. 68 non recalculé.'];
+        const d = rb?.droits;
+        total = !d || d.value !== null
+          ? exact(m + (d?.value ?? 0), 'manuel', notes)
+          : { value: null, lo: d.lo === undefined ? undefined : m + d.lo, hi: d.hi === undefined ? undefined : m + d.hi, status: d.status, notes };
+      }
     } else {
       const totals = variants.map((v) => {
         const heirs = (pereTax(v).droits ?? 0) + (filsTax(v).droits ?? 0);
-        const renoncant = benefTax(v).droits ?? 0;
+        const renoncant = renoncantPart(v);
         if (renoncant > heirs) plancherApplique = true;
-        return Math.max(heirs, renoncant);
+        return Math.max(heirs, renoncant) + insDroits(v);
       });
       total = numFrom(totals, baseLoOk, hiOk);
     }
     renonciation = {
-      key: 'renonciation', titre: TITRES.renonciation, disponible: true, rows: [rp, rf], total, totalPrudent, plancherApplique, retenu: retenuOf(s, 'renonciation'),
+      key: 'renonciation', titre: TITRES.renonciation, disponible: true, rows: rb ? [rb, rp, rf] : [rp, rf], total, totalPrudent, plancherApplique, retenu: retenuOf(s, 'renonciation'),
       notes: [
         ...notesCommunes,
-        'La bénéficiaire qui renonce ne paie rien sur cette succession.',
+        avecAssurance
+          ? 'La bénéficiaire renonce à la succession mais garde en principe l’assurance (droit propre, hors succession) : elle paie les droits sur ce capital seul (à confirmer).'
+          : 'La bénéficiaire qui renonce ne paie rien sur cette succession.',
         `Dévolution supposée : ${PARTS_RENONCIATION.map((p) => p.label).join(', ')} (pas de descendant, mère prédécédée, un seul frère) — à confirmer au vu du testament.`,
         o.descendants === 'inconnu' ? 'Absence de descendant à confirmer.' : '',
         'La nue-propriété recueillie par le père, déjà usufruitier, devient pleine propriété (consolidation).',
+        autres !== null && autres < 0
+          ? `Les héritiers recueillent aussi les dettes de cette succession${deficit !== null && deficit > 0 ? ` : passif non couvert estimé à ${formatEUR(deficit)}, à leur charge s’ils acceptent purement et simplement. Accepter sous bénéfice d’inventaire (dettes payées dans la limite des biens) ou renoncer à leur tour : à voir avec le notaire` : ''}.`
+          : '',
         plancherApplique
-          ? 'Plancher appliqué : les héritiers ne paieraient pas moins que la renonçante (art. 68 C. succ., à confirmer) ; le complément n’est pas réparti entre eux.'
-          : 'Plancher « pas moins que la renonçante » (art. 68 C. succ., à confirmer) : sans effet ici, les héritiers paient déjà davantage.',
+          ? `Plancher appliqué : les héritiers ne paieraient pas moins que la renonçante${avecAssurance ? ' sur la part renoncée (assurance exclue)' : ''} (art. 68 C. succ., à confirmer) ; le complément n’est pas réparti entre eux.`
+          : `Plancher « pas moins que la renonçante » (art. 68 C. succ., à confirmer${avecAssurance ? ', assurance exclue' : ''}) : sans effet ici, les héritiers paient déjà davantage.`,
       ].filter(Boolean),
     };
   }

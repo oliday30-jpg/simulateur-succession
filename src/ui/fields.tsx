@@ -249,7 +249,7 @@ export function CheckField({ label, checked, onChange, hint, help }: { label: st
 export const CERTAINTY_LABEL: Record<Certainty, string> = { approx: '≈ Approximatif', manuel: '✎ Saisi manuellement', verifie: '✓ Vérifié' };
 
 /** Montant + degré de fiabilité + provenance. */
-export function ValueField({ label, value, onChange, hint, help, essential }: { label: string; value: Value; onChange: (v: Value) => void; hint?: string; help?: HelpKey; essential?: boolean }) {
+export function ValueField({ label, value, onChange, hint, help, essential, allowNegative }: { label: string; value: Value; onChange: (v: Value) => void; hint?: string; help?: HelpKey; essential?: boolean; allowNegative?: boolean }) {
   const t = useT();
   const { button, panel } = useHelp(help, label);
   const titleId = useId();
@@ -260,7 +260,7 @@ export function ValueField({ label, value, onChange, hint, help, essential }: { 
         <span className="label-row"><span id={titleId} className="value-title">{t(label)}</span>{button}</span>
         {panel}
       </div>
-      <MoneyField label="Montant" value={value.cents} onChange={(c) => onChange({ ...value, cents: c })} hint={hint} essential={essential} />
+      <MoneyField label="Montant" value={value.cents} onChange={(c) => onChange({ ...value, cents: c })} hint={hint} essential={essential} allowNegative={allowNegative} />
       <SelectField label="Fiabilité" help="fiabilite" value={value.certainty} onChange={(c) => onChange({ ...value, certainty: c })}
         options={Object.entries(CERTAINTY_LABEL) as [Certainty, string][]} />
       <TextField label="Provenance" value={value.source} onChange={(s) => onChange({ ...value, source: s })} />

@@ -30,8 +30,13 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
           options={[['inconnu', 'Inconnu'], ['aucun', 'Aucun enfant'], ['oui', 'Un ou plusieurs enfants']]} />
         <SelectField label="La maison était-elle leur résidence commune ?" value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
           options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]} hint="Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés)." />
-        <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })}
-          hint="Comptes, voiture… moins les dettes et frais (y compris la créance du père). Supposés suivre la même dévolution que la maison." />
+        <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })} allowNegative
+          hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent." />
+        <ValueField label="Assurance groupe / vie versée à la bénéficiaire" help="sfpAssurance" value={o.assurance} onChange={(v) => set((x) => { x.assurance = v; })}
+          hint="Capital versé directement par l’assureur : hors succession, les dettes ne s’y imputent pas. Mettre 0 s’il n’y en a pas." />
+        <SelectField label="Assurance soumise aux droits de succession ?" help="sfpAssuranceTaxee" value={o.assuranceTaxee} onChange={(v) => set((x) => { x.assuranceTaxee = v; })}
+          options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]}
+          hint="En principe oui (art. 8 C. succ.), à confirmer pour une assurance groupe." />
         <SelectField label="Base taxable de la nue-propriété" help="sfpBaseNP" value={o.baseNP} onChange={(v) => set((x) => { x.baseNP = v; })}
           options={[['a_confirmer', 'À confirmer (fourchette)'], ['pleine_propriete', 'Valeur de la pleine propriété'], ['nue_propriete', 'Valeur de la nue-propriété (coefficient)']]}
           hint="Le père garde l’usufruit : la règle d’évaluation n’a pas été trouvée dans les sources consultées." />

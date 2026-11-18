@@ -117,6 +117,23 @@ describe('parcours interface', () => {
     expect(screen.getByText(/^Après l’option retenue :/).textContent).toMatch(/Père — PP 17\/24/);
   });
 
+  it('succession du fils prédécédé : dettes supérieures aux biens (montant négatif) et assurance', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
+    const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
+    await user.type(montant(/^Autres biens nets/), '-60000');
+    await user.tab();
+    await user.type(montant(/^Assurance groupe/), '300000');
+    await user.tab();
+    expect(card.textContent).not.toMatch(/Montant négatif non admis/);
+    // 50 000 € de maison − 60 000 € = passif non couvert de 10 000 €
+    expect(card.textContent).toMatch(/Succession déficitaire.*10.000,00.€/);
+    // Hypothèse prudente : assurance seule taxée (300 000 € → 38 625 − 375 = 38 250 €)
+    const acc = within(card).getByRole('article', { name: /accepte le legs/ });
+    expect(acc.textContent).toMatch(/38.250,00.€/);
+  });
+
   it('les prénoms saisis remplacent les rôles dans la simulation', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);

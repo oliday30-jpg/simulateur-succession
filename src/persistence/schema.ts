@@ -16,10 +16,13 @@ const donee = z.enum(['fils', 'petitFils']);
 
 const lot = z.object({ id: z.string(), share: fracS, pp: holder.optional(), np: holder.optional(), us: holder.optional(), origine: z.string() });
 
+const defaultAssurance = () => ({ cents: null, certainty: 'approx' as const, source: 'Assurance groupe / vie (organisme assureur)' });
+
 /** Ajouté le 18/11/2026 : valeur par défaut pour les données enregistrées avant (pas de changement de version). */
 export const defaultSuccFilsPredecede = () => ({
   testament: 'inconnu' as const, descendants: 'inconnu' as const, residenceCommune: 'inconnu' as const,
   autresBiensNets: { cents: null, certainty: 'approx' as const, source: 'Succession du fils prédécédé (notaire)' },
+  assurance: defaultAssurance(), assuranceTaxee: 'inconnu' as const,
   baseNP: 'a_confirmer' as const, coefNP: null, supplementCohabitant: 'inconnu' as const,
   droitsNotaire: { beneficiaire: null, pere: null, fils: null },
 });
@@ -28,6 +31,9 @@ const succFilsPredecede = z.object({
   descendants: z.enum(['inconnu', 'aucun', 'oui']),
   residenceCommune: z.enum(['inconnu', 'non', 'oui']),
   autresBiensNets: value,
+  // Ajoutés le 18/11/2026 (T10) : valeurs par défaut pour les données enregistrées avant.
+  assurance: value.default(defaultAssurance),
+  assuranceTaxee: z.enum(['inconnu', 'oui', 'non']).default('inconnu'),
   baseNP: z.enum(['a_confirmer', 'pleine_propriete', 'nue_propriete']),
   coefNP: fracS.nullable(),
   supplementCohabitant: z.enum(['inconnu', 'appliquer', 'ne_pas_appliquer']),

@@ -40,6 +40,9 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
               <li>☐ Si elle accepte : barème du cohabitant légal (ligne directe) ; exemption supplémentaire de 12 500 € (part ≤ 125 000 €) applicable au cohabitant ?</li>
               <li>☐ Si elle renonce : dévolution légale (<T>1/4 au père, 3/4 au fils survivant</T> ?), barème entre frères et sœurs, plancher « pas moins que le renonçant » (art. 68 C. succ.) et sa répartition.</li>
               <li>☐ Base taxable de la nue-propriété dont <T>le père</T> garde l’usufruit (valeur de la pleine propriété ou de la nue-propriété ? coefficient ?) ; autres biens et dettes de cette succession ; délai de la déclaration (4 mois ?) et de l’option.</li>
+              <li>☐ Assurances groupe / vie versées à {who('beneficiaire')} ({formatEUR(s.succFilsPredecede.assurance.cents)}) : soumises aux droits de succession (art. 8 C. succ.) ? Montant brut ou net des retenues ? Les dettes de la succession peuvent-elles s’imputer sur ce capital ? Conservées si elle renonce ?</li>
+              <li>☐ Dettes de cette succession : nature (crédit hypothécaire ?), assurance solde restant dû ? Si les dettes dépassent les biens et qu’elle renonce : risque pour <T>le père</T> et <T>le fils survivant</T>, acceptation sous bénéfice d’inventaire ou renonciation, délais.</li>
+              <li>☐ Logement du couple (détenu pour moitié par chacun) : exemption « logement familial » du cohabitant légal pour la moitié recueillie (non modélisée : cette moitié est comptée dans les « autres biens nets ») ?</li>
             </ul>
           </li>
           <li>☐ <T>Testament du père</T> : qualité d’héritier légal unique de {who('fils')} ; legs éventuel à {who('petitFils')} (20 000 € / 25 000 €), clause d’imputation des dons, droits à charge de qui.</li>

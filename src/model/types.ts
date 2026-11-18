@@ -113,6 +113,13 @@ export interface SuccessionFilsPredecede {
   residenceCommune: 'inconnu' | 'non' | 'oui';
   /** Autres biens nets de la succession (après dettes), supposés suivre la même dévolution que la part de maison. */
   autresBiensNets: Value;
+  /**
+   * Assurance groupe / vie versée à la bénéficiaire désignée : hors succession civile (les dettes ne s'y
+   * imputent pas), en principe soumise aux droits de succession dans son chef (art. 8 C. succ., à confirmer).
+   * Conservée même si elle renonce à la succession.
+   */
+  assurance: Value;
+  assuranceTaxee: 'inconnu' | 'oui' | 'non';
   /** Base taxable de la nue-propriété recueillie (règle d'évaluation non trouvée dans les sources consultées). */
   baseNP: 'a_confirmer' | 'pleine_propriete' | 'nue_propriete';
   /** Valeur de la nue-propriété en fraction de la pleine propriété (fournie par le notaire). */

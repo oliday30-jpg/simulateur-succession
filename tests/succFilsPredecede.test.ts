@@ -131,7 +131,90 @@ describe('droits de la succession du fils prédécédé', () => {
   });
 });
 
+/**
+ * Barème ligne directe (cohabitante légale), cumuls à la main :
+ *  12 500 → 375 ; 25 000 → 875 ; 50 000 → 2 125 ; 100 000 → 5 625 ; 150 000 → 10 625 ;
+ *  200 000 → 17 625 ; 250 000 → 26 625 ; puis 24 % jusqu'à 500 000.
+ *  - 300 000 € (assurance seule) : 26 625 + 50 000 × 24 % = 38 625 ; exemption 12 500 € à 3 % (− 375) → 38 250.
+ *  - 350 000 € (assurance + part de maison 50 000) : 26 625 + 100 000 × 24 % = 50 625 − 375 → 50 250.
+ *    Part > 125 000 € : pas d'exemption supplémentaire, même si elle était admise.
+ */
+describe('assurance groupe / vie versée à la bénéficiaire', () => {
+  const avecAssurance = (taxee: 'oui' | 'non' | 'inconnu', f: (s: Situation) => void = () => {}) => sit((s) => {
+    s.succFilsPredecede.baseNP = 'pleine_propriete';
+    s.succFilsPredecede.assurance.cents = E(300000);
+    s.succFilsPredecede.assuranceTaxee = taxee;
+    f(s);
+  });
+
+  it('acceptation : part de maison taxée au-dessus de l’assurance (24 %) et supplément perdu', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('oui'));
+    const [acc] = r.scenarios;
+    // supplément « à confirmer » : sans effet, part 350 000 > 125 000 → valeur unique
+    expect(acc.total).toMatchObject({ value: E(50250) });
+    expect(acc.rows[0].part.value).toBe(E(350000));
+    // Coût de la part de maison : 50 250 − 38 250 = 12 000 = 50 000 × 24 % (contre 1 250 … 1 750 sans assurance)
+  });
+
+  it('renonciation : elle garde l’assurance et paie 38 250 € ; plancher art. 68 sur la part renoncée', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('oui'));
+    const [, ren] = r.scenarios;
+    expect(ren.rows.map((x) => x.id)).toEqual(['beneficiaire', 'pere', 'fils']);
+    expect(ren.rows[0].droits.value).toBe(E(38250));
+    // Héritiers : père 12 500 → 0 ; fils 37 500 → 10 000. Part renoncée : 50 250 − 38 250 = 12 000 > 10 000 → plancher.
+    expect(ren.plancherApplique).toBe(true);
+    expect(ren.total.value).toBe(E(12000 + 38250));
+    expect(ren.totalPrudent).toBe(E(50250));
+    expect(ecartRenonciation(r)).toMatch(/coûte 0,00.€/);
+  });
+
+  it('taxation à confirmer : fourchette avec / sans assurance, hypothèse prudente avec', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('inconnu', (s) => { s.succFilsPredecede.supplementCohabitant = 'ne_pas_appliquer'; }));
+    const [acc, ren] = r.scenarios;
+    // Sans assurance : 50 000 → 2 125 − 375 = 1 750 ; avec : 50 250
+    expect(acc.total).toMatchObject({ value: null, lo: E(1750), hi: E(50250), status: 'a_confirmer' });
+    expect(acc.totalPrudent).toBe(E(50250));
+    // Renonciation : sans assurance 10 000 (pas de plancher : 1 750 < 10 000) ; avec 50 250
+    expect(ren.total).toMatchObject({ lo: E(10000), hi: E(50250) });
+    expect(acc.notes.join(' ')).toMatch(/art\. 8/);
+  });
+
+  it('assurance non taxée : résultats d’origine', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('non'));
+    expect(r.scenarios[0].total).toMatchObject({ lo: E(1250), hi: E(1750) });
+    expect(r.scenarios[1].rows.map((x) => x.id)).toEqual(['pere', 'fils']);
+    expect(r.scenarios[1].total.value).toBe(E(10000));
+  });
+
+  it('succession déficitaire : passif non couvert signalé, rien de taxable dans la succession', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('oui', (s) => { s.succFilsPredecede.autresBiensNets.cents = E(-60000); }));
+    // 50 000 − 60 000 = − 10 000 : part de succession 0 ; les dettes ne s'imputent pas sur l'assurance
+    expect(r.avertissements.join(' ')).toMatch(/déficitaire.*10.000,00.€/);
+    const [acc, ren] = r.scenarios;
+    expect(acc.total.value).toBe(E(38250));
+    expect(ren.total.value).toBe(E(38250)); // héritiers 0, part renoncée 0, assurance 38 250
+    expect(ren.notes.join(' ')).toMatch(/bénéfice d’inventaire/);
+  });
+
+  it('assurance non renseignée : avertissement', () => {
+    const r = computeSuccFilsPredecede(sit());
+    expect(r.avertissements.join(' ')).toMatch(/Assurance .* non renseignée/);
+  });
+});
+
 describe('données enregistrées avant l’ajout', () => {
+  it('un état sans les cases d’assurance reste lisible (non renseignée, à confirmer)', () => {
+    const st = defaultState() as unknown as { situation: { succFilsPredecede: Record<string, unknown> } };
+    delete st.situation.succFilsPredecede.assurance;
+    delete st.situation.succFilsPredecede.assuranceTaxee;
+    const p = stateSchema.safeParse(st);
+    expect(p.success).toBe(true);
+    if (p.success) {
+      expect(p.data.situation.succFilsPredecede.assurance.cents).toBeNull();
+      expect(p.data.situation.succFilsPredecede.assuranceTaxee).toBe('inconnu');
+    }
+  });
+
   it('un état sans « succFilsPredecede » reste lisible (valeurs par défaut)', () => {
     const st = defaultState() as unknown as { situation: Record<string, unknown> };
     delete st.situation.succFilsPredecede;

@@ -198,9 +198,22 @@ export const HELP = {
     siVide: '« Inconnu » : les deux options sont chiffrées, sans certitude sur la bénéficiaire.',
   },
   sfpAutresBiens: {
-    quoi: 'Ce que laisse le fils prédécédé en dehors de la maison (comptes, voiture…), moins ses dettes et frais, dont la dette envers le père.',
-    ou: 'Notaire de sa succession ; extraits de ses comptes au jour du décès.',
+    quoi: 'Ce que laisse le fils prédécédé en dehors de la maison de Gembloux (sa part de son propre logement, comptes, voiture…), moins ses dettes et frais, dont la dette envers le père. Sans les assurances groupe / vie (case suivante). Montant négatif si les dettes dépassent ces biens.',
+    ou: 'Notaire de sa succession ; extraits de ses comptes au jour du décès ; décompte du crédit (et de l’éventuelle assurance solde restant dû).',
+    exemple: '150 000 (moitié du logement) − 150 000 (dettes) + 10 000 (comptes) = 10 000 ; ou « -40 000 »',
     siVide: 'Le calcul suppose 0 € d’autres biens, avec une mention « à confirmer ».',
+  },
+  sfpAssurance: {
+    quoi: 'Le capital décès des assurances groupe ou vie du fils prédécédé versé à la bénéficiaire désignée dans le contrat. Il ne fait pas partie de la succession : il ne sert pas à payer les dettes, et elle le garde même si elle renonce.',
+    ou: 'Courrier de l’assureur ou de l’employeur (règlement du plan de pension) ; notaire de la succession.',
+    exemple: '300 000',
+    siVide: 'Non compté, avec un avertissement : si l’assurance existe, les droits de la bénéficiaire sont sous-estimés.',
+    certitude: 'Préciser si le montant est brut ou net des retenues (INAMI, solidarité, impôt).',
+  },
+  sfpAssuranceTaxee: {
+    quoi: 'Si ce capital est soumis aux droits de succession dans le chef de la bénéficiaire. Il s’ajoute alors à sa part et fait monter le taux appliqué à la maison.',
+    ou: 'Question pour le notaire (art. 8 du Code des droits de succession, cas particulier des assurances groupe).',
+    siVide: VIDE_FOURCHETTE,
   },
   sfpBaseNP: {
     quoi: 'Sur quelle valeur se calculent les droits sur la nue-propriété héritée : la pleine propriété, ou la nue-propriété seule (avec un coefficient).',
