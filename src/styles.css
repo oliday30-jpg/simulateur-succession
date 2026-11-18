@@ -12,6 +12,8 @@
   --err: #a1161b;
   --err-bg: #fde8e8;
   --info-bg: #e8f1fb;
+  --need-bg: #fff3b0; --need-line: #b58900; --need-ink: #4a3600;
+  --done-bg: #e3f5e6; --done-line: #2e7d43; --done-ink: #14522a;
   --radius: 8px;
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   color: var(--text);
@@ -24,6 +26,8 @@
     --bg: #14171c; --card: #1d2128; --text: #eef0f3; --muted: #b5bcc7; --border: #3a414c;
     --accent: #6cb2ff; --accent-ink: #0b1420; --ok: #7fd69a; --warn-bg: #3d3216; --warn-ink: #ffe3a3;
     --err: #ff9a9e; --err-bg: #3b1d1f; --info-bg: #1c2a3b;
+    --need-bg: #3f3511; --need-line: #e0b52e; --need-ink: #ffe9a0;
+    --done-bg: #17321f; --done-line: #5cbf7a; --done-ink: #b9f0c9;
   }
 }
 * { box-sizing: border-box; }
@@ -69,6 +73,17 @@ input[type='checkbox'] { width: 22px; height: 22px; accent-color: var(--accent);
 .money input { text-align: right; font-variant-numeric: tabular-nums; }
 .hint { color: var(--muted); font-size: 0.8rem; }
 .error { color: var(--err); font-weight: 600; font-size: 0.85rem; }
+.field.essentiel { padding: 8px 10px; border-radius: 6px; border-left: 5px solid; }
+.field.essentiel.a-remplir { background: var(--need-bg); border-color: var(--need-line); }
+.field.essentiel.rempli { background: var(--done-bg); border-color: var(--done-line); }
+.field.essentiel.a-remplir input, .field.essentiel.a-remplir select { border: 2px solid var(--need-line); }
+.need-badge { font-size: 0.8rem; font-weight: 700; }
+.a-remplir .need-badge { color: var(--need-ink); }
+.rempli .need-badge { color: var(--done-ink); }
+.need-legend { padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--card); }
+.need-legend .sw { display: inline-block; padding: 0 6px; border-radius: 4px; border-left: 4px solid; font-weight: 600; }
+.need-legend .sw.a-remplir { background: var(--need-bg); border-color: var(--need-line); color: var(--need-ink); }
+.need-legend .sw.rempli { background: var(--done-bg); border-color: var(--done-line); color: var(--done-ink); }
 .has-error input { border-color: var(--err); border-width: 2px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; margin: 0; min-width: 0; }

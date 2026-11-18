@@ -1,6 +1,7 @@
 import type { AppState, Scenario, SimEvent, DonBancaire, DonationImmo, Vente, Cession, Flux, Legs, HolderId, RulesMode, PersonId, Donee } from '../model/types';
 import { TEMPLATES, newId, mkDonBancaire, mkDonationImmo, mkVente, mkFlux, mkCession, mkLegs, DEFAULT_ACT_DATE } from '../model/sample';
-import { CheckField, DateField, FracField, MoneyField, SelectField, TextField } from './fields';
+import { CheckField, DateField, FracField, MoneyField, NeedLegend, SelectField, TextField } from './fields';
+import { countMissing, petitFilsInherits, scenarioNeeds } from './essentials';
 import { eventLabel, sortEvents, type SimResult } from '../engine/simulate';
 import { addDays, addYears, formatDate } from '../util/dates';
 import { HOLDER_LABEL } from '../domain/rights';
@@ -81,9 +82,10 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
       {active && (
         <section className="card" aria-labelledby="h-edit">
           <h2 id="h-edit">Variante : {active.name}</h2>
+          <NeedLegend missing={countMissing(scenarioNeeds(active))} />
           <div className="grid">
             <TextField label="Nom de la variante" value={active.name} onChange={(v) => upd((s) => { s.name = v; })} />
-            <DateField label="Décès simulé du père" value={active.deathDate} onChange={(v) => upd((s) => { s.deathDate = v; })} hint="jj/mm/aaaa — vide = pas de décès simulé" />
+            <DateField label="Décès simulé du père" essential value={active.deathDate} onChange={(v) => upd((s) => { s.deathDate = v; })} hint="jj/mm/aaaa — vide = pas de décès simulé" />
             <MoneyField label="Valeur de la maison au décès" value={active.valeurMaisonDeces} onChange={(v) => upd((s) => { s.valeurMaisonDeces = v; })} hint={active.valeurMaisonDeces === null ? 'Vide = hérite de l’hypothèse de la situation' : 'Valeur propre à cette variante'} />
             <SelectField label="Règles fiscales" value={active.rulesMode} onChange={(v) => upd((s) => { s.rulesMode = v; })} options={RULES_OPTS} />
             <SelectField label="Réserve de progressivité immobilière" value={active.reserveProgressivite} onChange={(v) => upd((s) => { s.reserveProgressivite = v; })}
@@ -101,7 +103,7 @@ export function ScenariosTab({ state, update, results }: { state: AppState; upda
           {active.rulesMode === 'manuel' && (
             <div className="grid">
               {(['fils', 'petitFils'] as PersonId[]).map((pid) => (
-                <MoneyField key={pid} label={`Droits de succession manuels — ${pid === 'fils' ? 'fils' : 'petit-fils'}`} value={active.manualDeathTax[pid] ?? null} onChange={(v) => upd((s) => { s.manualDeathTax[pid] = v; })} hint="Montant fiscal manuel clairement étiqueté" />
+                <MoneyField key={pid} label={`Droits de succession manuels — ${pid === 'fils' ? 'fils' : 'petit-fils'}`} value={active.manualDeathTax[pid] ?? null} essential={pid === 'fils' || petitFilsInherits(active)} onChange={(v) => upd((s) => { s.manualDeathTax[pid] = v; })} hint="Montant fiscal manuel clairement étiqueté" />
               ))}
             </div>
           )}
@@ -201,7 +203,7 @@ function EventEditor({ e, onChange, onRemove }: { e: SimEvent; onChange: (e: Sim
 function DonFields({ e, onChange }: { e: DonBancaire; onChange: (e: SimEvent) => void }) {
   return (
     <>
-      <MoneyField label="Montant du don" value={e.montant} onChange={(v) => onChange({ ...e, montant: v })} />
+      <MoneyField label="Montant du don" essential value={e.montant} onChange={(v) => onChange({ ...e, montant: v })} />
       <SelectField label="Donataire" value={e.donataire} onChange={(v) => onChange({ ...e, donataire: v })} options={DONEES} />
       <SelectField label="Statut" value={e.statut} onChange={(v) => onChange({ ...e, statut: v, dateEnregistrement: v === 'realise_non_enregistre' ? null : e.dateEnregistrement })}
         options={[['prevu', 'Prévu (enregistrement à faire)'], ['realise_non_enregistre', 'Réalisé, non enregistré'], ['enregistrement_confirme', 'Enregistrement confirmé']]} />
@@ -215,7 +217,7 @@ function DonFields({ e, onChange }: { e: DonBancaire; onChange: (e: SimEvent) =>
 function ImmoFields({ e, onChange }: { e: DonationImmo; onChange: (e: SimEvent) => void }) {
   return (
     <>
-      <FracField label="Fraction de la maison donnée" value={e.fraction} onChange={(f) => f && onChange({ ...e, fraction: f })} hint="Fraction de toute la maison, au plus la pleine propriété du père (2/3 selon l’acte de 2005). Ex. 1/2, 2/3" />
+      <FracField label="Fraction de la maison donnée" essential value={e.fraction} onChange={(f) => f && onChange({ ...e, fraction: f })} hint="Fraction de toute la maison, au plus la pleine propriété du père (2/3 selon l’acte de 2005). Ex. 1/2, 2/3" />
       <SelectField label="Donataire" value={e.donataire} onChange={(v) => onChange({ ...e, donataire: v })} options={DONEES} />
       <CheckField label="Réserve d’usufruit au profit du père" checked={e.reserveUsufruit} onChange={(v) => onChange({ ...e, reserveUsufruit: v })} />
       <MoneyField label="Valeur de la maison à la date de l’acte" value={e.valeurBien} onChange={(v) => onChange({ ...e, valeurBien: v })} hint={e.valeurBien === null ? 'Vide = hérite de l’hypothèse de la situation' : undefined} />
@@ -233,7 +235,7 @@ function VenteFields({ e, onChange }: { e: Vente; onChange: (e: SimEvent) => voi
       <MoneyField label="Frais de vente" value={e.frais.cents} onChange={(v) => onChange({ ...e, frais: { ...e.frais, cents: v } })} />
       <SelectField label="Frais supportés par" value={e.fraisRepartition} onChange={(v) => onChange({ ...e, fraisRepartition: v })} options={[['prorata', 'Au prorata des parts'], ...HOLDERS]} />
       <SelectField label="Mode de répartition" value={e.mode} onChange={(v) => onChange({ ...e, mode: v })} options={[['coefficient', 'Coefficient d’usufruit convenu'], ['montants_saisis', 'Montants validés saisis à la main']]} />
-      {e.mode === 'coefficient' && <FracField label="Coefficient économique d’usufruit (convenu)" value={e.coefUsufruit} onChange={(f) => onChange({ ...e, coefUsufruit: f })} hint="Ni déduit de l’âge, ni coefficient fiscal, ni table civile : valeur convenue entre parties" />}
+      {e.mode === 'coefficient' && <FracField label="Coefficient économique d’usufruit (convenu)" essential value={e.coefUsufruit} onChange={(f) => onChange({ ...e, coefUsufruit: f })} hint="Ni déduit de l’âge, ni coefficient fiscal, ni table civile : valeur convenue entre parties" />}
       {e.mode === 'montants_saisis' && HOLDERS.map(([h, l]) => (
         <MoneyField key={h} label={`Montant — ${l}`} value={e.montantsSaisis[h] ?? null} onChange={(v) => onChange({ ...e, montantsSaisis: { ...e.montantsSaisis, [h]: v } })} />
       ))}
@@ -259,7 +261,7 @@ function FluxFields({ e, onChange }: { e: Flux; onChange: (e: SimEvent) => void 
   return (
     <>
       <TextField label="Libellé" value={e.label} onChange={(v) => onChange({ ...e, label: v })} />
-      <MoneyField label="Montant" value={e.montant} onChange={(v) => onChange({ ...e, montant: v })} />
+      <MoneyField label="Montant" essential value={e.montant} onChange={(v) => onChange({ ...e, montant: v })} />
     </>
   );
 }
@@ -270,7 +272,7 @@ function LegsEditor({ l, onChange, onRemove }: { l: Legs; onChange: (l: Legs) =>
     <fieldset className="event">
       <legend>Legs {formatEUR(l.montant)} — {who(l.beneficiaire)}{l.actif ? '' : ' (désactivé)'}</legend>
       <div className="grid">
-        <MoneyField label="Montant du legs" value={l.montant} onChange={(v) => onChange({ ...l, montant: v })} />
+        <MoneyField label="Montant du legs" essential={l.actif} value={l.montant} onChange={(v) => onChange({ ...l, montant: v })} />
         <SelectField label="Légataire" value={l.beneficiaire} onChange={(v) => onChange({ ...l, beneficiaire: v })} options={DONEES} />
         <CheckField label="Legs actif" checked={l.actif} onChange={(v) => onChange({ ...l, actif: v })} />
         <SelectField label="Imputation des dons antérieurs" value={l.imputation} onChange={(v) => onChange({ ...l, imputation: v })} options={[['aucune', 'Aucune clause confirmée'], ['imputation_confirmee', 'Clause d’imputation confirmée']]} />

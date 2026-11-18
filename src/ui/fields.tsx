@@ -5,13 +5,37 @@ import { formatFrac, parseFrac, type Frac } from '../util/fraction';
 import type { Certainty, Value } from '../model/types';
 import { useT } from './display';
 
-interface FieldShell { label: string; hint?: string; error?: string | null; id: string; children: ReactNode; className?: string; keepRoles?: boolean }
+/** Champ indispensable à l'estimation : `filled` indique s'il est déjà renseigné. */
+export interface Need { essential?: boolean; filled?: boolean }
+interface FieldShell extends Need { label: string; hint?: string; error?: string | null; id: string; children: ReactNode; className?: string; keepRoles?: boolean }
+
+/** Mention écrite (jamais la couleur seule) d'un champ indispensable. */
+export function NeedBadge({ filled }: { filled: boolean }) {
+  return filled
+    ? <span className="need-badge">✓ Indispensable — renseigné</span>
+    : <span className="need-badge">★ Indispensable — à remplir</span>;
+}
+/** Légende des cases indispensables, en tête des onglets de saisie. */
+export function NeedLegend({ missing }: { missing: number }) {
+  return (
+    <p className="need-legend" role="note">
+      Cases indispensables pour qu’une estimation puisse se faire :{' '}
+      <span className="sw a-remplir">★ jaune = à remplir</span>{' '}
+      <span className="sw rempli">✓ vert = renseignée</span>.{' '}
+      {missing === 0 ? <strong>✓ Toutes les cases indispensables de cet onglet sont remplies.</strong> : <strong>★ Encore {missing} case{missing > 1 ? 's' : ''} indispensable{missing > 1 ? 's' : ''} à remplir.</strong>}
+      {' '}Les autres cases affinent le résultat mais ne le bloquent pas.
+    </p>
+  );
+}
+const needClass = ({ essential, filled }: Need) => (essential ? `essentiel ${filled ? 'rempli' : 'a-remplir'}` : '');
+
 /** Les libellés et aides affichent les prénoms à la place des rôles (sauf `keepRoles`). */
-export function Shell({ label, hint, error, id, children, className, keepRoles }: FieldShell) {
+export function Shell({ label, hint, error, id, children, className, keepRoles, essential, filled }: FieldShell) {
   const tr = useT();
   const t = keepRoles ? (x: string) => x : tr;
   return (
-    <div className={`field ${className ?? ''} ${error ? 'has-error' : ''}`}>
+    <div className={`field ${className ?? ''} ${error ? 'has-error' : ''} ${needClass({ essential, filled })}`}>
+      {essential && <NeedBadge filled={!!filled} />}
       <label htmlFor={id}>{t(label)}</label>
       {children}
       {hint && <small id={`${id}-hint`} className="hint">{t(hint)}</small>}
@@ -23,7 +47,7 @@ export function Shell({ label, hint, error, id, children, className, keepRoles }
 const describedBy = (id: string, hint?: string, error?: string | null) =>
   [hint ? `${id}-hint` : '', error ? `${id}-err` : ''].filter(Boolean).join(' ') || undefined;
 
-export function MoneyField({ label, value, onChange, hint, allowNegative = false, required = false, className }: { label: string; value: Cents | null; onChange: (v: Cents | null) => void; hint?: string; allowNegative?: boolean; required?: boolean; className?: string }) {
+export function MoneyField({ label, value, onChange, hint, allowNegative = false, required = false, className, essential }: { label: string; value: Cents | null; onChange: (v: Cents | null) => void; hint?: string; allowNegative?: boolean; required?: boolean; className?: string; essential?: boolean }) {
   const id = useId();
   const [text, setText] = useState(centsToInput(value));
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +62,7 @@ export function MoneyField({ label, value, onChange, hint, allowNegative = false
     setText(centsToInput(r.value));
   };
   return (
-    <Shell label={label} hint={hint ?? (value === null ? 'Non renseigné (≠ 0)' : undefined)} error={error} id={id} className={className}>
+    <Shell label={label} hint={hint ?? (value === null ? 'Non renseigné (≠ 0)' : undefined)} error={error} id={id} className={className} essential={essential} filled={value !== null}>
       <div className="money">
         <input id={id} inputMode="decimal" autoComplete="off" value={text} placeholder="non renseigné"
           aria-invalid={!!error} aria-describedby={describedBy(id, hint ?? (value === null ? 'x' : undefined), error)}
@@ -49,7 +73,7 @@ export function MoneyField({ label, value, onChange, hint, allowNegative = false
   );
 }
 
-export function DateField({ label, value, onChange, hint, allowEmpty = true }: { label: string; value: ISODate | null; onChange: (v: ISODate | null) => void; hint?: string; allowEmpty?: boolean }) {
+export function DateField({ label, value, onChange, hint, allowEmpty = true, essential }: { label: string; value: ISODate | null; onChange: (v: ISODate | null) => void; hint?: string; allowEmpty?: boolean; essential?: boolean }) {
   const id = useId();
   const [text, setText] = useState(value ? formatDate(value) : '');
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +87,7 @@ export function DateField({ label, value, onChange, hint, allowEmpty = true }: {
     setText(formatDate(iso));
   };
   return (
-    <Shell label={label} hint={hint ?? 'jj/mm/aaaa'} error={error} id={id}>
+    <Shell label={label} hint={hint ?? 'jj/mm/aaaa'} error={error} id={id} essential={essential} filled={value !== null}>
       <input id={id} inputMode="numeric" autoComplete="off" placeholder="jj/mm/aaaa" value={text}
         aria-invalid={!!error} aria-describedby={describedBy(id, 'x', error)}
         onChange={(e) => setText(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
@@ -71,7 +95,7 @@ export function DateField({ label, value, onChange, hint, allowEmpty = true }: {
   );
 }
 
-export function FracField({ label, value, onChange, hint }: { label: string; value: Frac | null; onChange: (v: Frac | null) => void; hint?: string }) {
+export function FracField({ label, value, onChange, hint, essential }: { label: string; value: Frac | null; onChange: (v: Frac | null) => void; hint?: string; essential?: boolean }) {
   const id = useId();
   const show = (f: Frac | null) => (f ? (f.d === 100 || 100 % f.d === 0 ? String(Math.round((f.n / f.d) * 10000) / 100).replace('.', ',') + ' %' : `${f.n}/${f.d}`) : '');
   const [text, setText] = useState(show(value));
@@ -85,7 +109,7 @@ export function FracField({ label, value, onChange, hint }: { label: string; val
     onChange(f);
   };
   return (
-    <Shell label={label} hint={hint ?? (value ? formatFrac(value) : 'Non renseigné')} error={error} id={id}>
+    <Shell label={label} hint={hint ?? (value ? formatFrac(value) : 'Non renseigné')} error={error} id={id} essential={essential} filled={value !== null && value.n > 0}>
       <input id={id} autoComplete="off" value={text} placeholder="ex. 1/2 ou 15 %" aria-invalid={!!error}
         aria-describedby={describedBy(id, 'x', error)}
         onChange={(e) => setText(e.target.value)} onBlur={commit} onKeyDown={(e) => { if (e.key === 'Enter') commit(); }} />
@@ -93,11 +117,11 @@ export function FracField({ label, value, onChange, hint }: { label: string; val
   );
 }
 
-export function SelectField<T extends string>({ label, value, onChange, options, hint }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][]; hint?: string }) {
+export function SelectField<T extends string>({ label, value, onChange, options, hint, essential, filled = true }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][]; hint?: string } & Need) {
   const t = useT();
   const id = useId();
   return (
-    <Shell label={label} hint={hint} id={id}>
+    <Shell label={label} hint={hint} id={id} essential={essential} filled={filled}>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)} aria-describedby={hint ? `${id}-hint` : undefined}>
         {options.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}
       </select>
@@ -129,12 +153,12 @@ export function CheckField({ label, checked, onChange, hint }: { label: string; 
 export const CERTAINTY_LABEL: Record<Certainty, string> = { approx: '≈ Approximatif', manuel: '✎ Saisi manuellement', verifie: '✓ Vérifié' };
 
 /** Montant + degré de fiabilité + provenance. */
-export function ValueField({ label, value, onChange, hint }: { label: string; value: Value; onChange: (v: Value) => void; hint?: string }) {
+export function ValueField({ label, value, onChange, hint, essential }: { label: string; value: Value; onChange: (v: Value) => void; hint?: string; essential?: boolean }) {
   const t = useT();
   return (
-    <fieldset className="value-field">
+    <fieldset className={`value-field ${essential ? 'essentiel-groupe' : ''}`}>
       <legend>{t(label)}</legend>
-      <MoneyField label="Montant" value={value.cents} onChange={(c) => onChange({ ...value, cents: c })} hint={hint} />
+      <MoneyField label="Montant" value={value.cents} onChange={(c) => onChange({ ...value, cents: c })} hint={hint} essential={essential} />
       <SelectField label="Fiabilité" value={value.certainty} onChange={(c) => onChange({ ...value, certainty: c })}
         options={Object.entries(CERTAINTY_LABEL) as [Certainty, string][]} />
       <TextField label="Provenance" value={value.source} onChange={(s) => onChange({ ...value, source: s })} />
