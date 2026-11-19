@@ -107,6 +107,14 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
     Valeur de la part de chaque fils : quelques dizaines à quelques centaines d'euros → négligeable dans les calculs ;
     à mentionner seulement dans la succession du fils prédécédé. L'autre maison n'y figure pas (vendue ?).
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
+- [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
+  Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
+  Afficher, **à titre de repère seulement** (le coefficient reste une valeur convenue, jamais appliqué automatiquement) :
+  - barème fiscal art. 47 C. enr. (revenu 4 % × multiplicateur selon l'âge, ex. 75–80 ans → 16 %, > 80 ans → 8 %) — règle versionnée avec source et date de consultation, à vérifier avant d'écrire le test ;
+  - estimation « espérance de vie » : 1 − (1 + i)^−n (taux i saisi, n issu d'une table Statbel citée) — fourchette, pas un total ;
+  - alerte quand un anniversaire de changement de tranche tombe près de la date de vente (convention : jour anniversaire → « à confirmer ») ;
+  - bouton « utiliser ce repère » qui recopie la valeur dans le champ coefficient (action explicite de l'utilisateur).
+  Tests : calculs indépendants en commentaire (ex. né le 01/07/1950, vente le 01/07/2028 → 78 ans → 16 % ; vente le 02/07/2030 → 8 %).
 
 ## Idées en attente (non décidées)
 
