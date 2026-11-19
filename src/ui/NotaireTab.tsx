@@ -1,9 +1,13 @@
 import type { AppState, Existence, Value } from '../model/types';
 import type { Row } from './ComparisonTab';
-import { NumView, Money, T, useT, useWho } from './display';
+import { useContext, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { NamesContext, NumView, Money, T, useT, useWho } from './display';
+import { shareOrDownload } from '../persistence/io';
+import { elementToPdf } from '../print/domToPdf';
 import { houseValueOf } from '../engine/simulate';
 import { formatEUR } from '../util/money';
-import { formatDate } from '../util/dates';
+import { formatDate, localToday } from '../util/dates';
 import { SOURCES } from '../tax/rules';
 import { CheckField } from './fields';
 import { summarize } from '../domain/rights';
@@ -11,6 +15,32 @@ import { detectRepartition, REPARTITION_LABEL } from '../domain/devolution';
 import { formatFrac } from '../util/fraction';
 
 export function NotaireTab({ state, rows, showNames, setShowNames }: { state: AppState; rows: Row[]; showNames: boolean; setShowNames: (v: boolean) => void }) {
+  const ctx = useContext(NamesContext);
+  // Pendant la fabrication du PDF seulement : prénoms selon la case (à l'écran, la fiche garde l'affichage habituel).
+  const [pdfMode, setPdfMode] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const ficheRef = useRef<HTMLElement>(null);
+  // PDF construit dans l'application (T19, comme T18) : depuis l'icône de l'écran d'accueil, iOS n'ouvre pas l'impression.
+  // Rendu synchrone puis partage immédiat : l'activation utilisateur est conservée sur iOS.
+  const creerPdf = async () => {
+    flushSync(() => setPdfMode(true));
+    const bytes = ficheRef.current ? elementToPdf(ficheRef.current, 'Simulation indicative, à valider par le notaire') : null;
+    flushSync(() => setPdfMode(false));
+    if (!bytes) return;
+    const how = await shareOrDownload(`fiche-notaire-${localToday()}.pdf`, bytes, 'application/pdf');
+    setMsg(how === 'annule' ? null : how === 'partage' ? 'PDF transmis à la feuille de partage.' : 'PDF téléchargé.');
+  };
+  return (
+    <NamesContext.Provider value={pdfMode ? { names: ctx.names, show: showNames } : ctx}>
+      <NotaireContent state={state} rows={rows} showNames={showNames} setShowNames={setShowNames} creerPdf={creerPdf} msg={msg} ficheRef={ficheRef} />
+    </NamesContext.Provider>
+  );
+}
+
+function NotaireContent({ state, rows, showNames, setShowNames, creerPdf, msg, ficheRef }: {
+  state: AppState; rows: Row[]; showNames: boolean; setShowNames: (v: boolean) => void;
+  creerPdf: () => Promise<void>; msg: string | null; ficheRef: React.RefObject<HTMLElement>;
+}) {
   const who = useWho();
   const t = useT();
   const s = state.situation;
@@ -21,14 +51,19 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
     <div className="stack">
       <section className="card no-print">
         <h2>Fiche pour le rendez-vous</h2>
-        <p>Cette fiche s’imprime sans données personnelles par défaut (rôles anonymes). Utilisez « Imprimer » puis « Enregistrer en PDF » dans le navigateur : aucun service tiers.</p>
-        <CheckField label="Inclure les noms affichés à l’impression" checked={showNames} onChange={setShowNames} />
-        <button type="button" onClick={() => window.print()}>Imprimer / enregistrer en PDF</button>
+        <p>Le PDF et l’impression ne contiennent pas les prénoms par défaut (rôles anonymes). Le PDF est fabriqué sur l’appareil : aucun service tiers.</p>
+        <CheckField label="Inclure les noms affichés à l’impression" checked={showNames} onChange={setShowNames} hint="Vaut pour « Créer le PDF » et pour « Imprimer »." />
+        <p className="small"><strong>Sur iPhone :</strong> touchez « Créer le PDF », puis choisissez « Enregistrer dans Fichiers », Mail ou Messages dans la feuille de partage. Le PDF reprend le texte de la fiche ci-dessous, en mise en page simple. Sur ordinateur, « Imprimer » garde la mise en page de l’écran.</p>
+        <div className="row">
+          <button type="button" onClick={() => void creerPdf()}>Créer le PDF</button>
+          <button type="button" onClick={() => window.print()}>Imprimer (ordinateur)</button>
+        </div>
+        {msg && <p className="small" role="status">{msg}</p>}
       </section>
 
-      <article className="card printable" aria-labelledby="h-fiche">
+      <article ref={ficheRef} className="card printable" aria-labelledby="h-fiche">
         <h2 id="h-fiche">Questions à valider avec le notaire</h2>
-        <p className="small">Simulation indicative établie le {formatDate(new Date().toISOString().slice(0, 10))}. Ce n’est ni un avis juridique, ni un devis, ni une déclaration.</p>
+        <p className="small">Simulation indicative établie le {formatDate(localToday())}. Ce n’est ni un avis juridique, ni un devis, ni une déclaration.</p>
 
         <h3>1. Titres et testament</h3>
         <ul className="checklist">
