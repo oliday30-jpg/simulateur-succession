@@ -16,6 +16,8 @@ export interface HelpEntry {
   siVide: string;
   /** Quand la marquer « vérifié » ou ce qui reste incertain (facultatif). */
   certitude?: string;
+  /** Intitulés propres (aide d'un tableau plutôt que d'une case). */
+  titres?: { quoi?: string; ou?: string; siVide?: string };
 }
 
 const VIDE_BLOQUE = 'Les résultats qui en dépendent sont bloqués (« ⛔ Bloquant ») : une case vide n’est jamais comptée comme 0.';
@@ -224,6 +226,21 @@ export const HELP = {
     exemple: '20 000',
     siVide: 'Rien n’est compté et la comparaison « garder / transmettre » n’est pas affichée.',
     certitude: 'Préciser si le montant est brut ou net des retenues (INAMI, solidarité, impôt).',
+  },
+  sfpAssuranceFilsTaxee: {
+    quoi: 'Si le capital d’assurance versé au fils survivant est soumis aux droits de succession dans son chef. Si oui, il paie le barème entre frères et sœurs (20 % jusqu’à 12 500 €, puis 25, 35, 50 et 65 %), sans exemption. '
+      + 'Si la bénéficiaire renonce et qu’il hérite aussi des 3/4 de la succession, le capital s’ajoute à cette part et est taxé dans des tranches plus élevées.',
+    ou: 'Question pour le notaire (art. 8 du Code des droits de succession, cas particulier des assurances groupe) ; l’assureur indique aussi les retenues faites avant le versement.',
+    siVide: 'Toujours rempli. « À confirmer » : la fourchette couvre « taxé » et « non taxé » ; l’hypothèse prudente le compte comme taxé.',
+  },
+  sfpTransmission: {
+    titres: { quoi: 'Ce que montre le tableau', ou: 'Comment le lire', siVide: 'Quand il n’apparaît pas' },
+    quoi: 'Quatre façons de traiter le capital d’assurance du fils survivant : le garder, le donner à la bénéficiaire par simple virement, par une donation enregistrée (5,5 %), ou y renoncer pour qu’il aille directement à elle. '
+      + '« Droits payés » : droits de succession du fils survivant sur ce capital, plus les droits de donation éventuels. « Reçu par la bénéficiaire » : ce qui lui arrive net. '
+      + '« Hypothèse prudente » : les montants quand une règle n’est pas confirmée (capital compté comme taxé, base la plus haute).',
+    ou: 'Une fourchette « entre … et … » signale une règle à confirmer. Le virement ne coûte rien tout de suite, mais la ligne « ⚠ Risque » chiffre les droits que la bénéficiaire paierait si le fils survivant décédait dans les cinq ans (barème entre non-parents, 30 % à 80 %). '
+      + 'La renonciation n’est chiffrée que si la clause du contrat désigne ensuite la bénéficiaire ; elle doit intervenir avant d’accepter le capital. Les calculs suivent l’option de la bénéficiaire retenue dans « Part du fils prédécédé ». Montants indicatifs : à valider par le notaire avant toute démarche.',
+    siVide: 'Le tableau n’apparaît que si le montant de l’assurance versée au fils survivant est saisi (plus de 0 €). La ligne « renonciation » reste non chiffrée tant que la clause bénéficiaire est inconnue.',
   },
   sfpAssuranceFilsSuivant: {
     quoi: 'Le bénéficiaire suivant prévu par le contrat si le fils survivant renonce au capital. Si c’est la bénéficiaire, renoncer peut éviter une double taxation ; si personne n’est prévu, le capital tombe dans la succession (et sert à payer les dettes).',

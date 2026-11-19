@@ -1,6 +1,6 @@
 import type { Situation, SuccessionFilsPredecede } from '../model/types';
 import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
-import { FracField, MoneyField, SelectField, ValueField } from './fields';
+import { FracField, MoneyField, SelectField, ValueField, useHelp } from './fields';
 import { NumView, SliceTable, T, useT, useWho } from './display';
 import { formatEUR } from '../util/money';
 import { formatFrac } from '../util/fraction';
@@ -40,7 +40,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
           hint="En principe oui (art. 8 C. succ.), à confirmer pour une assurance groupe." />
         <ValueField label={t('Assurance groupe / vie versée au fils survivant')} help="sfpAssuranceFils" value={o.assuranceFils} onChange={(v) => set((x) => { x.assuranceFils = v; })}
           hint="Contrat dont le fils survivant est le bénéficiaire désigné : hors succession, taxé au barème entre frères et sœurs. Mettre 0 s’il n’y en a pas." />
-        <SelectField label={t('Assurance du fils survivant soumise aux droits de succession ?')} help="sfpAssuranceTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
+        <SelectField label={t('Assurance du fils survivant soumise aux droits de succession ?')} help="sfpAssuranceFilsTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
           options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]} />
         <SelectField label={t('Si le fils survivant renonce au bénéfice du contrat, le capital va à…')} help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
           options={[['inconnu', 'Inconnu (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['succession', 'Personne : la succession'], ['autre', 'Une autre personne']]}
@@ -87,9 +87,11 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
 function TransmissionBlock({ tr }: { tr: TransmissionResult }) {
   const who = useWho();
   const t = useT();
+  const help = useHelp('sfpTransmission', 'Garder ou transmettre l’assurance du fils survivant');
   return (
     <section aria-labelledby="h-sfp-trans">
-      <h3 id="h-sfp-trans">{t(`Assurance du fils survivant (${formatEUR(tr.capital)}) : la garder ou la transmettre à la bénéficiaire ?`)}</h3>
+      <h3 id="h-sfp-trans">{t(`Assurance du fils survivant (${formatEUR(tr.capital)}) : la garder ou la transmettre à la bénéficiaire ?`)} {help.button}</h3>
+      {help.panel}
       <div className="table-wrap">
         <table>
           <caption className="sr-only">Comparaison des façons de transmettre le capital</caption>

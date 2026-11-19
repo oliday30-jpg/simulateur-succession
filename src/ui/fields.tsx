@@ -41,7 +41,7 @@ export function useHelp(key: HelpKey | undefined, label: string) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   if (!key) return { button: null, panel: null };
-  const h: { quoi: string; ou: string; exemple?: string; siVide: string; certitude?: string } = HELP[key];
+  const h: { quoi: string; ou: string; exemple?: string; siVide: string; certitude?: string; titres?: { quoi?: string; ou?: string; siVide?: string } } = HELP[key];
   const name = `Aide : ${t(label)}`;
   const button = (
     <button ref={btnRef} type="button" className="help-btn" aria-expanded={open} aria-haspopup="dialog"
@@ -51,10 +51,10 @@ export function useHelp(key: HelpKey | undefined, label: string) {
   const panel = open ? (
     <HelpPopover id={`${id}-aide`} name={name} anchor={btnRef} onClose={close}>
       <dl>
-        <dt>Quoi mettre</dt><dd>{t(h.quoi)}</dd>
-        <dt>Où le trouver</dt><dd>{t(h.ou)}</dd>
+        <dt>{h.titres?.quoi ?? 'Quoi mettre'}</dt><dd>{t(h.quoi)}</dd>
+        <dt>{h.titres?.ou ?? 'Où le trouver'}</dt><dd>{t(h.ou)}</dd>
         {h.exemple && <><dt>Exemple</dt><dd>{t(h.exemple)}</dd></>}
-        <dt>Si la case reste vide</dt><dd>{t(h.siVide)}</dd>
+        <dt>{h.titres?.siVide ?? 'Si la case reste vide'}</dt><dd>{t(h.siVide)}</dd>
         {h.certitude && <><dt>Fiabilité</dt><dd>{t(h.certitude)}</dd></>}
       </dl>
     </HelpPopover>
