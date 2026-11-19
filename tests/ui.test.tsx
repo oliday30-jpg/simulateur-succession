@@ -145,6 +145,7 @@ describe('parcours interface', () => {
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
     await user.type(montant(/^Autres biens nets/), '-60000');
     await user.tab();
+    await user.selectOptions(within(card).getByLabelText(/^Une assurance groupe \/ vie est-elle versée à la bénéficiaire/), 'oui');
     await user.type(montant(/^Assurance groupe \/ vie versée à la bénéficiaire/), '300000');
     await user.tab();
     expect(card.textContent).not.toMatch(/Montant négatif non admis/);
@@ -162,6 +163,9 @@ describe('parcours interface', () => {
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     expect(within(card).queryByRole('region', { name: /la garder ou la transmettre/ })).toBeNull();
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
+    // Par défaut, l'existence du contrat n'est pas supposée : pas de case montant.
+    expect(within(card).queryByRole('group', { name: /^Assurance groupe \/ vie versée au fils survivant/ })).toBeNull();
+    await user.selectOptions(within(card).getByLabelText(/^Une assurance groupe \/ vie est-elle versée au fils survivant/), 'oui');
     await user.type(montant(/^Assurance groupe \/ vie versée au fils survivant/), '20000');
     await user.tab();
     const tr = within(card).getByRole('region', { name: /la garder ou la transmettre/ });

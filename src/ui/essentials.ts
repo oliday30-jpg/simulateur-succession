@@ -1,4 +1,4 @@
-import type { Scenario, Situation } from '../model/types';
+import type { Existence, Scenario, Situation } from '../model/types';
 import { validateLots } from '../domain/rights';
 
 /**
@@ -47,3 +47,27 @@ export function scenarioNeeds(sc: Scenario): { label: string; filled: boolean }[
 }
 
 export const countMissing = (needs: { filled: boolean }[]) => needs.filter((n) => !n.filled).length;
+
+/** Le contrat d'assurance existe (ou peut-être) : son montant devient indispensable. */
+export const assuranceAChiffrer = (e: Existence) => e === 'oui' || e === 'possible';
+
+/**
+ * Cases indispensables de l'onglet « Succession du fils prédécédé » : sans elles, l'estimation repose
+ * sur une valeur par défaut, ne donne qu'un minimum ou laisse une option non calculée.
+ */
+export function sfpNeeds(s: Situation): { label: string; filled: boolean }[] {
+  const o = s.succFilsPredecede;
+  const out: { label: string; filled: boolean }[] = [
+    { label: 'Valeur de la maison au décès du fils prédécédé', filled: s.house.valeurDecesFilsPredecede.cents !== null },
+    { label: 'Testament', filled: o.testament !== 'inconnu' },
+    { label: 'Descendants', filled: o.descendants !== 'inconnu' },
+    { label: 'Résidence commune', filled: o.residenceCommune !== 'inconnu' },
+    { label: 'Autres biens nets', filled: o.autresBiensNets.cents !== null },
+    { label: 'Assurance versée à la bénéficiaire : existe-t-elle ?', filled: o.assuranceExiste !== 'inconnu' },
+  ];
+  if (assuranceAChiffrer(o.assuranceExiste)) out.push({ label: 'Montant de l’assurance de la bénéficiaire', filled: o.assurance.cents !== null });
+  out.push({ label: 'Assurance versée au fils survivant : existe-t-elle ?', filled: o.assuranceFilsExiste !== 'inconnu' });
+  if (assuranceAChiffrer(o.assuranceFilsExiste)) out.push({ label: 'Montant de l’assurance du fils survivant', filled: o.assuranceFils.cents !== null });
+  if (o.baseNP === 'nue_propriete') out.push({ label: 'Valeur de la nue-propriété (%)', filled: o.coefNP !== null });
+  return out;
+}

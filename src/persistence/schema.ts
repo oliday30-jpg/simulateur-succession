@@ -23,12 +23,22 @@ const defaultAssuranceFils = () => ({ cents: null, certainty: 'approx' as const,
 export const defaultSuccFilsPredecede = () => ({
   testament: 'inconnu' as const, descendants: 'inconnu' as const, residenceCommune: 'inconnu' as const,
   autresBiensNets: { cents: null, certainty: 'approx' as const, source: 'Succession du fils prédécédé (notaire)' },
-  assurance: defaultAssurance(), assuranceTaxee: 'inconnu' as const,
-  assuranceFils: defaultAssuranceFils(), assuranceFilsTaxee: 'inconnu' as const, assuranceFilsSuivant: 'inconnu' as const,
+  assuranceExiste: 'inconnu' as const, assurance: defaultAssurance(), assuranceTaxee: 'inconnu' as const,
+  assuranceFilsExiste: 'inconnu' as const, assuranceFils: defaultAssuranceFils(), assuranceFilsTaxee: 'inconnu' as const, assuranceFilsSuivant: 'inconnu' as const,
   baseNP: 'a_confirmer' as const, coefNP: null, supplementCohabitant: 'inconnu' as const,
   droitsNotaire: { beneficiaire: null, pere: null, fils: null },
 });
-const succFilsPredecede = z.object({
+const existence = z.enum(['inconnu', 'non', 'possible', 'oui']);
+/** Données enregistrées avant le 19/11/2026 (sans « existe ? ») : un montant > 0 vaut « oui », 0 vaut « non », vide « inconnu ». */
+const existeDepuis = (v: unknown) => {
+  const c = (v as { cents?: unknown } | undefined)?.cents;
+  return typeof c === 'number' ? (c > 0 ? 'oui' : 'non') : 'inconnu';
+};
+const succFilsPredecede = z.preprocess((raw) => {
+  if (!raw || typeof raw !== 'object') return raw;
+  const r = raw as Record<string, unknown>;
+  return { ...r, assuranceExiste: r.assuranceExiste ?? existeDepuis(r.assurance), assuranceFilsExiste: r.assuranceFilsExiste ?? existeDepuis(r.assuranceFils) };
+}, z.object({
   testament: z.enum(['inconnu', 'legs_beneficiaire', 'aucun']),
   descendants: z.enum(['inconnu', 'aucun', 'oui']),
   residenceCommune: z.enum(['inconnu', 'non', 'oui']),
@@ -44,7 +54,10 @@ const succFilsPredecede = z.object({
   coefNP: fracS.nullable(),
   supplementCohabitant: z.enum(['inconnu', 'appliquer', 'ne_pas_appliquer']),
   droitsNotaire: z.object({ beneficiaire: ncents, pere: ncents, fils: ncents }),
-});
+  // Ajoutés le 19/11/2026 (T15) : déduits du montant pour les données enregistrées avant (voir ci-dessus).
+  assuranceExiste: existence,
+  assuranceFilsExiste: existence,
+}));
 
 const situation = z.object({
   region: z.literal('wallonie'),

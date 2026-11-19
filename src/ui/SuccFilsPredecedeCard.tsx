@@ -1,4 +1,5 @@
-import type { Situation, SuccessionFilsPredecede } from '../model/types';
+import type { Existence, Situation, SuccessionFilsPredecede } from '../model/types';
+import { assuranceAChiffrer } from './essentials';
 import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
 import { FracField, MoneyField, SelectField, ValueField, useHelp } from './fields';
 import { NumView, SliceTable, T, useT, useWho } from './display';
@@ -7,6 +8,8 @@ import { formatFrac } from '../util/fraction';
 import { formatDate } from '../util/dates';
 
 type Upd = (fn: (s: Situation) => void) => void;
+
+const EXISTE: [Existence, string][] = [['inconnu', 'Je ne sais pas encore'], ['non', 'Non, aucune'], ['possible', 'Peut-être (calcul avec et sans)'], ['oui', 'Oui, confirmée']];
 
 /** Succession du fils prédécédé : hypothèses et droits estimés selon l'option de la bénéficiaire. */
 export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd }) {
@@ -23,38 +26,71 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
         {t(`Droits de succession dus sur la succession du fils prédécédé (décès du ${formatDate(r.dateDeces)}), pas sur celle du père.`)}{' '}
         Les deux options sont toujours calculées pour pouvoir les comparer ; l’option retenue se choisit dans « Part du fils prédécédé » en haut de cet onglet. Estimation indicative, à valider par le notaire.
       </p>
+      <h3><T>2. Famille et testament</T></h3>
       <div className="grid">
-        <SelectField label="Testament" help="sfpTestament" value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}
-          options={[['inconnu', 'Inconnu'], ['legs_beneficiaire', t('Oui, en faveur de la bénéficiaire')], ['aucun', 'Pas de testament']]} />
-        <SelectField label="Descendants du fils prédécédé" value={o.descendants} onChange={(v) => set((x) => { x.descendants = v; })}
+        <SelectField label="Testament" help="sfpTestament" essential filled={o.testament !== 'inconnu'} value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}
+          options={[['inconnu', 'Inconnu'], ['legs_beneficiaire', t('Oui, en faveur de la bénéficiaire')], ['aucun', 'Pas de testament']]}
+          hint={o.testament === 'aucun' ? 'Sans testament, la cohabitante légale ne recueille pas cette part : seule la renonciation (dévolution légale) est calculée.' : undefined} />
+        <SelectField label="Descendants du fils prédécédé" help="sfpDescendants" essential filled={o.descendants !== 'inconnu'} value={o.descendants} onChange={(v) => set((x) => { x.descendants = v; })}
           options={[['inconnu', 'Inconnu'], ['aucun', 'Aucun enfant'], ['oui', 'Un ou plusieurs enfants']]} />
-        <SelectField label={t('Le fils prédécédé et sa cohabitante habitaient-ils la maison familiale (celle du père) ?')} value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
+        <SelectField label={t('Le fils prédécédé et sa cohabitante habitaient-ils la maison familiale (celle du père) ?')} help="sfpResidence" essential filled={o.residenceCommune !== 'inconnu'} value={o.residenceCommune} onChange={(v) => set((x) => { x.residenceCommune = v; })}
           options={[['inconnu', 'Inconnu'], ['non', 'Non'], ['oui', 'Oui']]}
           hint="Non s’ils vivaient dans leur propre logement (celui-ci va dans « Autres biens nets »). Si oui : usufruit légal du cohabitant et exemption du logement familial (non modélisés, calcul indisponible)." />
-        <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })} allowNegative
-          hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Plus ce qui vient de la succession de la mère hors maison (créance de restitution du quasi-usufruit, quotes-parts d’autres immeubles). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent." />
-        <ValueField label="Assurance groupe / vie versée à la bénéficiaire" help="sfpAssurance" value={o.assurance} onChange={(v) => set((x) => { x.assurance = v; })}
-          hint="Capital versé directement par l’assureur : hors succession, les dettes ne s’y imputent pas. Mettre 0 s’il n’y en a pas." />
-        <SelectField label="Assurance soumise aux droits de succession ?" help="sfpAssuranceTaxee" value={o.assuranceTaxee} onChange={(v) => set((x) => { x.assuranceTaxee = v; })}
-          options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]}
-          hint="En principe oui (art. 8 C. succ.), à confirmer pour une assurance groupe." />
-        <ValueField label={t('Assurance groupe / vie versée au fils survivant')} help="sfpAssuranceFils" value={o.assuranceFils} onChange={(v) => set((x) => { x.assuranceFils = v; })}
-          hint="Contrat dont le fils survivant est le bénéficiaire désigné : hors succession, taxé au barème entre frères et sœurs. Mettre 0 s’il n’y en a pas." />
-        <SelectField label={t('Assurance du fils survivant soumise aux droits de succession ?')} help="sfpAssuranceFilsTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
-          options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]} />
-        <SelectField label={t('Si le fils survivant renonce au bénéfice du contrat, le capital va à…')} help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
-          options={[['inconnu', 'Inconnu (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['succession', 'Personne : la succession'], ['autre', 'Une autre personne']]}
-          hint="Lire la clause bénéficiaire (ou le règlement du plan) avant d’accepter le capital." />
+      </div>
+
+      <h3><T>3. Biens et dettes du fils prédécédé</T></h3>
+      <div className="grid">
+        <ValueField label="Autres biens nets de cette succession" help="sfpAutresBiens" essential value={o.autresBiensNets} onChange={(v) => set((x) => { x.autresBiensNets = v; })} allowNegative
+          hint="Sa moitié de son propre logement, comptes, voiture… moins les dettes et frais (y compris la créance du père). Plus ce qui vient de la succession de la mère hors maison (créance de restitution du quasi-usufruit, quotes-parts d’autres immeubles). Sans les assurances. Négatif (« -40 000 ») si les dettes dépassent ; « 0 » s’il n’y a rien." />
+      </div>
+
+      <h3><T>4. Assurances groupe / vie (hors succession)</T></h3>
+      <p className="small muted">Indiquez d’abord si chaque contrat existe : le montant et les options n’apparaissent que pour « Oui » ou « Peut-être ». « Peut-être » calcule avec et sans le capital.</p>
+      <div className="grid">
+        <SelectField<Existence> label="Une assurance groupe / vie est-elle versée à la bénéficiaire ?" help="sfpAssuranceExiste" essential filled={o.assuranceExiste !== 'inconnu'} value={o.assuranceExiste} onChange={(v) => set((x) => { x.assuranceExiste = v; })} options={EXISTE} />
+        {assuranceAChiffrer(o.assuranceExiste) && (
+          <>
+            <ValueField label="Assurance groupe / vie versée à la bénéficiaire" help="sfpAssurance" essential value={o.assurance} onChange={(v) => set((x) => { x.assurance = v; })}
+              hint="Capital versé directement par l’assureur : hors succession, les dettes ne s’y imputent pas." />
+            <SelectField label="Assurance soumise aux droits de succession ?" help="sfpAssuranceTaxee" value={o.assuranceTaxee} onChange={(v) => set((x) => { x.assuranceTaxee = v; })}
+              options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]}
+              hint="En principe oui (art. 8 C. succ.), à confirmer pour une assurance groupe." />
+          </>
+        )}
+      </div>
+      <div className="grid">
+        <SelectField<Existence> label="Une assurance groupe / vie est-elle versée au fils survivant ?" help="sfpAssuranceFilsExiste" essential filled={o.assuranceFilsExiste !== 'inconnu'} value={o.assuranceFilsExiste} onChange={(v) => set((x) => { x.assuranceFilsExiste = v; })} options={EXISTE} />
+        {assuranceAChiffrer(o.assuranceFilsExiste) && (
+          <>
+            <ValueField label="Assurance groupe / vie versée au fils survivant" help="sfpAssuranceFils" essential value={o.assuranceFils} onChange={(v) => set((x) => { x.assuranceFils = v; })}
+              hint="Contrat dont le fils survivant est le bénéficiaire désigné : hors succession, taxé au barème entre frères et sœurs." />
+            <SelectField label="Assurance du fils survivant soumise aux droits de succession ?" help="sfpAssuranceFilsTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
+              options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]} />
+            <SelectField label="Si le fils survivant renonce au bénéfice du contrat, le capital va à…" help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
+              options={[['inconnu', 'Inconnu (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['succession', 'Personne : la succession'], ['autre', 'Une autre personne']]}
+              hint="Lire la clause bénéficiaire (ou le règlement du plan) avant d’accepter le capital." />
+          </>
+        )}
+      </div>
+
+      <h3><T>5. Règles fiscales à confirmer</T></h3>
+      <p className="small muted">Laissées « à confirmer », elles donnent une fourchette ; à préciser avec le notaire.</p>
+      <div className="grid">
         <SelectField label="Base taxable de la nue-propriété" help="sfpBaseNP" value={o.baseNP} onChange={(v) => set((x) => { x.baseNP = v; })}
           options={[['a_confirmer', 'À confirmer (fourchette)'], ['pleine_propriete', 'Valeur de la pleine propriété'], ['nue_propriete', 'Valeur de la nue-propriété (coefficient)']]}
           hint="Le père garde l’usufruit : la règle d’évaluation n’a pas été trouvée dans les sources consultées." />
-        <FracField label="Valeur de la nue-propriété (% de la pleine propriété)" help="sfpCoefNP" value={o.coefNP} onChange={(f) => set((x) => { x.coefNP = f; })}
-          hint="Donné par le notaire (dépend notamment de l’âge du père). Ex. « 60 % »." />
-        <SelectField label="Exemption supplémentaire de 12 500 € pour la cohabitante" value={o.supplementCohabitant} onChange={(v) => set((x) => { x.supplementCohabitant = v; })}
-          options={[['inconnu', 'À confirmer (fourchette)'], ['appliquer', 'Oui (confirmé)'], ['ne_pas_appliquer', 'Non (confirmé)']]}
-          hint="Le SPF l’écrit pour l’héritier en ligne directe seulement." />
+        {o.baseNP !== 'pleine_propriete' && (
+          <FracField label="Valeur de la nue-propriété (% de la pleine propriété)" help="sfpCoefNP" essential={o.baseNP === 'nue_propriete'} value={o.coefNP} onChange={(f) => set((x) => { x.coefNP = f; })}
+            hint="Donné par le notaire (dépend notamment de l’âge du père). Ex. « 60 % »." />
+        )}
+        {o.testament !== 'aucun' && (
+          <SelectField label="Exemption supplémentaire de 12 500 € pour la cohabitante" value={o.supplementCohabitant} onChange={(v) => set((x) => { x.supplementCohabitant = v; })}
+            options={[['inconnu', 'À confirmer (fourchette)'], ['appliquer', 'Oui (confirmé)'], ['ne_pas_appliquer', 'Non (confirmé)']]}
+            hint="Le SPF l’écrit pour l’héritier en ligne directe seulement." />
+        )}
       </div>
 
+      <h3><T>6. Résultats</T></h3>
       <p>
         Part de la maison : <strong>{formatFrac(r.quotePart)}</strong> × {formatEUR(r.valeurMaison.cents)} <span className="small muted">({r.valeurMaison.provenance})</span>
         {' '}= <strong>{formatEUR(r.partPP)}</strong> en pleine propriété{r.partNP !== null && <> ; {formatEUR(r.partNP)} avec le coefficient de nue-propriété</>}.

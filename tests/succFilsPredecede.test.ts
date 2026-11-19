@@ -142,6 +142,7 @@ describe('droits de la succession du fils prédécédé', () => {
 describe('assurance groupe / vie versée à la bénéficiaire', () => {
   const avecAssurance = (taxee: 'oui' | 'non' | 'inconnu', f: (s: Situation) => void = () => {}) => sit((s) => {
     s.succFilsPredecede.baseNP = 'pleine_propriete';
+    s.succFilsPredecede.assuranceExiste = 'oui';
     s.succFilsPredecede.assurance.cents = E(300000);
     s.succFilsPredecede.assuranceTaxee = taxee;
     f(s);
@@ -196,9 +197,27 @@ describe('assurance groupe / vie versée à la bénéficiaire', () => {
     expect(ren.notes.join(' ')).toMatch(/bénéfice d’inventaire/);
   });
 
-  it('assurance non renseignée : avertissement', () => {
-    const r = computeSuccFilsPredecede(sit());
-    expect(r.avertissements.join(' ')).toMatch(/Assurance .* non renseignée/);
+  it('existence non vérifiée : avertissement ; contrat existant sans montant : autre avertissement', () => {
+    expect(computeSuccFilsPredecede(sit()).avertissements.join(' ')).toMatch(/Existence d’une assurance .* à vérifier/);
+    const r = computeSuccFilsPredecede(avecAssurance('oui', (s) => { s.succFilsPredecede.assurance.cents = null; }));
+    expect(r.avertissements.join(' ')).toMatch(/montant non renseigné/);
+  });
+
+  // Sans assurance (part 50 000 € seule) : 1 250 … 1 750 € selon l'exemption supplémentaire (prudente 1 750) ;
+  // avec : 50 250 € (part > 125 000 € : pas de supplément).
+  it('« pas d’assurance » : montant ignoré même s’il reste saisi', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('oui', (s) => { s.succFilsPredecede.assuranceExiste = 'non'; }));
+    expect([r.scenarios[0].total.lo, r.scenarios[0].total.hi, r.scenarios[0].totalPrudent]).toEqual([E(1250), E(1750), E(1750)]);
+    expect(r.avertissements.join(' ')).not.toMatch(/assurance/i);
+  });
+
+  it('« peut-être » : fourchette avec et sans le capital, même si sa taxation est confirmée ; prudente avec', () => {
+    const r = computeSuccFilsPredecede(avecAssurance('oui', (s) => { s.succFilsPredecede.assuranceExiste = 'possible'; }));
+    const acc = r.scenarios[0];
+    expect(acc.total.lo).toBe(E(1250));
+    expect(acc.total.hi).toBe(E(50250));
+    expect(acc.totalPrudent).toBe(E(50250));
+    expect(acc.notes.join(' ')).toMatch(/existence du contrat incertaine/);
   });
 });
 
@@ -234,8 +253,10 @@ describe('assurance versée au fils survivant', () => {
   const avecFils = (f: (s: Situation) => void = () => {}) => sit((s) => {
     const o = s.succFilsPredecede;
     o.baseNP = 'pleine_propriete';
+    o.assuranceExiste = 'oui';
     o.assurance.cents = E(300000);
     o.assuranceTaxee = 'oui';
+    o.assuranceFilsExiste = 'oui';
     o.assuranceFils.cents = E(20000);
     o.assuranceFilsTaxee = 'oui';
     o.assuranceFilsSuivant = 'beneficiaire';
@@ -292,6 +313,22 @@ describe('assurance versée au fils survivant', () => {
     expect(o.raison).toMatch(/payer les dettes/);
   });
 
+  // « Peut-être » : 0 … 4 375 € pour le fils ; acceptation 50 250 … 54 625 € ; tableau affiché avec une réserve.
+  it('« peut-être » : fourchette avec / sans, comparaison affichée avec une réserve', () => {
+    const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFilsExiste = 'possible'; }));
+    expect(r.scenarios[0].total.lo).toBe(E(50250));
+    expect(r.scenarios[0].total.hi).toBe(E(54625));
+    expect(r.transmission!.notes.join(' ')).toMatch(/Existence du contrat incertaine/);
+  });
+
+  it('« pas d’assurance » ou « je ne sais pas » : rien compté, pas de comparaison', () => {
+    for (const e of ['non', 'inconnu'] as const) {
+      const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFilsExiste = e; }));
+      expect(r.transmission, e).toBeNull();
+      expect(r.scenarios[0].total.value, e).toBe(E(50250));
+    }
+  });
+
   it('non renseignée : aucun changement, pas de comparaison', () => {
     const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFils.cents = null; }));
     expect(r.transmission).toBeNull();
@@ -312,6 +349,24 @@ describe('données enregistrées avant l’ajout', () => {
       expect(p.data.situation.succFilsPredecede.assuranceFils.cents).toBeNull();
       expect(p.data.situation.succFilsPredecede.assuranceFilsSuivant).toBe('inconnu');
     }
+  });
+
+  it('un état sans « existe ? » : déduit du montant (> 0 → oui, 0 → non, vide → je ne sais pas)', () => {
+    const st = defaultState() as unknown as { situation: { succFilsPredecede: Record<string, unknown> & { assurance: { cents: number | null }; assuranceFils: { cents: number | null } } } };
+    const o = st.situation.succFilsPredecede;
+    delete o.assuranceExiste;
+    delete o.assuranceFilsExiste;
+    o.assurance.cents = E(300000);
+    o.assuranceFils.cents = 0;
+    const p = stateSchema.safeParse(st);
+    expect(p.success).toBe(true);
+    if (p.success) {
+      expect(p.data.situation.succFilsPredecede.assuranceExiste).toBe('oui');
+      expect(p.data.situation.succFilsPredecede.assuranceFilsExiste).toBe('non');
+    }
+    o.assurance.cents = null;
+    const q = stateSchema.safeParse(st);
+    expect(q.success && q.data.situation.succFilsPredecede.assuranceExiste).toBe('inconnu');
   });
 
   it('un état sans les cases d’assurance reste lisible (non renseignée, à confirmer)', () => {

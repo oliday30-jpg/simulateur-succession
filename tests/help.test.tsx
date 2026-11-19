@@ -21,6 +21,7 @@ describe('aide des cases', () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
+    await user.selectOptions(screen.getByLabelText(/^Une assurance groupe \/ vie est-elle versée au fils survivant/), 'oui');
     // La case « taxée ? » du fils survivant a sa propre aide (barème entre frères et sœurs), pas celle de la bénéficiaire.
     await user.click(screen.getByRole('button', { name: /Aide : Assurance du fils survivant soumise/ }));
     const p1 = screen.getByRole('dialog', { name: /Aide : Assurance du fils survivant soumise/ });
@@ -39,6 +40,20 @@ describe('aide des cases', () => {
     expect(within(p2).getByText('Comment le lire')).toBeTruthy();
     expect(within(p2).queryByText('Quoi mettre')).toBeNull();
     expect(p2.textContent).toMatch(/cinq ans/);
+  });
+
+  it('toute case indispensable de l’onglet de la succession du fils prédécédé a un bouton « ? »', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
+    for (const l of [/^Une assurance groupe \/ vie est-elle versée à la bénéficiaire/, /^Une assurance groupe \/ vie est-elle versée au fils survivant/]) await user.selectOptions(screen.getByLabelText(l), 'possible');
+    // 7 cases de base + les 2 montants d'assurance
+    const essentials = [...container.querySelectorAll('.field.essentiel')];
+    expect(essentials.length).toBe(9);
+    for (const f of essentials) {
+      const group = f.closest('.value-field') ?? f;
+      expect(group.querySelector('button.help-btn'), f.textContent ?? '').not.toBeNull();
+    }
   });
 
   it('toute case indispensable de l’onglet Situation a un bouton « ? »', () => {

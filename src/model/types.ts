@@ -118,8 +118,11 @@ export interface SuccessionFilsPredecede {
    * imputent pas), en principe soumise aux droits de succession dans son chef (art. 8 C. succ., à confirmer).
    * Conservée même si elle renonce à la succession.
    */
+  /** Le contrat existe-t-il ? « possible » : calcul avec et sans (fourchette) ; « inconnu » / « non » : non compté. */
+  assuranceExiste: Existence;
   assurance: Value;
   assuranceTaxee: 'inconnu' | 'oui' | 'non';
+  assuranceFilsExiste: Existence;
   /**
    * Assurance groupe / vie du fils prédécédé versée au FILS SURVIVANT (bénéficiaire désigné) : hors succession,
    * en principe soumise aux droits de succession dans son chef au barème entre frères et sœurs (art. 8, à confirmer).
@@ -241,6 +244,8 @@ export interface Legs {
  */
 export type RulesMode = 'auto' | 'constant2026' | 'decret2024' | 'annonce2026' | 'manuel';
 export type TriState = 'inconnu' | 'appliquer' | 'ne_pas_appliquer';
+/** Existence d'un contrat ou d'un fait non certain : pas encore vérifié, non, peut-être (calcul avec et sans), oui. */
+export type Existence = 'inconnu' | 'non' | 'possible' | 'oui';
 
 export interface ResultSnapshot {
   savedAt: ISODate;

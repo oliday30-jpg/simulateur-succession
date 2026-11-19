@@ -1,4 +1,4 @@
-import type { Situation, SuccessionFilsPredecede } from '../model/types';
+import type { Existence, Situation, SuccessionFilsPredecede, Value } from '../model/types';
 import { allocate, applyRateBp, formatEUR, type Cents } from '../util/money';
 import { formatPct, mulCents, sum, type Frac } from '../util/fraction';
 import { formatDate } from '../util/dates';
@@ -159,9 +159,13 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   /** Passif non couvert par la part de maison (en pleine propriété) et les autres biens. */
   const deficit = autres === null || partPP === null ? null : -(partPP + autres);
   if (deficit !== null && deficit > 0) avertissements.push(`Succession déficitaire : les dettes dépassent les biens d’environ ${formatEUR(deficit)}. Les héritiers qui acceptent purement et simplement en répondent sur leurs propres biens : bénéfice d’inventaire ou renonciation à examiner avec le notaire.`);
-  const ass = o.assurance.cents;
-  if (ass === null) avertissements.push('Assurance groupe / vie versée à la bénéficiaire non renseignée : non comptée (si elle existe, ses droits sont sous-estimés).');
-  const assF = o.assuranceFils.cents;
+  const ass = capitalOf(o.assuranceExiste, o.assurance);
+  const assIncertaine = o.assuranceExiste === 'possible';
+  if (o.assuranceExiste === 'inconnu') avertissements.push('Existence d’une assurance groupe / vie versée à la bénéficiaire à vérifier : non comptée (si elle existe, ses droits sont sous-estimés).');
+  else if (o.assuranceExiste !== 'non' && ass === null) avertissements.push('Assurance groupe / vie versée à la bénéficiaire : montant non renseigné, non comptée (ses droits sont sous-estimés).');
+  const assF = capitalOf(o.assuranceFilsExiste, o.assuranceFils);
+  const assFIncertaine = o.assuranceFilsExiste === 'possible';
+  if (o.assuranceFilsExiste !== 'inconnu' && o.assuranceFilsExiste !== 'non' && assF === null) avertissements.push('Assurance groupe / vie versée au fils survivant : montant non renseigné, non comptée.');
 
   const sources = [SOURCES.spfSuccession, SOURCES.spfTarifsAutres];
   const res = resolveSuccession(dateDeces, 'auto');
@@ -188,9 +192,10 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   const baseLoOk = bases.includes('np') || !lotsNP.length || o.baseNP === 'pleine_propriete';
   const supps = o.supplementCohabitant === 'appliquer' ? [true] : o.supplementCohabitant === 'ne_pas_appliquer' ? [false] : [true, false];
   // Assurance : comptée (taxée), non comptée, ou les deux (fourchette) ; la valeur la plus haute d'abord (hypothèse prudente).
-  const insVals: Cents[] = !ass || o.assuranceTaxee === 'non' ? [0] : o.assuranceTaxee === 'oui' ? [ass] : [ass, 0];
+  // Contrat seulement « possible » : calculé avec et sans, même si sa taxation est confirmée.
+  const insVals: Cents[] = !ass || o.assuranceTaxee === 'non' ? [0] : o.assuranceTaxee === 'oui' && !assIncertaine ? [ass] : [ass, 0];
   const avecAssurance = insVals.some((x) => x > 0);
-  const insFVals: Cents[] = !assF || o.assuranceFilsTaxee === 'non' ? [0] : o.assuranceFilsTaxee === 'oui' ? [assF] : [assF, 0];
+  const insFVals: Cents[] = !assF || o.assuranceFilsTaxee === 'non' ? [0] : o.assuranceFilsTaxee === 'oui' && !assFIncertaine ? [assF] : [assF, 0];
   const avecAssFils = insFVals.some((x) => x > 0);
   const variants: Variant[] = bases.flatMap((b) => supps.flatMap((supplement) => insVals.flatMap((ins) => insFVals.map((insF) => ({ base: b, supplement, ins, insF })))));
   const hiOk = autres !== null;
@@ -224,9 +229,10 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
     `Décès du ${formatDate(dateDeces)} : ${profil.label}.`,
     bases.length > 1 ? `Nue-propriété taxée sur la valeur de la pleine propriété ou sur ${formatPct(o.coefNP!)} de celle-ci : règle à confirmer, la fourchette couvre les deux.` : '',
     !baseLoOk ? 'La nue-propriété pourrait être taxée sur une valeur plus basse que la pleine propriété : saisissez le coefficient fourni par le notaire pour obtenir le minimum.' : '',
-    avecAssurance && insVals.length > 1 ? `Assurance groupe / vie de ${formatEUR(ass)} : soumission aux droits de succession à confirmer (art. 8 C. succ., non lu dans les sources consultées) ; la fourchette couvre les deux cas.` : '',
+    avecAssurance && assIncertaine ? `Assurance groupe / vie de ${formatEUR(ass)} versée à la bénéficiaire : existence du contrat incertaine ; la fourchette couvre les cas avec et sans ce capital.` : '',
+    avecAssurance && insVals.length > 1 && !assIncertaine ? `Assurance groupe / vie de ${formatEUR(ass)} : soumission aux droits de succession à confirmer (art. 8 C. succ., non lu dans les sources consultées) ; la fourchette couvre les deux cas.` : '',
     avecAssurance ? 'Montant de l’assurance : brut ou net des retenues (INAMI, solidarité, impôt) à confirmer ; les dettes de la succession ne s’imputent pas sur ce capital (hypothèse prudente).' : '',
-    avecAssFils ? `Assurance de ${formatEUR(assF)} au profit du fils survivant : hors succession, taxée dans son chef au barème entre frères et sœurs (art. 8 C. succ., à confirmer)${insFVals.length > 1 ? ' ; la fourchette couvre aussi le cas « non taxée »' : ''}.` : '',
+    avecAssFils ? `Assurance de ${formatEUR(assF)} au profit du fils survivant : hors succession, taxée dans son chef au barème entre frères et sœurs (art. 8 C. succ., à confirmer)${assFIncertaine ? ' ; existence du contrat incertaine : la fourchette couvre aussi le cas « pas d’assurance »' : insFVals.length > 1 ? ' ; la fourchette couvre aussi le cas « non taxée »' : ''}.` : '',
   ].filter(Boolean);
 
   // ── Acceptation : la cohabitante légale recueille la part (barème ligne directe en Wallonie).
@@ -352,6 +358,7 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
       capital: assF, contexte, sources: [SOURCES.spfTarifsAutres, SOURCES.spfTarifsNonParents, SOURCES.spfDonationsAutres],
       notes: [
         `Contexte : ${contexte === 'acceptation' ? 'la bénéficiaire accepte le legs (le fils survivant n’hérite pas : capital taxé seul)' : 'la bénéficiaire renonce (le capital s’ajoute aux 3/4 du fils survivant : droits marginaux, tranches plus élevées)'} — option retenue dans « Part du fils prédécédé ».`,
+        assFIncertaine ? 'Existence du contrat incertaine (« peut-être ») : ce tableau ne vaut que si le capital est effectivement versé.' : '',
         'Une fois versé, le capital appartient au fils survivant : il peut le donner librement.',
         'Attendre que la bénéficiaire ait choisi d’accepter ou de renoncer : si elle acceptait purement et simplement une succession déficitaire, les créanciers pourraient saisir ce qu’elle reçoit.',
         `Droits de donation : profil « ${DON_ACTUEL.label} » (dons jusqu’au 31/12/2027).`,
@@ -382,6 +389,11 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   }
 
   return { ...base, scenarios: [acceptation, renonciation], transmission };
+}
+
+/** Capital pris en compte : 0 si le contrat n'existe pas, rien (null) si son existence n'est pas vérifiée. */
+function capitalOf(existe: Existence, v: Value): Cents | null {
+  return existe === 'non' ? 0 : existe === 'inconnu' ? null : v.cents;
 }
 
 const TRANS_TITRES: Record<TransKey, string> = {

@@ -18,10 +18,10 @@ export function NeedBadge({ filled }: { filled: boolean }) {
     : <span className="need-badge">★ Indispensable — à remplir</span>;
 }
 /** Légende des cases indispensables, en tête des onglets de saisie. */
-export function NeedLegend({ missing }: { missing: number }) {
+export function NeedLegend({ missing, intro = 'Cases indispensables pour qu’une estimation puisse se faire' }: { missing: number; intro?: string }) {
   return (
     <p className="need-legend" role="note">
-      Cases indispensables pour qu’une estimation puisse se faire :{' '}
+      {intro} :{' '}
       <span className="sw a-remplir">★ jaune = à remplir</span>{' '}
       <span className="sw rempli">✓ vert = renseignée</span>.{' '}
       {missing === 0 ? <strong>✓ Toutes les cases indispensables de cet onglet sont remplies.</strong> : <strong>★ Encore {missing} case{missing > 1 ? 's' : ''} indispensable{missing > 1 ? 's' : ''} à remplir.</strong>}

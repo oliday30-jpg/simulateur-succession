@@ -1,7 +1,8 @@
 import type { Situation } from '../model/types';
 import { HOLDER_LABEL, quartLabel, resolveLots, summarize } from '../domain/rights';
 import type { HolderId } from '../model/types';
-import { SelectField, TextField, ValueField } from './fields';
+import { NeedLegend, SelectField, TextField, ValueField } from './fields';
+import { countMissing, sfpNeeds } from './essentials';
 import { T, useWho } from './display';
 import { formatFrac } from '../util/fraction';
 import { SuccFilsPredecedeCard } from './SuccFilsPredecedeCard';
@@ -17,8 +18,9 @@ export function SuccFilsPredecedeTab({ s, update }: { s: Situation; update: Upd 
   const who = useWho();
   return (
     <div className="stack">
+      <NeedLegend missing={countMissing(sfpNeeds(s))} intro="Cases indispensables pour une estimation fiable de cette succession" />
       <section className="card" aria-labelledby="h-sfp-option">
-        <h2 id="h-sfp-option"><T>Part du fils prédécédé dans la maison du père</T></h2>
+        <h2 id="h-sfp-option"><T>1. Part du fils prédécédé dans la maison du père</T></h2>
         <p className="muted"><T>Ce dossier est distinct de la situation du père. L’option retenue ici modifie seulement qui détient la part du fils prédécédé (nue-propriété) dans les calculs des autres onglets.</T></p>
         <div className="grid">
           <SelectField label="Part du fils prédécédé (nue-propriété)" help="quartResolution" value={s.house.quartResolution} onChange={(v) => update((d) => { d.house.quartResolution = v; })}
@@ -30,7 +32,7 @@ export function SuccFilsPredecedeTab({ s, update }: { s: Situation; update: Upd 
               <TextField label="Fondement (cession, renonciation…)" value={s.house.quartPersonnalise.note} onChange={(v) => update((d) => { d.house.quartPersonnalise.note = v; })} />
             </>
           )}
-          <ValueField label="Valeur de la maison du père au 07/10/2026 (décès du fils prédécédé)" help="valeurDecesFilsPredecede" value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
+          <ValueField label="Valeur de la maison du père au 07/10/2026 (décès du fils prédécédé)" help="valeurDecesFilsPredecede" essential value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
         </div>
         {s.house.quartResolution !== 'inconnu' && (
           <p className="small">Après l’option retenue : {summarize(resolveLots(s.house.lots, s.house)).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>

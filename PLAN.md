@@ -54,7 +54,8 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 
 ## À faire (tâches testables et commitables)
 
-- [ ] **T1 — Test réel sur iPhone** (manuel, aucune dépendance)
+- [x] **T1 — Test réel sur iPhone** (manuel, aucune dépendance)
+  _19/11/2026 — test manuel par l'utilisateur sur la version en ligne (commit 82482a0) : installation sur l'écran d'accueil, plein écran et encoche, onglets, saisie « 170 000,50 », aide, mode avion, export vers iCloud Drive puis import → tout OK, aucun problème relevé._
   Installer sur l'écran d'accueil ; vérifier : affichage plein écran et encoche, saisie « 170 000,50 », onglets,
   mode avion (hors connexion), « Exporter » → Enregistrer dans Fichiers → iCloud Drive, puis « Importer ».
   Noter les problèmes ici ; chacun devient une tâche.
@@ -112,6 +113,12 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   déplacés hors de l'onglet Situation, qui ne garde qu'une ligne de renvoi (option retenue + répartition résultante). Format des données inchangé.
   _19/11/2026 — commit faff785. 139 tests + build OK. Poussé._
   Prévu ensuite : saisie des réponses de la bénéficiaire (comptes, dettes détaillées, assurances, délais, bénéfice d'inventaire) — questionnaire préparé en session.
+- [ ] **T16 — Onglet « Succession du fils prédécédé » plus clair et personnalisable** (demande du 19/11/2026)
+  Étapes numérotées (1 part de maison · 2 famille et testament · 3 biens et dettes · 4 assurances · 5 règles fiscales à confirmer · 6 résultats) ;
+  cases indispensables jaune / vert + légende (`sfpNeeds` dans `src/ui/essentials.ts`) ; question « l'assurance existe-t-elle ? »
+  (Je ne sais pas / Non / Peut-être = calcul avec et sans / Oui) pour chaque assurance : montant et options affichés seulement si elle existe ;
+  données déjà enregistrées : existence déduite du montant (> 0 → oui, 0 → non, vide → je ne sais pas). Fiche notaire adaptée.
+  _Terminée, testée (147 tests + build OK), commit à faire._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
@@ -131,6 +138,16 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   renonciation au bénéfice (seulement si la clause désigne ensuite la bénéficiaire ; sinon le capital peut tomber dans la succession) ».
   Règles : barème « entre autres personnes » 30/35/60/80 % et donation mobilière « autres personnes » 5,5 % (SPF, consultés le 19/11/2026).
   Fiche notaire : clause bénéficiaire, retenues, renonciation au bénéfice, attendre l'option successorale de la bénéficiaire, contrat refusé (clause suicide, réserve).
+- [ ] **T15 — Bouton « PDF de cet onglet pour le destinataire »** (onglet « Succession du fils prédécédé » ; dépend de T14)
+  But : envoyer à la bénéficiaire (ou à une autre personne) **uniquement** cet onglet, sans l'export JSON ni les autres onglets.
+  - Bouton en haut de l'onglet (masqué à l'impression) : saisie facultative du destinataire (texte libre, non stocké ni exporté) et choix
+    « afficher les prénoms » propre à cette impression (indépendant de la case de l'onglet « Questions pour le notaire »), puis `window.print()`.
+  - En-tête imprimé : titre de l'onglet, « Préparé pour : … » si renseigné, date du jour jj/mm/aaaa, mention « indicatif, à valider par le notaire ».
+  - Aperçu avant impression : liste des données de la situation du père reprises dans l'onglet (valeur de la maison au décès, part 1/6 NP…)
+    pour que l'utilisateur vérifie ce qu'il montre ; champs vides rendus lisibles (« non renseigné ») plutôt que des cases de saisie vides.
+  - iPhone : texte d'aide « Partager → Imprimer → Partager (PDF) » ; aucune boîte `confirm()` avant l'impression.
+  Tests : parcours interface (bouton présent, en-tête avec destinataire et date, prénoms masqués par défaut puis affichés si coché,
+  destinataire absent du localStorage et de l'export JSON) ; vérification manuelle de l'aperçu d'impression à 390 px.
 
 ## Idées en attente (non décidées)
 

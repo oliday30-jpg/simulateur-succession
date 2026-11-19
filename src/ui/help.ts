@@ -199,6 +199,26 @@ export const HELP = {
     ou: 'Notaire de sa succession (recherche au registre central des testaments).',
     siVide: '« Inconnu » : les deux options sont chiffrées, sans certitude sur la bénéficiaire.',
   },
+  sfpDescendants: {
+    quoi: 'Si le fils prédécédé avait des enfants (même d’une autre relation). Ce sont alors eux, et non le père et le fils survivant, qui recueillent sa part si la bénéficiaire renonce.',
+    ou: 'Acte de notoriété de sa succession, établi par le notaire.',
+    siVide: '« Inconnu » : la renonciation est calculée comme s’il n’avait pas d’enfant, avec une mention « à confirmer ».',
+  },
+  sfpResidence: {
+    quoi: 'Si le fils prédécédé et sa cohabitante légale vivaient dans la maison familiale (celle du père). Répondre « Non » s’ils avaient leur propre logement.',
+    ou: 'Domicile au registre national (certificat de résidence) ; notaire de la succession.',
+    siVide: '« Inconnu » : le calcul suppose qu’ils n’y vivaient pas. « Oui » rend le calcul indisponible (usufruit légal du cohabitant et exemption du logement familial non modélisés).',
+  },
+  sfpAssuranceExiste: {
+    quoi: 'Si une assurance groupe ou vie du fils prédécédé verse un capital à la bénéficiaire. « Peut-être » : le contrat n’est pas certain (refus de l’assureur possible, clause à vérifier) ; le simulateur calcule alors avec et sans ce capital.',
+    ou: 'Courrier de l’assureur ou de l’employeur ; notaire de la succession ; la bénéficiaire elle-même.',
+    siVide: '« Je ne sais pas encore » : rien n’est compté et un avertissement le rappelle. Le montant n’est demandé que pour « Oui » ou « Peut-être ».',
+  },
+  sfpAssuranceFilsExiste: {
+    quoi: 'Si une assurance groupe ou vie du fils prédécédé verse un capital au fils survivant (bénéficiaire désigné). « Peut-être » : contrat non confirmé ; le simulateur calcule avec et sans.',
+    ou: 'Courrier de l’assureur ou de l’employeur (clause bénéficiaire, règlement du plan de pension).',
+    siVide: '« Je ne sais pas encore » : rien n’est compté et la comparaison « garder / transmettre » n’est pas affichée.',
+  },
   sfpAutresBiens: {
     quoi: 'Ce que laisse le fils prédécédé en dehors de la maison de Gembloux (sa part de son propre logement, comptes, voiture…), moins ses dettes et frais, dont la dette envers le père. Y ajouter ce qu’il avait recueilli dans la succession de la mère hors maison : '
       + 'sa créance de restitution envers le père (quasi-usufruit sur les comptes et titres de la mère, environ 1/3 de ceux-ci, exigible au décès du père) '
