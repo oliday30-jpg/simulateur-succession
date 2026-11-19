@@ -78,6 +78,9 @@ function NotaireContent({ state, rows, showNames, setShowNames, creerPdf, msg, f
           </li>
           <li>☐ <T>Part en nue-propriété du fils prédécédé</T> : testament, option successorale de {who('beneficiaire')}, éventuelle cession ou renonciation.
             <ul>
+              <li>☐ <strong>Existence du testament</strong> : le Registre central des testaments (Fednot) a-t-il été interrogé pour <T>le fils prédécédé</T> ? Résultat, notaire qui conserve le testament ; un testament olographe trouvé chez lui a-t-il été déposé chez un notaire (procès-verbal de dépôt) ?</li>
+              <li>☐ En l’absence de descendants, <T>le père et le fils survivant</T> sont héritiers légaux : confirmer leur droit à une <strong>copie complète</strong> du testament (et non un extrait) ; qui en fait la demande, et auprès de quel notaire ?</li>
+              <li>☐ Le testament modifie-t-il le bénéficiaire d’une assurance vie ? Contient-il un legs à {who('petitFils')} (barème entre oncle et neveu) ?</li>
               <li>☐ Testament : legs à {who('beneficiaire')} (universel ou particulier ?), clause prévue si elle renonce ? Descendants : aucun ? Le couple ne vivait pas dans la maison familiale (celle <T>du père</T>) ?</li>
               <li>☐ Si elle accepte : barème du cohabitant légal (ligne directe) ; exemption supplémentaire de 12 500 € (part ≤ 125 000 €) applicable au cohabitant ?</li>
               <li>☐ Si elle renonce : dévolution légale (<T>1/4 au père, 3/4 au fils survivant</T> ?), barème entre frères et sœurs, plancher « pas moins que le renonçant » (art. 68 C. succ.) et sa répartition.</li>
