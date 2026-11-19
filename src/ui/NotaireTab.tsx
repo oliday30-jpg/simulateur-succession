@@ -66,7 +66,14 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
         <h3>3. Donation et vente</h3>
         <ul className="checklist">
           <li>☐ Coût de l’acte de donation immobilière (honoraires, frais, droits) — devis.</li>
-          <li>☐ Base des droits d’une donation avec réserve d’usufruit ; cumul avec des donations antérieures.</li>
+          <li>☐ Base des droits d’une donation avec réserve d’usufruit ; cumul avec des donations antérieures.
+            <ul>
+              <li>☐ <strong>Démembrement</strong> : une donation de la nue-propriété des 2/3 <T>du père</T> avec réserve d’usufruit est-elle intéressante, sachant que les droits de donation wallons portent sur la valeur de la pleine propriété du lot donné ?</li>
+              <li>☐ Donation avec réserve d’usufruit : risque lié à l’art. 9 C. succ. (biens donnés avec réserve d’usufruit) et au rappel des dons non enregistrés (3 ou 5 ans) ?</li>
+              <li>☐ Au décès <T>du père</T> : confirmer que l’extinction de son usufruit sur 1/3 de la maison ne déclenche ni frais ni droits de succession, et que seuls ses 2/3 en pleine propriété entrent dans sa succession.</li>
+              <li>☐ Usufruit <T>du père</T> sur le 1/6 <T>du fils prédécédé</T> : il se maintient pendant la succession de ce dernier ; effet sur la valeur déclarée de cette nue-propriété et sur une éventuelle cession.</li>
+            </ul>
+          </li>
           <li>☐ Existence et mécanisme d’une réserve de progressivité pour une donation immobilière dans les 3 ans du décès (non trouvée dans les sources consultées) ; imputation de l’exemption (art. 54 / 66bis).</li>
           <li>☐ En cas de vente : coefficient économique d’usufruit convenu, ventilation du prix par lot, accords de tous les titulaires, report d’usufruit éventuel.</li>
           <li>☐ Enregistrement d’un don bancaire : procédure, date d’effet, preuve, enregistrement distinct de la date du don.</li>
