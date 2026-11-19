@@ -119,6 +119,10 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   (Je ne sais pas / Non / Peut-être = calcul avec et sans / Oui) pour chaque assurance : montant et options affichés seulement si elle existe ;
   données déjà enregistrées : existence déduite du montant (> 0 → oui, 0 → non, vide → je ne sais pas). Fiche notaire adaptée.
   _19/11/2026 — commit 0b52fee. 147 tests + build OK. Non poussé (accord requis)._
+- [x] **T17 — « Fils survivant » = frère du fils prédécédé** (demande du 19/11/2026 : libellé lu comme « enfant du fils prédécédé »)
+  Libellés, aides, cases indispensables, avertissement et fiche notaire de l'assurance du fils survivant : « (frère du fils prédécédé) » ;
+  avec prénoms : « versée à Olivier (frère de Pierre) » (test `naming.test.ts`).
+  _19/11/2026 — commit 167c66f. 148 tests + build OK. Non poussé (accord requis)._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
@@ -151,6 +155,8 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 
 ## Idées en attente (non décidées)
 
+- **Assurance à un bénéficiaire au choix** (suite de T17) : remplacer « assurance versée au fils survivant » par un bénéficiaire choisi
+  avec son lien de parenté (frère, parent, neveu, tiers…) et le barème correspondant. Change le format des données (migration zod).
 - **Accès iPhone « pour toutes mes applications »** depuis l'extérieur : stratégie générale à définir appli par appli
   (GitHub Pages si les données peuvent rester sur l'appareil ; pages privées claude.ai ou réseau privé type Tailscale s'il faut synchroniser des données).
   Attention : le PC est un poste professionnel (Windows Enterprise) → pas de VPN ni de serveur exposé sans accord du service informatique.
