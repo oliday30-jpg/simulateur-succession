@@ -58,7 +58,8 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   Installer sur l'écran d'accueil ; vérifier : affichage plein écran et encoche, saisie « 170 000,50 », onglets,
   mode avion (hors connexion), « Exporter » → Enregistrer dans Fichiers → iCloud Drive, puis « Importer ».
   Noter les problèmes ici ; chacun devient une tâche.
-- [ ] **T2 — Mettre à jour le workflow GitHub Actions** (aucune dépendance)
+- [x] **T2 — Mettre à jour le workflow GitHub Actions** (aucune dépendance)
+  _19/11/2026 — commit cea090e. checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 (toutes Node 24 ; `dist/` sans fichier caché). 139 tests + build OK. Poussé : déploiement vert sans avertissement, site en ligne (HTTP 200). `ubuntu-latest` conservé (plus d'avertissement)._
   Avertissements : actions sur Node 20 obsolète (checkout@v4, configure-pages@v5, setup-node@v4, upload-artifact@v4) ; `ubuntu-latest` passe à Ubuntu 26.
   Vérifier les versions récentes des actions, mettre à jour, pousser (accord requis), contrôler un déploiement vert sans avertissement.
 - [ ] **T3 — Cache du service worker lié à la version** (après T1 de préférence)
