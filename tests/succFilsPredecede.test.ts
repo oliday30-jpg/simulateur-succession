@@ -6,7 +6,7 @@ import { stateSchema } from '../src/persistence/schema';
 import { simulate } from '../src/engine/simulate';
 import { TEMPLATES } from '../src/model/sample';
 import { progressive } from '../src/tax/brackets';
-import { SUCC_FRERES_SOEURS } from '../src/tax/rules';
+import { DON_ACTUEL, SUCC_AUTRES_PERSONNES, SUCC_FRERES_SOEURS } from '../src/tax/rules';
 import { euros } from '../src/util/money';
 import { frac } from '../src/util/fraction';
 import type { Situation } from '../src/model/types';
@@ -202,7 +202,118 @@ describe('assurance groupe / vie versée à la bénéficiaire', () => {
   });
 });
 
+describe('barème entre autres personnes et donation mobilière (SPF, consultés le 19/11/2026)', () => {
+  it('cumuls de la page SPF et taux 5,5 %', () => {
+    expect(progressive(SUCC_AUTRES_PERSONNES.ordinaire, E(12500))).toBe(E(3750));   // 12 500 × 30 %
+    expect(progressive(SUCC_AUTRES_PERSONNES.ordinaire, E(25000))).toBe(E(8125));   // + 12 500 × 35 %
+    expect(progressive(SUCC_AUTRES_PERSONNES.ordinaire, E(75000))).toBe(E(38125));  // + 50 000 × 60 %
+    expect(progressive(SUCC_AUTRES_PERSONNES.ordinaire, E(175000))).toBe(E(118125)); // + 100 000 × 80 %
+    expect(DON_ACTUEL.mobilierAutresBp).toBe(550);
+  });
+});
+
+/**
+ * Assurance au profit du fils survivant (calculs à la main) — cas : part de maison 50 000 € en PP,
+ * autres biens 0, assurance de la bénéficiaire 300 000 € taxée, assurance du fils 20 000 € taxée.
+ *
+ * Elle accepte (contexte par défaut) :
+ *  - fils, 20 000 € seuls, barème frères et sœurs : 12 500 × 20 % + 7 500 × 25 % = 2 500 + 1 875 = 4 375 ;
+ *    total des droits 50 250 + 4 375 = 54 625.
+ *  - don bancaire : net 15 625 ; rappel (entre autres personnes) 12 500 × 30 % + 3 125 × 35 % = 3 750 + 1 093,75 = 4 843,75.
+ *  - donation enregistrée : 15 625 × 5,5 % = 859,375 → 859,38 ; droits 5 234,38 ; reçu 14 765,62.
+ *  - renonciation au bénéfice (clause → bénéficiaire) : sa base 350 000 € est dans la tranche 250 000–500 000 à 24 % :
+ *    20 000 × 24 % = 4 800 ; reçu 15 200.
+ * Elle renonce :
+ *  - fils : 37 500 + 20 000 = 57 500 → 2 500 + 3 125 + 32 500 × 35 % = 17 000 ; père 12 500 → 0 ;
+ *    part des héritiers sur la part renoncée 17 000 − 4 375 = 12 625 > 12 000 (renonçante) → pas de plancher ;
+ *    total 0 + 17 000 + 38 250 = 55 250.
+ *  - capital marginal du fils : 17 000 − 10 000 = 7 000 (20 000 × 35 %) ; net 13 000 ; donation 715 ;
+ *    rappel 3 750 + 500 × 35 % = 3 925 ; renonciation au bénéfice : base 300 000 → 4 800.
+ */
+describe('assurance versée au fils survivant', () => {
+  const avecFils = (f: (s: Situation) => void = () => {}) => sit((s) => {
+    const o = s.succFilsPredecede;
+    o.baseNP = 'pleine_propriete';
+    o.assurance.cents = E(300000);
+    o.assuranceTaxee = 'oui';
+    o.assuranceFils.cents = E(20000);
+    o.assuranceFilsTaxee = 'oui';
+    o.assuranceFilsSuivant = 'beneficiaire';
+    f(s);
+  });
+  const opt = (r: ReturnType<typeof computeSuccFilsPredecede>, key: string) => r.transmission!.options.find((o) => o.key === key)!;
+
+  it('elle accepte : capital taxé seul dans le chef du fils, ajouté au total', () => {
+    const r = computeSuccFilsPredecede(avecFils());
+    const [acc] = r.scenarios;
+    expect(acc.rows.map((x) => x.id)).toEqual(['beneficiaire', 'fils']);
+    expect(acc.rows[1].droits.value).toBe(E(4375));
+    expect(acc.total.value).toBe(E(54625));
+    expect(acc.totalPrudent).toBe(E(54625));
+  });
+
+  it('elle accepte : comparaison des façons de transmettre', () => {
+    const r = computeSuccFilsPredecede(avecFils());
+    expect(r.transmission!.contexte).toBe('acceptation');
+    expect(opt(r, 'garder')).toMatchObject({ droits: { value: E(4375) }, recu: { value: 0 } });
+    const don = opt(r, 'don_bancaire');
+    expect(don).toMatchObject({ droits: { value: E(4375) }, recu: { value: E(15625) } });
+    expect(don.risque!.value).toBe(484375);
+    expect(opt(r, 'donation_enregistree')).toMatchObject({ droits: { value: 523438 }, recu: { value: 1476562 } });
+    expect(opt(r, 'renonciation_benefice')).toMatchObject({ disponible: true, droits: { value: E(4800) }, recu: { value: E(15200) } });
+  });
+
+  it('elle renonce : capital ajouté aux 3/4 du fils, droits marginaux, plancher sur la part renoncée seulement', () => {
+    const r = computeSuccFilsPredecede(avecFils((s) => { s.house.quartResolution = 'renonciation'; }));
+    const [, ren] = r.scenarios;
+    expect(ren.rows.find((x) => x.id === 'fils')!.droits.value).toBe(E(17000));
+    expect(ren.rows.find((x) => x.id === 'fils')!.part.value).toBe(E(57500));
+    expect(ren.plancherApplique).toBe(false);
+    expect(ren.total.value).toBe(E(55250));
+    expect(ren.totalPrudent).toBe(E(55250));
+    expect(r.transmission!.contexte).toBe('renonciation');
+    expect(opt(r, 'garder').droits.value).toBe(E(7000));
+    expect(opt(r, 'don_bancaire')).toMatchObject({ recu: { value: E(13000) }, risque: { value: E(3925) } });
+    expect(opt(r, 'donation_enregistree')).toMatchObject({ droits: { value: E(7715) }, recu: { value: E(12285) } });
+    expect(opt(r, 'renonciation_benefice').droits.value).toBe(E(4800));
+  });
+
+  it('taxation à confirmer : fourchette 0 … 4 375 €, hypothèse prudente taxée', () => {
+    const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFilsTaxee = 'inconnu'; }));
+    expect(opt(r, 'garder').droits).toMatchObject({ value: null, lo: 0, hi: E(4375), status: 'a_confirmer' });
+    expect(opt(r, 'garder').droitsPrudent).toBe(E(4375));
+    expect(r.scenarios[0].total).toMatchObject({ lo: E(50250), hi: E(54625) });
+  });
+
+  it('clause sans bénéficiaire suivant : renonciation au bénéfice non chiffrée (le capital tomberait dans la succession)', () => {
+    const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFilsSuivant = 'succession'; }));
+    const o = opt(r, 'renonciation_benefice');
+    expect(o.disponible).toBe(false);
+    expect(o.raison).toMatch(/payer les dettes/);
+  });
+
+  it('non renseignée : aucun changement, pas de comparaison', () => {
+    const r = computeSuccFilsPredecede(avecFils((s) => { s.succFilsPredecede.assuranceFils.cents = null; }));
+    expect(r.transmission).toBeNull();
+    expect(r.scenarios[0].rows.map((x) => x.id)).toEqual(['beneficiaire']);
+    expect(r.scenarios[0].total.value).toBe(E(50250));
+  });
+});
+
 describe('données enregistrées avant l’ajout', () => {
+  it('un état sans les cases d’assurance du fils survivant reste lisible', () => {
+    const st = defaultState() as unknown as { situation: { succFilsPredecede: Record<string, unknown> } };
+    delete st.situation.succFilsPredecede.assuranceFils;
+    delete st.situation.succFilsPredecede.assuranceFilsTaxee;
+    delete st.situation.succFilsPredecede.assuranceFilsSuivant;
+    const p = stateSchema.safeParse(st);
+    expect(p.success).toBe(true);
+    if (p.success) {
+      expect(p.data.situation.succFilsPredecede.assuranceFils.cents).toBeNull();
+      expect(p.data.situation.succFilsPredecede.assuranceFilsSuivant).toBe('inconnu');
+    }
+  });
+
   it('un état sans les cases d’assurance reste lisible (non renseignée, à confirmer)', () => {
     const st = defaultState() as unknown as { situation: { succFilsPredecede: Record<string, unknown> } };
     delete st.situation.succFilsPredecede.assurance;

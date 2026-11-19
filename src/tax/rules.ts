@@ -53,6 +53,18 @@ export const SOURCES = {
     consulte: '2026-11-18',
     constat: 'Un seul barème « entre conjoints, cohabitants légaux et héritiers en ligne directe ». Frères et sœurs : 20 % jusqu’à 12 500 €, 25 % jusqu’à 25 000 €, 35 % jusqu’à 75 000 €, 50 % jusqu’à 175 000 €, 65 % au-delà. Exemption de la première tranche de 12 500 € pour « le conjoint, cohabitant légal ou héritier en ligne directe » ; supplément de 12 500 € (part nette ≤ 125 000 €) formulé pour « l’héritier en ligne directe » seulement. Aucun abattement pour les frères et sœurs. Rien sur la renonciation ni sur l’évaluation de la nue-propriété.',
   },
+  spfTarifsNonParents: {
+    titre: 'SPF Finances — Payer les droits de succession (Wallonie) : taux « entre autres personnes »',
+    url: 'https://fin.belgium.be/fr/particuliers/famille/deces/droits-succession/bruxelles-wallonie/calcul-paiement',
+    consulte: '2026-11-19',
+    constat: 'Entre autres personnes : 30 % jusqu’à 12 500 €, 35 % jusqu’à 25 000 €, 60 % jusqu’à 75 000 €, 80 % au-delà (cumuls 3 750 / 8 125 / 38 125 / 118 125 €). Rien sur les assurances-vie (art. 8) dans la partie lue mot à mot.',
+  },
+  spfDonationsAutres: {
+    titre: 'SPF Finances — Donations (Région wallonne, biens mobiliers)',
+    url: 'https://fin.belgium.be/fr/particuliers/autres-services/donations',
+    consulte: '2026-11-19',
+    constat: 'Biens mobiliers : 3,3 % en ligne directe, entre époux et cohabitants légaux ; 5,5 % « entre toutes les autres personnes ». Don manuel ou bancaire non enregistré : aucun droit de donation, mais droits de succession si le donateur décède dans les cinq ans (trois ans pour les dons non enregistrés avant le 01/01/2022).',
+  },
   notaire: {
     titre: 'Notaire.be — Usufruit et nue-propriété',
     url: 'https://www.notaire.be/usufruit-et-nue-propriete',
@@ -93,6 +105,8 @@ export interface DonationProfile {
   validFrom: ISODate | null;
   validTo: ISODate | null;
   mobilierBp: number;
+  /** Donation mobilière entre toutes les autres personnes (hors ligne directe, époux, cohabitants légaux). */
+  mobilierAutresBp: number;
   immobilier: Bracket[];
   cumul: 'non_verifie';
   sources: RuleSource[];
@@ -185,6 +199,19 @@ export const SUCC_FRERES_SOEURS: SuccessionProfile = {
   postesCouverts: ['succession entre frères et sœurs'],
 };
 
+/** Succession entre personnes non parentes (profil en vigueur) : rappel d'un don non enregistré fait à une belle-sœur, par ex. */
+export const SUCC_AUTRES_PERSONNES: SuccessionProfile = {
+  ...SUCC_ACTUEL,
+  id: 'WAL-SUCC-AUTRES-PERSONNES',
+  label: 'Wallonie — droits de succession entre autres personnes (barème actuel)',
+  ordinaire: [b(12500, 30), b(25000, 35), b(75000, 60), b(null, 80)],
+  logement: null,
+  abattement: { base: 0, supplement: null, supplementStatut: 'verifie', reserveHeritierLegal: 'a_confirmer' },
+  sources: [SOURCES.spfTarifsNonParents],
+  notes: ['Barème lu sur la page SPF Finances le 19/11/2026 ; aucune exemption entre personnes non parentes.'],
+  postesCouverts: ['succession entre personnes non parentes'],
+};
+
 export const DON_ACTUEL: DonationProfile = {
   id: 'WAL-DON-ACTUEL',
   label: 'Wallonie — droits de donation, profil en vigueur',
@@ -192,9 +219,10 @@ export const DON_ACTUEL: DonationProfile = {
   validFrom: null,
   validTo: '2027-12-31',
   mobilierBp: 330,
+  mobilierAutresBp: 550,
   immobilier: [b(150000, 3), b(250000, 9), b(450000, 18), b(null, 27)],
   cumul: 'non_verifie',
-  sources: [SOURCES.spfDonations, SOURCES.decret2024],
+  sources: [SOURCES.spfDonations, SOURCES.spfDonationsAutres, SOURCES.decret2024],
   notes: ['Cumul de donations immobilières successives entre les mêmes parties : règle non trouvée dans les sources consultées, à vérifier.', 'Base d’une donation avec réserve d’usufruit : valeur de la pleine propriété du lot donné (pratique à confirmer par le notaire).'],
 };
 
@@ -207,12 +235,12 @@ export const DON_2028: DonationProfile = {
   validTo: null,
   immobilier: [b(150000, 3), b(250000, 6), b(450000, 10), b(null, 14)],
   sources: [SOURCES.decret2024, SOURCES.annonce2026],
-  notes: ['Voté le 05/12/2024 (art. 21, CDE art. 131) ; le communiqué du 12/10/2026 annonce son maintien. Taux mobilier 3,3 % supposé inchangé (non visé par le décret).', ...DON_ACTUEL.notes],
+  notes: ['Voté le 05/12/2024 (art. 21, CDE art. 131) ; le communiqué du 12/10/2026 annonce son maintien. Taux mobiliers 3,3 % et 5,5 % supposés inchangés (non visés par le décret).', ...DON_ACTUEL.notes],
 };
 
 export const DON_CONSTANT_2026: DonationProfile = { ...DON_ACTUEL, id: 'CF-DON-CONSTANT-2026', statut: 'contrefactuel', validTo: null, label: 'Donation à barème 2026 constant (contrefactuel)' };
 
-export const ALL_PROFILES = [SUCC_ACTUEL, SUCC_FRERES_SOEURS, SUCC_DECRET_2024, SUCC_ANNONCE_2026, SUCC_CONSTANT_2026, DON_ACTUEL, DON_2028, DON_CONSTANT_2026];
+export const ALL_PROFILES = [SUCC_ACTUEL, SUCC_FRERES_SOEURS, SUCC_AUTRES_PERSONNES, SUCC_DECRET_2024, SUCC_ANNONCE_2026, SUCC_CONSTANT_2026, DON_ACTUEL, DON_2028, DON_CONSTANT_2026];
 
 export const REFORM_DATE = '2028-01-01';
 

@@ -124,7 +124,7 @@ describe('parcours interface', () => {
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
     await user.type(montant(/^Autres biens nets/), '-60000');
     await user.tab();
-    await user.type(montant(/^Assurance groupe/), '300000');
+    await user.type(montant(/^Assurance groupe \/ vie versée à la bénéficiaire/), '300000');
     await user.tab();
     expect(card.textContent).not.toMatch(/Montant négatif non admis/);
     // 50 000 € de maison − 60 000 € = passif non couvert de 10 000 €
@@ -132,6 +132,25 @@ describe('parcours interface', () => {
     // Hypothèse prudente : assurance seule taxée (300 000 € → 38 625 − 375 = 38 250 €)
     const acc = within(card).getByRole('article', { name: /accepte le legs/ });
     expect(acc.textContent).toMatch(/38.250,00.€/);
+  });
+
+  it('assurance du fils survivant : comparaison garder / transmettre à la bénéficiaire', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
+    expect(within(card).queryByRole('region', { name: /la garder ou la transmettre/ })).toBeNull();
+    const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
+    await user.type(montant(/^Assurance groupe \/ vie versée au fils survivant/), '20000');
+    await user.tab();
+    const tr = within(card).getByRole('region', { name: /la garder ou la transmettre/ });
+    // 20 000 € au barème frères et sœurs : 2 500 + 7 500 × 25 % = 4 375 € (hypothèse prudente : taxé)
+    expect(tr.textContent).toMatch(/4.375,00.€/);
+    expect(tr.textContent).toMatch(/Donation enregistrée.*5,5 %/);
+    // Clause inconnue : renonciation au bénéfice non chiffrée
+    expect(tr.textContent).toMatch(/Clause bénéficiaire à lire/);
+    // Fiche notaire : question sur le contrat refusé
+    await user.click(screen.getByRole('tab', { name: /notaire/i }));
+    expect(document.body.textContent).toMatch(/exclusion du suicide/);
   });
 
   it('suites de la succession de la mère : source cadastre, quasi-usufruit, autres immeubles', async () => {

@@ -48,6 +48,12 @@ export function NotaireTab({ state, rows, showNames, setShowNames }: { state: Ap
               <li>☐ Si elle renonce : dévolution légale (<T>1/4 au père, 3/4 au fils survivant</T> ?), barème entre frères et sœurs, plancher « pas moins que le renonçant » (art. 68 C. succ.) et sa répartition.</li>
               <li>☐ Base taxable de la nue-propriété dont <T>le père</T> garde l’usufruit (valeur de la pleine propriété ou de la nue-propriété ? coefficient ?) ; autres biens et dettes de cette succession ; délai de la déclaration (4 mois ?) et de l’option.</li>
               <li>☐ Assurances groupe / vie versées à {who('beneficiaire')} ({formatEUR(s.succFilsPredecede.assurance.cents)}) : soumises aux droits de succession (art. 8 C. succ.) ? Montant brut ou net des retenues ? Les dettes de la succession peuvent-elles s’imputer sur ce capital ? Conservées si elle renonce ?</li>
+              <li>☐ Assurance groupe / vie <T>au profit du fils survivant</T> ({formatEUR(s.succFilsPredecede.assuranceFils.cents)}) : taxée au barème entre frères et sœurs (art. 8 C. succ.) ? Montant brut ou net des retenues ? Clause bénéficiaire : qui reçoit si <T>le fils survivant</T> renonce au bénéfice ? Délai et forme de cette renonciation ; une renonciation pure et simple est-elle exempte de droits de donation ?
+                <ul>
+                  <li>☐ Pour transmettre ce capital à {who('beneficiaire')} : renonciation au bénéfice, don bancaire (risque de rappel si décès du donateur dans les 5 ans, barème entre non-parents) ou donation enregistrée (5,5 %) ? Faut-il attendre son option successorale (créanciers) ?</li>
+                </ul>
+              </li>
+              <li>☐ Contrat refusé par l’assureur (exclusion du suicide) : clause exacte (en principe, suicide exclu seulement pendant la première année du contrat, sauf clause contraire) ; la réserve déjà constituée est-elle versée malgré tout ? Demander la réponse écrite de l’assureur.</li>
               <li>☐ Dettes de cette succession : nature (crédit hypothécaire ?), assurance solde restant dû ? Si les dettes dépassent les biens et qu’elle renonce : risque pour <T>le père</T> et <T>le fils survivant</T>, acceptation sous bénéfice d’inventaire ou renonciation, délais.</li>
               <li>☐ Logement du couple (détenu pour moitié par chacun) : exemption « logement familial » du cohabitant légal pour la moitié recueillie (non modélisée : cette moitié est comptée dans les « autres biens nets ») ?</li>
             </ul>

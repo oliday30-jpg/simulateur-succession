@@ -217,6 +217,19 @@ export const HELP = {
     ou: 'Question pour le notaire (art. 8 du Code des droits de succession, cas particulier des assurances groupe).',
     siVide: VIDE_FOURCHETTE,
   },
+  sfpAssuranceFils: {
+    quoi: 'Le capital d’une assurance groupe ou vie du fils prédécédé dont le fils survivant est le bénéficiaire désigné. Hors succession : les dettes ne s’y imputent pas. '
+      + 'En principe taxé dans son chef au barème entre frères et sœurs (20 % à 65 %). Une fois versé, il peut le donner à qui il veut : le simulateur compare les façons de le transmettre.',
+    ou: 'Courrier de l’assureur ou de l’employeur (règlement du plan de pension, clause bénéficiaire).',
+    exemple: '20 000',
+    siVide: 'Rien n’est compté et la comparaison « garder / transmettre » n’est pas affichée.',
+    certitude: 'Préciser si le montant est brut ou net des retenues (INAMI, solidarité, impôt).',
+  },
+  sfpAssuranceFilsSuivant: {
+    quoi: 'Le bénéficiaire suivant prévu par le contrat si le fils survivant renonce au capital. Si c’est la bénéficiaire, renoncer peut éviter une double taxation ; si personne n’est prévu, le capital tombe dans la succession (et sert à payer les dettes).',
+    ou: 'Clause bénéficiaire du contrat ou règlement du plan d’assurance groupe (à demander à l’assureur, par écrit).',
+    siVide: '« Inconnu » : l’option « renonciation au bénéfice » n’est pas chiffrée.',
+  },
   sfpBaseNP: {
     quoi: 'Sur quelle valeur se calculent les droits sur la nue-propriété héritée : la pleine propriété, ou la nue-propriété seule (avec un coefficient).',
     ou: 'Question pour le notaire.',

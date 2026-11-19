@@ -120,6 +120,14 @@ export interface SuccessionFilsPredecede {
    */
   assurance: Value;
   assuranceTaxee: 'inconnu' | 'oui' | 'non';
+  /**
+   * Assurance groupe / vie du fils prédécédé versée au FILS SURVIVANT (bénéficiaire désigné) : hors succession,
+   * en principe soumise aux droits de succession dans son chef au barème entre frères et sœurs (art. 8, à confirmer).
+   */
+  assuranceFils: Value;
+  assuranceFilsTaxee: 'inconnu' | 'oui' | 'non';
+  /** À qui va ce capital si le fils survivant renonce au bénéfice du contrat (clause bénéficiaire). */
+  assuranceFilsSuivant: 'inconnu' | 'beneficiaire' | 'succession' | 'autre';
   /** Base taxable de la nue-propriété recueillie (règle d'évaluation non trouvée dans les sources consultées). */
   baseNP: 'a_confirmer' | 'pleine_propriete' | 'nue_propriete';
   /** Valeur de la nue-propriété en fraction de la pleine propriété (fournie par le notaire). */

@@ -115,6 +115,15 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   - alerte quand un anniversaire de changement de tranche tombe près de la date de vente (convention : jour anniversaire → « à confirmer ») ;
   - bouton « utiliser ce repère » qui recopie la valeur dans le champ coefficient (action explicite de l'utilisateur).
   Tests : calculs indépendants en commentaire (ex. né le 01/07/1950, vente le 01/07/2028 → 78 ans → 16 % ; vente le 02/07/2030 → 8 %).
+- [ ] **T13 — Assurance versée au fils survivant et transmission à la bénéficiaire** (bloc « Succession du fils prédécédé »)
+  Nouvelle donnée (19/11/2026) : une petite assurance groupe du fils prédécédé désigne **le fils survivant** ; un autre contrat
+  (capital pension) serait refusé par l'assureur (exclusion suicide) ; dettes ≈ la moitié de l'assurance de la bénéficiaire.
+  Cases : capital versé au fils survivant, « taxé ? » (oui / non / à confirmer → fourchette), bénéficiaire suivant si le fils renonce au bénéfice.
+  Moteur : capital taxé au barème frères et sœurs dans le chef du fils (art. 8, à confirmer) — seul si la bénéficiaire accepte, ajouté à ses 3/4 si elle renonce.
+  Comparaison « garder / don bancaire non enregistré (risque de rappel 5 ans au barème entre non-parents) / donation enregistrée 5,5 % /
+  renonciation au bénéfice (seulement si la clause désigne ensuite la bénéficiaire ; sinon le capital peut tomber dans la succession) ».
+  Règles : barème « entre autres personnes » 30/35/60/80 % et donation mobilière « autres personnes » 5,5 % (SPF, consultés le 19/11/2026).
+  Fiche notaire : clause bénéficiaire, retenues, renonciation au bénéfice, attendre l'option successorale de la bénéficiaire, contrat refusé (clause suicide, réserve).
 
 ## Idées en attente (non décidées)
 
