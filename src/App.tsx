@@ -11,10 +11,13 @@ import { ComparisonTab, type Row } from './ui/ComparisonTab';
 import { DetailTab } from './ui/DetailTab';
 import { NotaireTab } from './ui/NotaireTab';
 import { RapportTab } from './ui/RapportTab';
+import { SuccFilsPredecedeTab } from './ui/SuccFilsPredecedeTab';
+import { renameText } from './ui/naming';
 import { CheckField } from './ui/fields';
 
 const TABS = [
   { id: 'situation', label: 'Situation et sources' },
+  { id: 'succFilsPredecede', label: 'Succession du fils prédécédé' },
   { id: 'rapport', label: 'Rapport simple' },
   { id: 'scenarios', label: 'Scénarios' },
   { id: 'comparaison', label: 'Comparaison' },
@@ -94,7 +97,7 @@ export function App({ initial }: { initial?: AppState } = {}) {
       <nav className="tabs no-print" role="tablist" aria-label="Sections">
         {TABS.map((t, i) => (
           <button key={t.id} ref={(el) => { tabRefs.current[i] = el; }} role="tab" id={`tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`panel-${t.id}`}
-            tabIndex={tab === t.id ? 0 : -1} onClick={() => setTab(t.id)} onKeyDown={(e) => onTabKey(e, i)}>{t.label}</button>
+            tabIndex={tab === t.id ? 0 : -1} onClick={() => setTab(t.id)} onKeyDown={(e) => onTabKey(e, i)}>{renameText(t.label, names)}</button>
         ))}
       </nav>
       <main id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={-1}>
@@ -106,7 +109,8 @@ export function App({ initial }: { initial?: AppState } = {}) {
         )}
         {msg && <p className="banner" role="status">{msg} <button type="button" className="link" onClick={() => setMsg(null)}>Fermer</button></p>}
         {tab === 'situation' && <SituationTab s={state.situation} update={updateSituation} names={names} setName={(id, n) => { setNames((p) => ({ ...p, [id]: n })); touched(); }} />}
-        {tab === 'rapport' && <RapportTab state={state} />}
+        {tab === 'succFilsPredecede' && <SuccFilsPredecedeTab s={state.situation} update={updateSituation} />}
+        {tab === 'rapport' &&<RapportTab state={state} />}
         {tab === 'scenarios' && <ScenariosTab state={state} update={update} results={results} />}
         {tab === 'comparaison' && <ComparisonTab state={state} rows={rows} />}
         {tab === 'detail' && <DetailTab rows={rows} allRows={allRows} />}

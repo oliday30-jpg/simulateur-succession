@@ -20,6 +20,7 @@ describe('aide des cases', () => {
   it('assurance du fils survivant : aide propre pour « taxée ? » et aide du tableau de comparaison', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     // La case « taxée ? » du fils survivant a sa propre aide (barème entre frères et sœurs), pas celle de la bénéficiaire.
     await user.click(screen.getByRole('button', { name: /Aide : Assurance du fils survivant soumise/ }));
     const p1 = screen.getByRole('dialog', { name: /Aide : Assurance du fils survivant soumise/ });

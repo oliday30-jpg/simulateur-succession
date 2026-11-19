@@ -51,7 +51,7 @@ export const HELP = {
   quartResolution: {
     quoi: 'Ce que devient la part (nue-propriété) du fils prédécédé : gardée par sa bénéficiaire si elle accepte, ou revenant au père et au fils survivant si elle renonce.',
     ou: 'Notaire de la succession du fils prédécédé ; décision de la bénéficiaire (acceptation ou renonciation).',
-    siVide: '« Inconnu » : cette part reste au nom de la succession ouverte ; les deux options sont chiffrées plus bas pour comparaison.',
+    siVide: '« Inconnu » : cette part reste au nom de la succession ouverte ; les deux options sont chiffrées dans cet onglet pour comparaison.',
   },
   logementEligibilite: {
     quoi: 'Si la part de la maison recueillie au décès du père peut bénéficier du taux réduit « logement familial ».',

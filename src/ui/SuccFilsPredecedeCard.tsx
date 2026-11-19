@@ -21,7 +21,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
       <h2 id="h-sfp"><T>Succession du fils prédécédé : droits selon l’option de la bénéficiaire</T></h2>
       <p className="muted">
         {t(`Droits de succession dus sur la succession du fils prédécédé (décès du ${formatDate(r.dateDeces)}), pas sur celle du père.`)}{' '}
-        Les deux options sont toujours calculées pour pouvoir les comparer ; l’option retenue se choisit dans « Part du fils prédécédé » ci-dessus. Estimation indicative, à valider par le notaire.
+        Les deux options sont toujours calculées pour pouvoir les comparer ; l’option retenue se choisit dans « Part du fils prédécédé » en haut de cet onglet. Estimation indicative, à valider par le notaire.
       </p>
       <div className="grid">
         <SelectField label="Testament" help="sfpTestament" value={o.testament} onChange={(v) => set((x) => { x.testament = v; })}

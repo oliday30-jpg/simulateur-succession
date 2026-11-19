@@ -106,6 +106,7 @@ describe('parcours interface', () => {
   it('succession du fils prédécédé : renonciation retenue, partage des lots et droits comparés', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     // Valeurs par défaut : hypothèse prudente chiffrée (50 000 € en PP, sans supplément) → 1 750 € si elle accepte
     const acc = within(card).getByRole('article', { name: /accepte le legs/ });
@@ -117,9 +118,29 @@ describe('parcours interface', () => {
     expect(screen.getByText(/^Après l’option retenue :/).textContent).toMatch(/Père — PP 17\/24/);
   });
 
+  it('succession du fils prédécédé : onglet séparé de la situation du père, renvoi et prénom', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    // Onglet Situation : plus de bloc ni de cases propres à cette succession, seulement un renvoi.
+    expect(screen.queryByRole('region', { name: /Succession du fils prédécédé : droits/ })).toBeNull();
+    expect(screen.queryByLabelText(/^Part du fils prédécédé \(nue-propriété\)/)).toBeNull();
+    expect(screen.queryByRole('group', { name: /décès du fils prédécédé/ })).toBeNull();
+    expect(screen.getByTestId('renvoi-sfp').textContent).toMatch(/Inconnu|inconnu/);
+    await user.type(screen.getByLabelText('Prénom — Fils prédécédé'), 'Pierre');
+    // Le libellé de l'onglet et le renvoi prennent le prénom.
+    expect(screen.getByTestId('renvoi-sfp').textContent).toMatch(/onglet « Succession de Pierre »/);
+    await user.click(screen.getByRole('tab', { name: 'Succession de Pierre' }));
+    expect(screen.getByRole('region', { name: /Succession de Pierre : droits/ })).toBeTruthy();
+    expect(screen.getByRole('group', { name: /décès de Pierre/ })).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText(/^Part de Pierre \(nue-propriété\)/), 'renonciation');
+    await user.click(screen.getByRole('tab', { name: 'Situation et sources' }));
+    expect(screen.getByTestId('renvoi-sfp').textContent).toMatch(/PP 17\/24/);
+  });
+
   it('succession du fils prédécédé : dettes supérieures aux biens (montant négatif) et assurance', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
     await user.type(montant(/^Autres biens nets/), '-60000');
@@ -137,6 +158,7 @@ describe('parcours interface', () => {
   it('assurance du fils survivant : comparaison garder / transmettre à la bénéficiaire', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     expect(within(card).queryByRole('region', { name: /la garder ou la transmettre/ })).toBeNull();
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
@@ -159,8 +181,10 @@ describe('parcours interface', () => {
     // Préréglage par défaut (acte 2005) : la note cite le cadastre comme confirmation.
     expect(document.body.textContent).toMatch(/Situation reprise par le cadastre \(MyMinfin, consulté le 18\/11\/2026/);
     // Bloc du fils prédécédé : les « autres biens » rappellent la créance de restitution.
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     expect(card.textContent).toMatch(/créance de restitution du quasi-usufruit/);
+    await user.click(screen.getByRole('tab', { name: 'Situation et sources' }));
     await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
     await user.click(screen.getByRole('tab', { name: 'Questions pour le notaire' }));
     const fiche = screen.getByRole('article', { name: 'Questions à valider avec le notaire' });
@@ -203,7 +227,7 @@ describe('parcours interface', () => {
     render(<App initial={defaultState()} />);
     screen.getByRole('tab', { name: 'Situation et sources' }).focus();
     await user.keyboard('{ArrowRight}');
-    expect(screen.getByRole('tab', { name: 'Rapport simple' })).toHaveProperty('ariaSelected', 'true');
+    expect(screen.getByRole('tab', { name: 'Succession du fils prédécédé' })).toHaveProperty('ariaSelected', 'true');
   });
 
   it('rapport simple : chiffres de la référence, piste, conseils et prénoms', async () => {
