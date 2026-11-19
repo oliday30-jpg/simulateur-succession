@@ -115,7 +115,8 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   - alerte quand un anniversaire de changement de tranche tombe près de la date de vente (convention : jour anniversaire → « à confirmer ») ;
   - bouton « utiliser ce repère » qui recopie la valeur dans le champ coefficient (action explicite de l'utilisateur).
   Tests : calculs indépendants en commentaire (ex. né le 01/07/1950, vente le 01/07/2028 → 78 ans → 16 % ; vente le 02/07/2030 → 8 %).
-- [ ] **T13 — Assurance versée au fils survivant et transmission à la bénéficiaire** (bloc « Succession du fils prédécédé »)
+- [x] **T13 — Assurance versée au fils survivant et transmission à la bénéficiaire** (bloc « Succession du fils prédécédé »)
+  _19/11/2026 — commit 822f4ba. 137 tests + build OK. Poussé._
   Nouvelle donnée (19/11/2026) : une petite assurance groupe du fils prédécédé désigne **le fils survivant** ; un autre contrat
   (capital pension) serait refusé par l'assureur (exclusion suicide) ; dettes ≈ la moitié de l'assurance de la bénéficiaire.
   Cases : capital versé au fils survivant, « taxé ? » (oui / non / à confirmer → fourchette), bénéficiaire suivant si le fils renonce au bénéfice.
