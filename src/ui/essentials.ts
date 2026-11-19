@@ -66,8 +66,8 @@ export function sfpNeeds(s: Situation): { label: string; filled: boolean }[] {
     { label: 'Assurance versée à la bénéficiaire : existe-t-elle ?', filled: o.assuranceExiste !== 'inconnu' },
   ];
   if (assuranceAChiffrer(o.assuranceExiste)) out.push({ label: 'Montant de l’assurance de la bénéficiaire', filled: o.assurance.cents !== null });
-  out.push({ label: 'Assurance versée au fils survivant : existe-t-elle ?', filled: o.assuranceFilsExiste !== 'inconnu' });
-  if (assuranceAChiffrer(o.assuranceFilsExiste)) out.push({ label: 'Montant de l’assurance du fils survivant', filled: o.assuranceFils.cents !== null });
+  out.push({ label: 'Assurance versée au fils survivant (frère du fils prédécédé) : existe-t-elle ?', filled: o.assuranceFilsExiste !== 'inconnu' });
+  if (assuranceAChiffrer(o.assuranceFilsExiste)) out.push({ label: 'Montant de l’assurance du fils survivant (frère du fils prédécédé)', filled: o.assuranceFils.cents !== null });
   if (o.baseNP === 'nue_propriete') out.push({ label: 'Valeur de la nue-propriété (%)', filled: o.coefNP !== null });
   return out;
 }

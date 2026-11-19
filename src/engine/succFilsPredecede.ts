@@ -165,7 +165,7 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   else if (o.assuranceExiste !== 'non' && ass === null) avertissements.push('Assurance groupe / vie versée à la bénéficiaire : montant non renseigné, non comptée (ses droits sont sous-estimés).');
   const assF = capitalOf(o.assuranceFilsExiste, o.assuranceFils);
   const assFIncertaine = o.assuranceFilsExiste === 'possible';
-  if (o.assuranceFilsExiste !== 'inconnu' && o.assuranceFilsExiste !== 'non' && assF === null) avertissements.push('Assurance groupe / vie versée au fils survivant : montant non renseigné, non comptée.');
+  if (o.assuranceFilsExiste !== 'inconnu' && o.assuranceFilsExiste !== 'non' && assF === null) avertissements.push('Assurance groupe / vie versée au fils survivant (frère du fils prédécédé) : montant non renseigné, non comptée.');
 
   const sources = [SOURCES.spfSuccession, SOURCES.spfTarifsAutres];
   const res = resolveSuccession(dateDeces, 'auto');

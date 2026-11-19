@@ -215,7 +215,7 @@ export const HELP = {
     siVide: '« Je ne sais pas encore » : rien n’est compté et un avertissement le rappelle. Le montant n’est demandé que pour « Oui » ou « Peut-être ».',
   },
   sfpAssuranceFilsExiste: {
-    quoi: 'Si une assurance groupe ou vie du fils prédécédé verse un capital au fils survivant (bénéficiaire désigné). « Peut-être » : contrat non confirmé ; le simulateur calcule avec et sans.',
+    quoi: 'Si une assurance groupe ou vie du fils prédécédé verse un capital au fils survivant (bénéficiaire désigné). Le fils survivant est l’autre enfant du père, frère du fils prédécédé (pas un enfant de celui-ci). « Peut-être » : contrat non confirmé ; le simulateur calcule avec et sans.',
     ou: 'Courrier de l’assureur ou de l’employeur (clause bénéficiaire, règlement du plan de pension).',
     siVide: '« Je ne sais pas encore » : rien n’est compté et la comparaison « garder / transmettre » n’est pas affichée.',
   },
@@ -240,7 +240,7 @@ export const HELP = {
     siVide: VIDE_FOURCHETTE,
   },
   sfpAssuranceFils: {
-    quoi: 'Le capital d’une assurance groupe ou vie du fils prédécédé dont le fils survivant est le bénéficiaire désigné. Hors succession : les dettes ne s’y imputent pas. '
+    quoi: 'Le capital d’une assurance groupe ou vie du fils prédécédé dont le fils survivant est le bénéficiaire désigné. Le fils survivant est l’autre enfant du père, frère du fils prédécédé (pas un enfant de celui-ci). Hors succession : les dettes ne s’y imputent pas. '
       + 'En principe taxé dans son chef au barème entre frères et sœurs (20 % à 65 %). Une fois versé, il peut le donner à qui il veut : le simulateur compare les façons de le transmettre.',
     ou: 'Courrier de l’assureur ou de l’employeur (règlement du plan de pension, clause bénéficiaire).',
     exemple: '20 000',

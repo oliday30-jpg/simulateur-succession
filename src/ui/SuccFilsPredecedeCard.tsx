@@ -59,14 +59,14 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
         )}
       </div>
       <div className="grid">
-        <SelectField<Existence> label="Une assurance groupe / vie est-elle versée au fils survivant ?" help="sfpAssuranceFilsExiste" essential filled={o.assuranceFilsExiste !== 'inconnu'} value={o.assuranceFilsExiste} onChange={(v) => set((x) => { x.assuranceFilsExiste = v; })} options={EXISTE} />
+        <SelectField<Existence> label="Une assurance groupe / vie est-elle versée au fils survivant (frère du fils prédécédé) ?" help="sfpAssuranceFilsExiste" essential filled={o.assuranceFilsExiste !== 'inconnu'} value={o.assuranceFilsExiste} onChange={(v) => set((x) => { x.assuranceFilsExiste = v; })} options={EXISTE} />
         {assuranceAChiffrer(o.assuranceFilsExiste) && (
           <>
-            <ValueField label="Assurance groupe / vie versée au fils survivant" help="sfpAssuranceFils" essential value={o.assuranceFils} onChange={(v) => set((x) => { x.assuranceFils = v; })}
-              hint="Contrat dont le fils survivant est le bénéficiaire désigné : hors succession, taxé au barème entre frères et sœurs." />
-            <SelectField label="Assurance du fils survivant soumise aux droits de succession ?" help="sfpAssuranceFilsTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
+            <ValueField label="Assurance groupe / vie versée au fils survivant (frère du fils prédécédé)" help="sfpAssuranceFils" essential value={o.assuranceFils} onChange={(v) => set((x) => { x.assuranceFils = v; })}
+              hint="Contrat du fils prédécédé dont son frère, le fils survivant, est le bénéficiaire désigné (il ne s’agit pas d’un enfant du fils prédécédé) : hors succession, taxé au barème entre frères et sœurs." />
+            <SelectField label="Assurance du fils survivant (frère du fils prédécédé) soumise aux droits de succession ?" help="sfpAssuranceFilsTaxee" value={o.assuranceFilsTaxee} onChange={(v) => set((x) => { x.assuranceFilsTaxee = v; })}
               options={[['inconnu', 'À confirmer (fourchette)'], ['oui', 'Oui (confirmé)'], ['non', 'Non (confirmé)']]} />
-            <SelectField label="Si le fils survivant renonce au bénéfice du contrat, le capital va à…" help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
+            <SelectField label="Si le fils survivant (frère du fils prédécédé) renonce au bénéfice du contrat, le capital va à…" help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
               options={[['inconnu', 'Inconnu (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['succession', 'Personne : la succession'], ['autre', 'Une autre personne']]}
               hint="Lire la clause bénéficiaire (ou le règlement du plan) avant d’accepter le capital." />
           </>
@@ -123,10 +123,10 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
 function TransmissionBlock({ tr }: { tr: TransmissionResult }) {
   const who = useWho();
   const t = useT();
-  const help = useHelp('sfpTransmission', 'Garder ou transmettre l’assurance du fils survivant');
+  const help = useHelp('sfpTransmission', 'Garder ou transmettre l’assurance du fils survivant (frère du fils prédécédé)');
   return (
     <section aria-labelledby="h-sfp-trans">
-      <h3 id="h-sfp-trans">{t(`Assurance du fils survivant (${formatEUR(tr.capital)}) : la garder ou la transmettre à la bénéficiaire ?`)} {help.button}</h3>
+      <h3 id="h-sfp-trans">{t(`Assurance du fils survivant, frère du fils prédécédé (${formatEUR(tr.capital)}) : la garder ou la transmettre à la bénéficiaire ?`)} {help.button}</h3>
       {help.panel}
       <div className="table-wrap">
         <table>

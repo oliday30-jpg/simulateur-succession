@@ -23,8 +23,8 @@ describe('aide des cases', () => {
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     await user.selectOptions(screen.getByLabelText(/^Une assurance groupe \/ vie est-elle versée au fils survivant/), 'oui');
     // La case « taxée ? » du fils survivant a sa propre aide (barème entre frères et sœurs), pas celle de la bénéficiaire.
-    await user.click(screen.getByRole('button', { name: /Aide : Assurance du fils survivant soumise/ }));
-    const p1 = screen.getByRole('dialog', { name: /Aide : Assurance du fils survivant soumise/ });
+    await user.click(screen.getByRole('button', { name: /Aide : Assurance du fils survivant \(frère du fils prédécédé\) soumise/ }));
+    const p1 = screen.getByRole('dialog', { name: /Aide : Assurance du fils survivant \(frère du fils prédécédé\) soumise/ });
     expect(p1.textContent).toMatch(/frères et sœurs/);
     expect(p1.textContent).not.toMatch(/part de maison/);
     await user.keyboard('{Escape}');

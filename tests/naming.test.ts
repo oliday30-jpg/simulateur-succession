@@ -40,4 +40,11 @@ describe('Prénoms à la place des rôles (affichage)', () => {
     expect(whoLabel('quart', N)).toBe('Titulaire de la part de Pierre (à déterminer)');
     expect(whoLabel('succession', N)).toBe('Succession');
   });
+  it('assurance du fils survivant : le lien « frère » reste lisible avec les prénoms', () => {
+    // Attendu écrit à la main : « au fils survivant » → « à Olivier », « du fils prédécédé » → « de Pierre ».
+    expect(renameText('Assurance groupe / vie versée au fils survivant (frère du fils prédécédé)', N))
+      .toBe('Assurance groupe / vie versée à Olivier (frère de Pierre)');
+    expect(renameText('Le fils survivant est l’autre enfant du père, frère du fils prédécédé (pas un enfant de celui-ci).', N))
+      .toBe('Olivier est l’autre enfant de Marcel, frère de Pierre (pas un enfant de celui-ci).');
+  });
 });
