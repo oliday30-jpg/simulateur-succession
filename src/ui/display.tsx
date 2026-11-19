@@ -10,6 +10,10 @@ import { formatBp } from '../util/money';
 /** Noms affichés (navigateur uniquement). */
 export const NamesContext = createContext<{ names: Record<string, string>; show: boolean }>({ names: {}, show: true });
 
+/** Aperçu avant impression : les cases s'affichent en texte (« non renseigné » si vides), sans aide ni repère jaune / vert. */
+export const ReadOnlyContext = createContext(false);
+export const useReadOnly = () => useContext(ReadOnlyContext);
+
 /** Libellé d'une personne : son prénom s'il est saisi (et affichable), sinon son rôle. */
 export function useWho() {
   const { names, show } = useContext(NamesContext);

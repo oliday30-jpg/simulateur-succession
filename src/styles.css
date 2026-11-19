@@ -225,3 +225,12 @@ button.help-btn[aria-expanded='true'] { background: var(--accent); color: var(--
 .help-pop dt:first-child { margin-top: 0; }
 .help-pop dd { margin: 2px 0 0; }
 @media print { .help-btn, .help-pop { display: none; } }
+
+/* Aperçu PDF d'un onglet (T15) : cases rendues en texte */
+.field.ro .ro-label, .value-field.ro .value-title { font-weight: 600; font-size: 0.9rem; }
+.ro-value { display: inline-block; padding: 2px 0; border-bottom: 1px dotted var(--border); min-width: 6em; }
+.ro-value.ro-empty { font-style: italic; color: var(--muted); }
+.apercu { display: flex; flex-direction: column; gap: 12px; }
+.entete-pdf p { margin: 4px 0; }
+.donnees-reprises { border-left: 4px solid var(--accent); padding: 4px 12px; margin: 8px 0; }
+@media print { .apercu .ro-empty { color: #333; } }

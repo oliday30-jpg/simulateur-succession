@@ -1,10 +1,10 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
-import { centsToInput, parseEUR, type Cents } from '../util/money';
+import { centsToInput, formatEUR, parseEUR, type Cents } from '../util/money';
 import { formatDate, parseUserDate, type ISODate } from '../util/dates';
 import { formatFrac, parseFrac, type Frac } from '../util/fraction';
 import type { Certainty, Value } from '../model/types';
-import { useT } from './display';
+import { useReadOnly, useT } from './display';
 import { HELP, type HelpKey } from './help';
 
 /** Champ indispensable à l'estimation : `filled` indique s'il est déjà renseigné. */
@@ -40,7 +40,8 @@ export function useHelp(key: HelpKey | undefined, label: string) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  if (!key) return { button: null, panel: null };
+  const ro = useReadOnly();
+  if (!key || ro) return { button: null, panel: null };
   const h: { quoi: string; ou: string; exemple?: string; siVide: string; certitude?: string; titres?: { quoi?: string; ou?: string; siVide?: string } } = HELP[key];
   const name = `Aide : ${t(label)}`;
   const button = (
@@ -116,8 +117,18 @@ function HelpPopover({ id, name, anchor, onClose, children }: { id: string; name
 /** Les libellés et aides affichent les prénoms à la place des rôles (sauf `keepRoles`). */
 export function Shell({ label, hint, help, error, id, children, className, keepRoles, essential, filled }: FieldShell) {
   const tr = useT();
+  const ro = useReadOnly();
   const { button, panel } = useHelp(help, label);
   const t = keepRoles ? (x: string) => x : tr;
+  if (ro) {
+    return (
+      <div className={`field ro ${className ?? ''}`}>
+        <div className="field-head"><span className="label-row"><span className="ro-label" id={`${id}-lbl`}>{t(label)}</span></span></div>
+        <div className="field-ctl" aria-labelledby={`${id}-lbl`}>{children}</div>
+        <div className="field-foot">{hint && <small className="hint">{t(hint)}</small>}</div>
+      </div>
+    );
+  }
   return (
     <div className={`field ${className ?? ''} ${error ? 'has-error' : ''} ${needClass({ essential, filled })}`}>
       {/* Trois zones (en-tête, case, aide) : dans une grille, elles s'alignent d'une colonne à l'autre (subgrid). */}
@@ -135,14 +146,21 @@ export function Shell({ label, hint, help, error, id, children, className, keepR
   );
 }
 
+/** Valeur d'une case en aperçu : texte lisible, « non renseigné » si vide. */
+export function RoValue({ text }: { text: string }) {
+  return text.trim() ? <span className="ro-value">{text}</span> : <span className="ro-value ro-empty">non renseigné</span>;
+}
+
 const describedBy = (id: string, hint?: string, error?: string | null) =>
   [hint ? `${id}-hint` : '', error ? `${id}-err` : ''].filter(Boolean).join(' ') || undefined;
 
 export function MoneyField({ label, value, onChange, hint, help, allowNegative = false, required = false, className, essential }: { label: string; value: Cents | null; onChange: (v: Cents | null) => void; hint?: string; help?: HelpKey; allowNegative?: boolean; required?: boolean; className?: string; essential?: boolean }) {
   const id = useId();
+  const ro = useReadOnly();
   const [text, setText] = useState(centsToInput(value));
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { setText(centsToInput(value)); }, [value]);
+  if (ro) return <Shell label={label} hint={hint} id={id} className={className}><RoValue text={value === null ? '' : formatEUR(value)} /></Shell>;
   const commit = () => {
     const r = parseEUR(text);
     if (!r.ok) { setError(r.error); return; }
@@ -166,9 +184,11 @@ export function MoneyField({ label, value, onChange, hint, help, allowNegative =
 
 export function DateField({ label, value, onChange, hint, help, allowEmpty = true, essential }: { label: string; value: ISODate | null; onChange: (v: ISODate | null) => void; hint?: string; help?: HelpKey; allowEmpty?: boolean; essential?: boolean }) {
   const id = useId();
+  const ro = useReadOnly();
   const [text, setText] = useState(value ? formatDate(value) : '');
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { setText(value ? formatDate(value) : ''); }, [value]);
+  if (ro) return <Shell label={label} hint={hint} id={id}><RoValue text={value ? formatDate(value) : ''} /></Shell>;
   const commit = () => {
     if (text.trim() === '') { if (allowEmpty) { setError(null); if (value !== null) onChange(null); } else setError('Date requise'); return; }
     const iso = parseUserDate(text);
@@ -189,9 +209,11 @@ export function DateField({ label, value, onChange, hint, help, allowEmpty = tru
 export function FracField({ label, value, onChange, hint, help, essential }: { label: string; value: Frac | null; onChange: (v: Frac | null) => void; hint?: string; help?: HelpKey; essential?: boolean }) {
   const id = useId();
   const show = (f: Frac | null) => (f ? (f.d === 100 || 100 % f.d === 0 ? String(Math.round((f.n / f.d) * 10000) / 100).replace('.', ',') + ' %' : `${f.n}/${f.d}`) : '');
+  const ro = useReadOnly();
   const [text, setText] = useState(show(value));
   const [error, setError] = useState<string | null>(null);
   useEffect(() => { setText(show(value)); }, [value]);
+  if (ro) return <Shell label={label} hint={hint} id={id}><RoValue text={show(value)} /></Shell>;
   const commit = () => {
     if (text.trim() === '') { setError(null); onChange(null); return; }
     const f = parseFrac(text);
@@ -211,6 +233,8 @@ export function FracField({ label, value, onChange, hint, help, essential }: { l
 export function SelectField<T extends string>({ label, value, onChange, options, hint, help, essential, filled = true }: { label: string; value: T; onChange: (v: T) => void; options: [T, string][]; hint?: string; help?: HelpKey } & Need) {
   const t = useT();
   const id = useId();
+  const ro = useReadOnly();
+  if (ro) return <Shell label={label} hint={hint} id={id}><RoValue text={t(options.find(([v]) => v === value)?.[1] ?? '')} /></Shell>;
   return (
     <Shell label={label} hint={hint} help={help} id={id} essential={essential} filled={filled}>
       <select id={id} value={value} onChange={(e) => onChange(e.target.value as T)} aria-describedby={hint ? `${id}-hint` : undefined}>
@@ -222,6 +246,8 @@ export function SelectField<T extends string>({ label, value, onChange, options,
 
 export function TextField({ label, value, onChange, hint, keepRoles }: { label: string; value: string; onChange: (v: string) => void; hint?: string; keepRoles?: boolean }) {
   const id = useId();
+  const ro = useReadOnly();
+  if (ro) return <Shell label={label} hint={hint} id={id} keepRoles={keepRoles}><RoValue text={value} /></Shell>;
   return (
     <Shell label={label} hint={hint} id={id} keepRoles={keepRoles}>
       <input id={id} value={value} autoComplete="off" onChange={(e) => onChange(e.target.value)} />
@@ -233,6 +259,8 @@ export function CheckField({ label, checked, onChange, hint, help }: { label: st
   const id = useId();
   const t = useT();
   const { button, panel } = useHelp(help, label);
+  const ro = useReadOnly();
+  if (ro) return <div className="field check ro"><span className="ro-value">{checked ? '☑ Oui' : '☐ Non'} — {t(label)}</span>{hint && <small className="hint">{t(hint)}</small>}</div>;
   return (
     <div className="field check">
       <div className="field-head" aria-hidden="true" />
@@ -253,6 +281,21 @@ export function ValueField({ label, value, onChange, hint, help, essential, allo
   const t = useT();
   const { button, panel } = useHelp(help, label);
   const titleId = useId();
+  const ro = useReadOnly();
+  if (ro) {
+    const details = [CERTAINTY_LABEL[value.certainty], value.source.trim() ? `provenance : ${value.source.trim()}` : ''].filter(Boolean).join(' ; ');
+    return (
+      <div role="group" aria-labelledby={titleId} className="value-field ro">
+        <div className="value-head"><span id={titleId} className="value-title">{t(label)}</span></div>
+        <div className="field ro">
+          <RoValue text={value.cents === null ? '' : formatEUR(value.cents)} />
+          {value.cents !== null && <small className="hint">{details}</small>}
+          {hint && <small className="hint">{t(hint)}</small>}
+          {value.note && <small className="hint value-note">{value.note}</small>}
+        </div>
+      </div>
+    );
+  }
   // Groupe ARIA plutôt que <fieldset> : Chrome n'aligne pas le contenu d'un fieldset sur la grille parente (subgrid).
   return (
     <div role="group" aria-labelledby={titleId} className={`value-field ${essential ? 'essentiel-groupe' : ''}`}>

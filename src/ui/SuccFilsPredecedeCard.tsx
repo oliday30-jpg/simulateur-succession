@@ -2,7 +2,7 @@ import type { Existence, Situation, SuccessionFilsPredecede } from '../model/typ
 import { assuranceAChiffrer } from './essentials';
 import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
 import { FracField, MoneyField, SelectField, ValueField, useHelp } from './fields';
-import { NumView, SliceTable, T, useT, useWho } from './display';
+import { NumView, SliceTable, T, useReadOnly, useT, useWho } from './display';
 import { formatEUR } from '../util/money';
 import { formatFrac } from '../util/fraction';
 import { formatDate } from '../util/dates';
@@ -19,6 +19,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
   const set = (fn: (o: SuccessionFilsPredecede) => void) => update((d) => fn(d.succFilsPredecede));
   const r = computeSuccFilsPredecede(s);
   const ecart = ecartRenonciation(r);
+  const ro = useReadOnly();
   return (
     <section className="card" aria-labelledby="h-sfp">
       <h2 id="h-sfp"><T>Succession du fils prédécédé : droits selon l’option de la bénéficiaire</T></h2>
@@ -106,7 +107,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
       {ecart && <p><strong>{ecart}</strong></p>}
       {r.transmission && <TransmissionBlock tr={r.transmission} />}
 
-      <details>
+      <details open={ro || undefined}>
         <summary>Montants calculés par le notaire (remplacent l’estimation)</summary>
         <div className="grid">
           <MoneyField help="sfpDroitsNotaire" label={`Droits — ${who('beneficiaire')} (si elle accepte)`} value={o.droitsNotaire.beneficiaire} onChange={(c) => set((x) => { x.droitsNotaire.beneficiaire = c; })} />

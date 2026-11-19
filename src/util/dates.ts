@@ -65,6 +65,11 @@ export function withinYears(act: ISODate, death: ISODate, n: number): { status: 
   return { status: cmpISO(death, ann) < 0 ? 'dans_le_delai' : 'hors_delai', anniversary: ann };
 }
 
+/** Date du jour dans le fuseau de l'appareil (et non en UTC comme `toISOString`). */
+export function localToday(d: Date = new Date()): ISODate {
+  return toISO({ y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() });
+}
+
 export function formatDate(s: ISODate | null | undefined): string {
   const c = parseISO(s);
   if (!c) return 'date non renseignée';
