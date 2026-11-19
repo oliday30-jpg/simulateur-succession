@@ -130,7 +130,12 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   Tests : structure PDF (xref), encodage des accents et de €, symboles remplacés, plusieurs pages, parcours interface (prénoms masqués par défaut).
   _19/11/2026 — commit 692892f. 158 tests + build OK. `src/print/pdf.ts` (Helvetica WinAnsi, A4, tableaux, pied de page) + `src/print/domToPdf.ts` ;
   PDF du cas d'exemple contrôlé page par page (3 pages, titres et en-têtes de tableau jamais seuls en bas de page). Feuille de partage iPhone à tester après le push. Non poussé (accord requis).
-  Suite possible : même bouton pour la fiche notaire et le rapport simple (même problème d'impression depuis l'écran d'accueil)._
+  Suite possible : fiche notaire faite (T19) ; reste le rapport simple (même problème d'impression depuis l'écran d'accueil)._
+- [x] **T19 — « Créer le PDF » pour la fiche « Questions pour le notaire »** (suite de T18 ; même générateur `elementToPdf`)
+  Boutons « Créer le PDF » (feuille de partage iOS) et « Imprimer (ordinateur) » ; prénoms dans le PDF selon la case « Inclure les noms affichés à l'impression »
+  (rendu synchrone `flushSync` le temps de fabriquer le PDF : l'écran garde les prénoms, l'activation utilisateur iOS est conservée) ; date « établie le » en date locale.
+  _19/11/2026 — commit 80aeea1. 159 tests + build OK. PDF du cas d'exemple contrôlé page par page (3 pages : questions, sections 3 à 5, tableau + points en suspens + sources).
+  Feuille de partage iPhone à tester après le push._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
