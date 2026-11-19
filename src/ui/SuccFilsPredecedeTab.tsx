@@ -1,7 +1,9 @@
 import type { Situation } from '../model/types';
 import { HOLDER_LABEL, quartLabel, resolveLots, summarize } from '../domain/rights';
 import type { HolderId } from '../model/types';
-import { useContext, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
+import { shareOrDownload } from '../persistence/io';
+import { elementToPdf } from '../print/domToPdf';
 import { CheckField, NeedLegend, SelectField, TextField, ValueField } from './fields';
 import { countMissing, sfpNeeds } from './essentials';
 import { NamesContext, ReadOnlyContext, T, useReadOnly, useT, useWho } from './display';
@@ -24,6 +26,16 @@ export function SuccFilsPredecedeTab({ s, update }: { s: Situation; update: Upd 
   // Destinataire et choix des prénoms : propres à cette impression, jamais enregistrés ni exportés.
   const [dest, setDest] = useState('');
   const [prenoms, setPrenoms] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const docRef = useRef<HTMLElement>(null);
+  // PDF construit dans l'application : depuis l'icône de l'écran d'accueil, iOS n'ouvre pas la fenêtre d'impression.
+  // Aucune attente avant le partage (l'activation utilisateur doit être conservée sur iOS).
+  const creerPdf = async () => {
+    if (!docRef.current) return;
+    const bytes = elementToPdf(docRef.current, 'Estimation indicative, à valider par le notaire');
+    const how = await shareOrDownload(`succession-fils-predecede-${localToday()}.pdf`, bytes, 'application/pdf');
+    setMsg(how === 'annule' ? null : how === 'partage' ? 'PDF transmis à la feuille de partage.' : 'PDF téléchargé.');
+  };
   if (!apercu) {
     return (
       <div className="stack">
@@ -45,15 +57,17 @@ export function SuccFilsPredecedeTab({ s, update }: { s: Situation; update: Upd 
           <CheckField label="Afficher les prénoms dans ce PDF" checked={prenoms} onChange={setPrenoms} hint="Par défaut, le PDF garde les rôles (« père », « fils prédécédé »…). Réglage propre à ce PDF, indépendant de la fiche notaire." />
         </div>
         <DonneesReprises s={s} />
-        <p className="small"><strong>Sur iPhone :</strong> touchez « Imprimer / enregistrer en PDF », puis dans l’aperçu d’impression touchez Partager → « Enregistrer dans Fichiers » ou envoyez directement le PDF. Si rien ne s’ouvre depuis l’écran d’accueil, ouvrez le site dans Safari puis Partager → Imprimer.</p>
+        <p className="small"><strong>Sur iPhone :</strong> touchez « Créer le PDF », puis choisissez « Enregistrer dans Fichiers », Mail ou Messages dans la feuille de partage. Le PDF reprend le texte de l’aperçu ci-dessous, en mise en page simple. Sur ordinateur, « Imprimer » garde la mise en page de l’écran.</p>
         <div className="row">
-          <button type="button" onClick={() => window.print()}>Imprimer / enregistrer en PDF</button>
-          <button type="button" onClick={() => setApercu(false)}>Revenir à la saisie</button>
+          <button type="button" onClick={() => void creerPdf()}>Créer le PDF</button>
+          <button type="button" onClick={() => window.print()}>Imprimer (ordinateur)</button>
+          <button type="button" onClick={() => { setApercu(false); setMsg(null); }}>Revenir à la saisie</button>
         </div>
+        {msg && <p className="small" role="status">{msg}</p>}
       </section>
       <NamesContext.Provider value={{ names, show: prenoms }}>
         <ReadOnlyContext.Provider value={true}>
-          <article className="apercu" aria-label="Aperçu du document">
+          <article ref={docRef} className="apercu" aria-label="Aperçu du document">
             <EnteteImpression dest={dest} />
             <SfpContent s={s} update={update} />
           </article>

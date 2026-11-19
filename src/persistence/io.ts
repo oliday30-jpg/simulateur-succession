@@ -143,7 +143,7 @@ export function needsBackup(st: { lastExport: number | null; lastChange: number 
  * Sur iPhone : feuille de partage (« Enregistrer dans Fichiers », iCloud Drive…).
  * Ailleurs : téléchargement local. Aucun envoi réseau dans les deux cas.
  */
-export async function shareOrDownload(filename: string, content: string, mime: string): Promise<'partage' | 'telechargement' | 'annule'> {
+export async function shareOrDownload(filename: string, content: string | Uint8Array, mime: string): Promise<'partage' | 'telechargement' | 'annule'> {
   try {
     const file = new File([content], filename, { type: mime });
     const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
@@ -170,7 +170,7 @@ export function readBlobText(b: Blob): Promise<string> {
 }
 
 /** Téléchargement local (Blob) : aucun transfert réseau. */
-export function download(filename: string, content: string, mime: string) {
+export function download(filename: string, content: string | Uint8Array, mime: string) {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

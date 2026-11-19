@@ -60,12 +60,45 @@ describe('PDF de l’onglet « Succession du fils prédécédé »', () => {
     // Données de la situation du père reprises, à vérifier avant l'envoi.
     expect(screen.getByText(/À vérifier : données de la situation/).closest('div')!.textContent).toMatch(/1\/6 \(16,67\s%\) en nue-propriété/);
 
-    await user.click(screen.getByRole('button', { name: 'Imprimer / enregistrer en PDF' }));
+    await user.click(screen.getByRole('button', { name: 'Imprimer (ordinateur)' }));
     expect(print).toHaveBeenCalledTimes(1);
 
     await user.click(screen.getByRole('button', { name: 'Revenir à la saisie' }));
     expect(screen.queryByRole('article', { name: 'Aperçu du document' })).toBeNull();
     expect(screen.getAllByRole('combobox').length).toBeGreaterThan(0);
+  });
+
+  it('« Créer le PDF » : fichier PDF sans prénoms par défaut, avec en-tête et destinataire', async () => {
+    const user = userEvent.setup();
+    const bytesOf = (b: Blob) => new Promise<string>((res) => {
+      const r = new FileReader();
+      r.onload = () => res(Array.from(new Uint8Array(r.result as ArrayBuffer), (c) => String.fromCharCode(c)).join(''));
+      r.readAsArrayBuffer(b);
+    });
+    render(<App initial={defaultState()} />);
+    await user.type(screen.getByLabelText('Prénom — Fils prédécédé'), 'Pierre');
+    await user.click(screen.getByRole('tab', { name: 'Succession de Pierre' }));
+    await user.click(screen.getByRole('button', { name: 'Préparer le PDF de cet onglet' }));
+    await user.type(screen.getByLabelText('Préparé pour (facultatif)'), 'Madame X');
+
+    await user.click(screen.getByRole('button', { name: 'Créer le PDF' }));
+    expect(captured).not.toBeNull();
+    expect(captured!.type).toBe('application/pdf');
+    let pdf = await bytesOf(captured!);
+    expect(pdf.startsWith('%PDF-1.4')).toBe(true);
+    // « Préparé pour : Madame X » en WinAnsi : é = \351.
+    expect(pdf).toContain('(Pr\\351par\\351 pour : Madame X)');
+    expect(pdf).toContain('(Succession du fils pr\\351d\\351c\\351d\\351)');
+    expect(pdf).toContain('non renseign\\351');
+    expect(pdf).not.toContain('Pierre');
+    // Les éléments propres à la saisie ne sont pas repris.
+    expect(pdf).not.toMatch(/Revenir \\340 la saisie|Indispensable/);
+    expect(screen.getByRole('status').textContent).toMatch(/PDF téléchargé/);
+
+    await user.click(screen.getByLabelText('Afficher les prénoms dans ce PDF'));
+    await user.click(screen.getByRole('button', { name: 'Créer le PDF' }));
+    pdf = await bytesOf(captured!);
+    expect(pdf).toContain('(Succession de Pierre)');
   });
 
   it('le destinataire n’est ni enregistré ni exporté', async () => {
