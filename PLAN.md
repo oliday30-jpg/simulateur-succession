@@ -123,6 +123,14 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   Libellés, aides, cases indispensables, avertissement et fiche notaire de l'assurance du fils survivant : « (frère du fils prédécédé) » ;
   avec prénoms : « versée à Olivier (frère de Pierre) » (test `naming.test.ts`).
   _19/11/2026 — commit 167c66f. 148 tests + build OK. Non poussé (accord requis)._
+- [x] **T18 — PDF fabriqué par l'application** (suite de T15 ; problème relevé le 19/11/2026 sur iPhone)
+  Depuis l'icône de l'écran d'accueil, iOS n'ouvre pas la fenêtre d'impression (`window.print()` sans effet).
+  Solution A retenue : bouton « Créer le PDF » qui construit un PDF texte (titres, paragraphes, listes, tableaux, en-tête, pied de page « indicatif »)
+  à partir de l'aperçu, sans dépendance ni réseau, puis l'ouvre dans la feuille de partage (comme l'export JSON) ; « Imprimer » reste pour l'ordinateur.
+  Tests : structure PDF (xref), encodage des accents et de €, symboles remplacés, plusieurs pages, parcours interface (prénoms masqués par défaut).
+  _19/11/2026 — commit 692892f. 158 tests + build OK. `src/print/pdf.ts` (Helvetica WinAnsi, A4, tableaux, pied de page) + `src/print/domToPdf.ts` ;
+  PDF du cas d'exemple contrôlé page par page (3 pages, titres et en-têtes de tableau jamais seuls en bas de page). Feuille de partage iPhone à tester après le push. Non poussé (accord requis).
+  Suite possible : même bouton pour la fiche notaire et le rapport simple (même problème d'impression depuis l'écran d'accueil)._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
@@ -145,7 +153,8 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
 - [x] **T15 — Bouton « PDF de cet onglet pour le destinataire »** (onglet « Succession du fils prédécédé » ; dépend de T14)
   _19/11/2026 — commit c065293. 151 tests + build OK. Mode « aperçu » : cases rendues en texte (« non renseigné » si vides, sans aide ni repère jaune / vert ; `ReadOnlyContext`),
   prénoms selon la case propre au PDF (contexte local, indépendant de `beforeprint`, peu fiable sur iOS), destinataire en mémoire seulement (test : absent du localStorage et de l'export),
-  date du jour locale (`localToday`, réutilisable pour T5a). Aperçu vérifié dans Chrome à 390 px sans défilement horizontal ; boîte d'impression iPhone à tester après le push. Non poussé (accord requis)._
+  date du jour locale (`localToday`, réutilisable pour T5a). Aperçu vérifié dans Chrome à 390 px sans défilement horizontal ; boîte d'impression iPhone à tester après le push. Poussé (déploiement vert)._
+  Test iPhone (19/11/2026) : depuis l'icône de l'écran d'accueil, « Imprimer » n'ouvre rien → T18.
   But : envoyer à la bénéficiaire (ou à une autre personne) **uniquement** cet onglet, sans l'export JSON ni les autres onglets.
   - Bouton en haut de l'onglet (masqué à l'impression) : saisie facultative du destinataire (texte libre, non stocké ni exporté) et choix
     « afficher les prénoms » propre à cette impression (indépendant de la case de l'onglet « Questions pour le notaire »), puis `window.print()`.
