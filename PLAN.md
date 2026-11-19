@@ -106,6 +106,11 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
     Attendu selon l'acte 2005 : père PP 1/72 + usufruit 1/36 ; chaque fils NP 1/72 → **inscription inversée ou autre origine** (à demander au notaire).
     Valeur de la part de chaque fils : quelques dizaines à quelques centaines d'euros → négligeable dans les calculs ;
     à mentionner seulement dans la succession du fils prédécédé. L'autre maison n'y figure pas (vendue ?).
+- [x] **T14 — Onglet séparé « Succession du fils prédécédé »** (2e onglet ; libellé avec le prénom s'il est saisi)
+  Option de la bénéficiaire (part en nue-propriété), valeur de la maison au décès et tout le bloc (testament, biens et dettes, assurances, droits)
+  déplacés hors de l'onglet Situation, qui ne garde qu'une ligne de renvoi (option retenue + répartition résultante). Format des données inchangé.
+  _19/11/2026 — commit faff785. 139 tests + build OK. Poussé._
+  Prévu ensuite : saisie des réponses de la bénéficiaire (comptes, dettes détaillées, assurances, délais, bénéfice d'inventaire) — questionnaire préparé en session.
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
