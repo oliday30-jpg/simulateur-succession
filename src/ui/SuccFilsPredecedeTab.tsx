@@ -30,7 +30,7 @@ export function SuccFilsPredecedeTab({ s, update }: { s: Situation; update: Upd 
               <TextField label="Fondement (cession, renonciation…)" value={s.house.quartPersonnalise.note} onChange={(v) => update((d) => { d.house.quartPersonnalise.note = v; })} />
             </>
           )}
-          <ValueField label="Valeur de la maison au 07/10/2026 (décès du fils prédécédé)" help="valeurDecesFilsPredecede" value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
+          <ValueField label="Valeur de la maison du père au 07/10/2026 (décès du fils prédécédé)" help="valeurDecesFilsPredecede" value={s.house.valeurDecesFilsPredecede} onChange={(v) => update((d) => { d.house.valeurDecesFilsPredecede = v; })} hint="Champ distinct — dossier de succession ouvert" />
         </div>
         {s.house.quartResolution !== 'inconnu' && (
           <p className="small">Après l’option retenue : {summarize(resolveLots(s.house.lots, s.house)).map((h) => `${who(h.holder)} — ${[h.pp.n ? `PP ${formatFrac(h.pp)}` : '', h.np.n ? `NP ${formatFrac(h.np)}` : '', h.us.n ? `US ${formatFrac(h.us)}` : ''].filter(Boolean).join(', ')}`).join(' ; ')}</p>

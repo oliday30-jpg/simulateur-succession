@@ -53,7 +53,7 @@ export function renameText(text: string, names: Names): string {
       .replace(word(`Du ${nouns}`), deNom(name).replace(/^d/, 'D'))
       .replace(word(`au ${nouns}`), `à ${name}`)
       .replace(word(`Au ${nouns}`), `À ${name}`)
-      .replace(word(`(?:le|Le) ${nouns}`), name)
+      .replace(word(`(?:le|Le|ce|Ce) ${nouns}`), name)
       .replace(word(nouns), name);
   }
   return s.split(PLURAL).join('fils');

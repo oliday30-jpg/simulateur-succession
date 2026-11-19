@@ -134,7 +134,7 @@ export function simulate(situation: Situation, sc: Scenario): SimResult {
   const lotsOk = lotIssues.length === 0;
   if (hv.cents === null) add('bloquant', 'Valeur de la maison non renseignée : résultats immobiliers indisponibles.', 'house');
   else if (hv.cents < 0) add('bloquant', 'Valeur de la maison négative.', 'house');
-  if (house.valeurDecesFilsPredecede.cents === null) add('a_confirmer', 'Valeur de la maison au 07/10/2026 (décès du fils prédécédé) à confirmer — utile au dossier de succession ouvert.', 'house');
+  if (house.valeurDecesFilsPredecede.cents === null) add('a_confirmer', 'Valeur de la maison du père au 07/10/2026 (décès du fils prédécédé) à confirmer — utile au dossier de succession ouvert.', 'house');
   if (house.quartResolution === 'inconnu') add('a_confirmer', 'Titulaire de la part du fils prédécédé non déterminé (testament, option successorale de la bénéficiaire).', 'quart');
   const hp = situation.horsPerimetre;
   const hors: string[] = [];

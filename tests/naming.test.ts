@@ -14,6 +14,8 @@ describe('Prénoms à la place des rôles (affichage)', () => {
     expect(renameText('Trésorerie du père après événements', N)).toBe('Trésorerie de Marcel après événements');
     expect(renameText('Réserve d’usufruit au profit du père', N)).toBe('Réserve d’usufruit au profit de Marcel');
     expect(renameText('ce qui reste au père', N)).toBe('ce qui reste à Marcel');
+    // « ce fils » ne doit pas donner « ce Olivier ».
+    expect(renameText('la succession de ce fils', N)).not.toContain('ce ');
     expect(renameText('Net reçu — fils survivant', N)).toBe('Net reçu — Olivier');
     expect(renameText('droits du petit-fils', N)).toBe('droits de Lucas');
     expect(renameText('Pour le fils : droits', N)).toBe('Pour Olivier : droits');

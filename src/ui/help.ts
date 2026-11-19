@@ -32,7 +32,7 @@ export const HELP = {
     certitude: 'Marquer « ✓ Vérifié » seulement avec une estimation écrite. Une valeur trop basse dans une déclaration ou un acte peut entraîner une amende : la valeur doit être réaliste.',
   },
   valeurDecesFilsPredecede: {
-    quoi: 'La valeur de toute la maison au jour du décès du fils prédécédé (07/10/2026). Elle sert à la succession de ce fils, distincte de celle du père.',
+    quoi: 'La valeur de toute la maison du père (le bien entier, pas seulement la part du fils prédécédé), estimée au jour du décès du fils prédécédé (07/10/2026). Elle sert à chiffrer la part du fils prédécédé dans sa succession ; c’est une valeur distincte de celle retenue pour la donation, la vente ou le décès du père.',
     ou: 'Le notaire chargé de la succession du fils prédécédé la fixe ou la demande pour la déclaration de succession.',
     siVide: 'La valeur utilisée par défaut sert à sa place, avec une mention « à confirmer ».',
   },
