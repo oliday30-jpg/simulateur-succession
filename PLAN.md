@@ -113,12 +113,12 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   déplacés hors de l'onglet Situation, qui ne garde qu'une ligne de renvoi (option retenue + répartition résultante). Format des données inchangé.
   _19/11/2026 — commit faff785. 139 tests + build OK. Poussé._
   Prévu ensuite : saisie des réponses de la bénéficiaire (comptes, dettes détaillées, assurances, délais, bénéfice d'inventaire) — questionnaire préparé en session.
-- [ ] **T16 — Onglet « Succession du fils prédécédé » plus clair et personnalisable** (demande du 19/11/2026)
+- [x] **T16 — Onglet « Succession du fils prédécédé » plus clair et personnalisable** (demande du 19/11/2026)
   Étapes numérotées (1 part de maison · 2 famille et testament · 3 biens et dettes · 4 assurances · 5 règles fiscales à confirmer · 6 résultats) ;
   cases indispensables jaune / vert + légende (`sfpNeeds` dans `src/ui/essentials.ts`) ; question « l'assurance existe-t-elle ? »
   (Je ne sais pas / Non / Peut-être = calcul avec et sans / Oui) pour chaque assurance : montant et options affichés seulement si elle existe ;
   données déjà enregistrées : existence déduite du montant (> 0 → oui, 0 → non, vide → je ne sais pas). Fiche notaire adaptée.
-  _Terminée, testée (147 tests + build OK), commit à faire._
+  _19/11/2026 — commit 0b52fee. 147 tests + build OK. Non poussé (accord requis)._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
