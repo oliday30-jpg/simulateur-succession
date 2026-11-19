@@ -142,7 +142,10 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   renonciation au bénéfice (seulement si la clause désigne ensuite la bénéficiaire ; sinon le capital peut tomber dans la succession) ».
   Règles : barème « entre autres personnes » 30/35/60/80 % et donation mobilière « autres personnes » 5,5 % (SPF, consultés le 19/11/2026).
   Fiche notaire : clause bénéficiaire, retenues, renonciation au bénéfice, attendre l'option successorale de la bénéficiaire, contrat refusé (clause suicide, réserve).
-- [ ] **T15 — Bouton « PDF de cet onglet pour le destinataire »** (onglet « Succession du fils prédécédé » ; dépend de T14)
+- [x] **T15 — Bouton « PDF de cet onglet pour le destinataire »** (onglet « Succession du fils prédécédé » ; dépend de T14)
+  _19/11/2026 — commit c065293. 151 tests + build OK. Mode « aperçu » : cases rendues en texte (« non renseigné » si vides, sans aide ni repère jaune / vert ; `ReadOnlyContext`),
+  prénoms selon la case propre au PDF (contexte local, indépendant de `beforeprint`, peu fiable sur iOS), destinataire en mémoire seulement (test : absent du localStorage et de l'export),
+  date du jour locale (`localToday`, réutilisable pour T5a). Aperçu vérifié dans Chrome à 390 px sans défilement horizontal ; boîte d'impression iPhone à tester après le push. Non poussé (accord requis)._
   But : envoyer à la bénéficiaire (ou à une autre personne) **uniquement** cet onglet, sans l'export JSON ni les autres onglets.
   - Bouton en haut de l'onglet (masqué à l'impression) : saisie facultative du destinataire (texte libre, non stocké ni exporté) et choix
     « afficher les prénoms » propre à cette impression (indépendant de la case de l'onglet « Questions pour le notaire »), puis `window.print()`.
