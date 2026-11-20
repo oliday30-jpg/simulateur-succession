@@ -12,12 +12,14 @@ import { DetailTab } from './ui/DetailTab';
 import { NotaireTab } from './ui/NotaireTab';
 import { RapportTab } from './ui/RapportTab';
 import { SuccFilsPredecedeTab } from './ui/SuccFilsPredecedeTab';
+import { BilanTab } from './ui/BilanTab';
 import { renameText } from './ui/naming';
 import { CheckField } from './ui/fields';
 
 const TABS = [
   { id: 'situation', label: 'Situation et sources' },
   { id: 'succFilsPredecede', label: 'Succession du fils prédécédé' },
+  { id: 'bilan', label: 'Point de situation (PDF)' },
   { id: 'rapport', label: 'Rapport simple' },
   { id: 'scenarios', label: 'Scénarios' },
   { id: 'comparaison', label: 'Comparaison' },
@@ -110,6 +112,7 @@ export function App({ initial }: { initial?: AppState } = {}) {
         {msg && <p className="banner" role="status">{msg} <button type="button" className="link" onClick={() => setMsg(null)}>Fermer</button></p>}
         {tab === 'situation' && <SituationTab s={state.situation} update={updateSituation} names={names} setName={(id, n) => { setNames((p) => ({ ...p, [id]: n })); touched(); }} />}
         {tab === 'succFilsPredecede' && <SuccFilsPredecedeTab s={state.situation} update={updateSituation} />}
+        {tab === 'bilan' && <BilanTab state={state} />}
         {tab === 'rapport' &&<RapportTab state={state} />}
         {tab === 'scenarios' && <ScenariosTab state={state} update={update} results={results} />}
         {tab === 'comparaison' && <ComparisonTab state={state} rows={rows} />}
