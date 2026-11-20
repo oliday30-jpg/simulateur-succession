@@ -95,7 +95,15 @@ function NotaireContent({ state, rows, showNames, setShowNames, creerPdf, msg, f
                 </ul>
               </li>}
               <li>☐ Contrat éventuellement refusé par l’assureur (exclusion du suicide) : clause exacte (en principe, suicide exclu seulement pendant la première année du contrat, sauf clause contraire) ; la réserve déjà constituée est-elle versée malgré tout ? Demander la réponse écrite de l’assureur.</li>
-              <li>☐ Dettes de cette succession : nature (crédit hypothécaire ?), assurance solde restant dû ? Si les dettes dépassent les biens et qu’elle renonce : risque pour <T>le père</T> et <T>le fils survivant</T>, acceptation sous bénéfice d’inventaire ou renonciation, délais.</li>
+              <li>☐ Dettes de cette succession : nature (crédit hypothécaire ?), assurance solde restant dû ? Si les dettes dépassent les biens et qu’elle renonce : risque pour <T>le père</T> et <T>le fils survivant</T>, acceptation sous bénéfice d’inventaire ou renonciation, délais.
+                <ul>
+                  <li>☐ Liste exacte des dettes : lesquelles ont été signées par <T>le fils prédécédé</T> seul, lesquelles avec {who('beneficiaire')} (codébitrice : tenue même si elle renonce) ?</li>
+                  <li>☐ Assurance solde restant dû sur le logement du couple : existe-t-elle, rembourse-t-elle le crédit (exclusion du suicide ?) ; sinon, la maison du couple doit-elle être vendue ou {who('beneficiaire')} peut-elle racheter la moitié de la succession (à quelle valeur) ?</li>
+                  <li>☐ Bénéfice d’inventaire : coût, durée, formalités (déclaration chez le notaire, publication, délai des créanciers) ; actes à éviter d’ici là (acceptation tacite : comptes, objets, paiement de dettes).</li>
+                  <li>☐ 1/6 en nue-propriété de la maison <T>du père</T> : l’usufruit du père est-il bien protégé ? Droit pour <T>le père</T> et <T>le fils survivant</T> de racheter ce 1/6 à la succession pour éviter sa vente à un tiers ; à quelle valeur ?</li>
+                  <li>☐ Si <T>le fils survivant</T> renonce : ses enfants sont-ils appelés à sa place (représentation du renonçant) ? Renonciation pour un mineur (autorisation du juge de paix) ; et si tout le monde renonce : curateur à succession vacante ?</li>
+                </ul>
+              </li>
               <li>☐ Logement du couple (détenu pour moitié par chacun) : exemption « logement familial » du cohabitant légal pour la moitié recueillie (non modélisée : cette moitié est comptée dans les « autres biens nets ») ?</li>
             </ul>
           </li>
