@@ -3,10 +3,11 @@ import { defaultState, sampleSituation } from '../src/model/sample';
 import { stateSchema } from '../src/persistence/schema';
 import { computeSuccFilsPredecede } from '../src/engine/succFilsPredecede';
 import { euros as E } from '../src/util/money';
+import { NOTE_EPARGNE_PENSION, NOTE_EPARGNE_PENSION_V1 } from '../src/model/contratsConnus';
 
 /** Contrats connus au 20/11/2026 : situation de base, et mise à jour unique des données enregistrées avant. */
 describe('contrats d’assurance du fils prédécédé (situation de base)', () => {
-  it('situation de base : 200 000 € à la bénéficiaire, 15 000 € au fils survivant, épargne-pension 50 000 € au bénéficiaire à établir', () => {
+  it('situation de base : 200 000 € à la bénéficiaire, 15 000 € au fils survivant, épargne-pension 50 000 € (bénéficiaire désignée : la cohabitante, refus annoncé)', () => {
     const o = defaultState().situation.succFilsPredecede;
     expect(o.assuranceExiste).toBe('oui');
     expect(o.assurance).toMatchObject({ cents: E(200000), certainty: 'approx', source: 'Assurance groupe Ethias' });
@@ -14,7 +15,8 @@ describe('contrats d’assurance du fils prédécédé (situation de base)', () 
     expect(o.assuranceFils).toMatchObject({ cents: E(15000), source: 'Assurance groupe Beobank' });
     expect(o.epargnePensionExiste).toBe('oui');
     expect(o.epargnePension).toMatchObject({ cents: E(50000), source: 'Épargne-pension AXA' });
-    expect(o.epargnePensionBeneficiaire).toBe('inconnu');
+    expect(o.epargnePensionBeneficiaire).toBe('beneficiaire');
+    expect(o.epargnePension.note).toMatch(/Bénéficiaire désignée : la cohabitante.*exclusion du suicide/);
     // Modifiable : deux appels ne partagent pas les mêmes objets.
     defaultState().situation.succFilsPredecede.assurance.cents = 1;
     expect(defaultState().situation.succFilsPredecede.assurance.cents).toBe(E(200000));
@@ -38,7 +40,7 @@ describe('contrats d’assurance du fils prédécédé (situation de base)', () 
     expect(acc.rows.find((x) => x.id === 'beneficiaire')!.droits.value).toBe(E(26250));
     expect(acc.rows.find((x) => x.id === 'fils')!.droits.value).toBe(E(3125));
     expect(acc.total.value).toBe(E(29375));
-    expect(r.avertissements.join(' ')).toMatch(/Épargne-pension \(50.000,00.€\) : bénéficiaire à établir.*non comptée/);
+    expect(r.avertissements.join(' ')).toMatch(/Épargne-pension \(50.000,00.€\) : désignée au profit de la bénéficiaire.*non comptée.*Si l’assureur la verse/);
     o.epargnePensionBeneficiaire = 'heritiers';
     expect(computeSuccFilsPredecede(s).avertissements.join(' ')).toMatch(/héritiers légaux.*s’ajoute aux biens partagés/);
     o.epargnePensionExiste = 'non';
@@ -66,7 +68,7 @@ describe('données enregistrées avant le 20/11/2026 (sans épargne-pension)', (
     expect(o.assurance.cents).toBe(E(200000));
     expect(o.assuranceFils.cents).toBe(E(15000));
     expect(o.epargnePension.cents).toBe(E(50000));
-    expect(o.epargnePensionBeneficiaire).toBe('inconnu');
+    expect(o.epargnePensionBeneficiaire).toBe('beneficiaire');
   });
 
   it('contrats déjà renseignés par l’utilisateur : conservés (seule l’épargne-pension est ajoutée)', () => {
@@ -85,5 +87,30 @@ describe('données enregistrées avant le 20/11/2026 (sans épargne-pension)', (
     const p = stateSchema.safeParse(st);
     expect(p.success && p.data.situation.succFilsPredecede.assuranceExiste).toBe('inconnu');
     expect(p.success && p.data.situation.succFilsPredecede.epargnePensionExiste).toBe('non');
+  });
+});
+
+describe('données enregistrées avec la première version de l’épargne-pension (commit fddcf5e)', () => {
+  const v1 = (f: (o: ReturnType<typeof defaultState>['situation']['succFilsPredecede']) => void = () => {}) => {
+    const st = defaultState();
+    const o = st.situation.succFilsPredecede;
+    o.epargnePensionBeneficiaire = 'inconnu';
+    o.epargnePension.note = NOTE_EPARGNE_PENSION_V1;
+    f(o);
+    const p = stateSchema.safeParse(st);
+    expect(p.success).toBe(true);
+    return p.success ? p.data.situation.succFilsPredecede : null!;
+  };
+  it('laissée telle que publiée : bénéficiaire = la cohabitante, note mise à jour', () => {
+    const o = v1();
+    expect(o.epargnePensionBeneficiaire).toBe('beneficiaire');
+    expect(o.epargnePension.note).toBe(NOTE_EPARGNE_PENSION);
+    expect(o.epargnePension.cents).toBe(E(50000));
+  });
+  it('modifiée par l’utilisateur (bénéficiaire choisi ou note changée) : conservée', () => {
+    expect(v1((o) => { o.epargnePensionBeneficiaire = 'heritiers'; }).epargnePensionBeneficiaire).toBe('heritiers');
+    const o = v1((x) => { x.epargnePension.note = 'Ma note'; });
+    expect(o.epargnePensionBeneficiaire).toBe('inconnu');
+    expect(o.epargnePension.note).toBe('Ma note');
   });
 });

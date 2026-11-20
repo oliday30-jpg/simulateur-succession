@@ -75,13 +75,13 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
       </div>
 
       <div className="grid">
-        <SelectField<Existence> label="Une épargne-pension du fils prédécédé (non versée à la bénéficiaire) existe-t-elle ?" help="sfpEpargnePensionExiste" value={o.epargnePensionExiste} onChange={(v) => set((x) => { x.epargnePensionExiste = v; })} options={EXISTE} />
+        <SelectField<Existence> label="Une épargne-pension du fils prédécédé existe-t-elle ?" help="sfpEpargnePensionExiste" value={o.epargnePensionExiste} onChange={(v) => set((x) => { x.epargnePensionExiste = v; })} options={EXISTE} />
         {assuranceAChiffrer(o.epargnePensionExiste) && (
           <>
             <ValueField label="Épargne-pension (capital au décès)" help="sfpEpargnePension" value={o.epargnePension} onChange={(v) => set((x) => { x.epargnePension = v; })}
-              hint="Non comptée dans les droits estimés tant que le bénéficiaire et le régime fiscal ne sont pas connus." />
+              hint="Non comptée dans les droits estimés : versement incertain (refus possible de l’assureur) et régime fiscal propre." />
             <SelectField<EpargnePensionBeneficiaire> label="Bénéficiaire de l’épargne-pension selon la clause" help="sfpEpargnePensionBenef" value={o.epargnePensionBeneficiaire} onChange={(v) => set((x) => { x.epargnePensionBeneficiaire = v; })}
-              options={[['inconnu', 'À établir (clause à lire)'], ['heritiers', 'Les héritiers légaux / la succession'], ['fils', t('Le fils survivant (frère du fils prédécédé)')], ['pere', t('Le père')], ['autre', 'Une autre personne']]} />
+              options={[['inconnu', 'À établir (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['heritiers', 'Les héritiers légaux / la succession'], ['fils', t('Le fils survivant (frère du fils prédécédé)')], ['pere', t('Le père')], ['autre', 'Une autre personne']]} />
           </>
         )}
       </div>

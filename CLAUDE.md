@@ -25,7 +25,7 @@ répartition par défaut selon l'acte de notoriété de 2005 (succession de la m
 réduite) : père 2/3 pleine propriété + usufruit sur 1/3 ; fils survivant 1/6 en nue-propriété ; 1/6 en nue-propriété du fils prédécédé
 (décédé le 07/10/2026) en succession ouverte (bénéficiaire potentielle : sa cohabitante légale, jamais certaine par défaut) ;
 contrats du fils prédécédé (`src/model/contratsConnus.ts`, 20/11/2026) : assurance groupe Ethias ≈ 200 000 € à la cohabitante,
-assurance groupe Beobank 15 000 € au fils survivant, épargne-pension AXA 50 000 € non versée à la cohabitante (= contrat « capital pension » refusé pour exclusion du suicide ; bénéficiaire à établir, non comptée) ;
+assurance groupe Beobank 15 000 € au fils survivant, épargne-pension AXA 50 000 € dont la cohabitante est la bénéficiaire désignée (= contrat « capital pension » dont le versement serait refusé pour exclusion du suicide ; non comptée) ;
 avoirs du père ≈ 170 000 € ; créance de 15 000 € moins 4 × 250 € (exclue par défaut) ; petit-fils (legs ou don possible).
 
 ## Technologies

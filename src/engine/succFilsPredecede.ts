@@ -393,9 +393,9 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   return { ...base, scenarios: [acceptation, renonciation], transmission };
 }
 
-/** Capital pris en compte : 0 si le contrat n'existe pas, rien (null) si son existence n'est pas vérifiée. */
 const EPA_BENEF: Record<EpargnePensionBeneficiaire, string> = {
-  inconnu: 'bénéficiaire à établir (pas la bénéficiaire de la part, selon les informations reçues)',
+  inconnu: 'bénéficiaire à établir (clause à lire)',
+  beneficiaire: 'désignée au profit de la bénéficiaire (cohabitante légale) ; versement à confirmer par l’assureur',
   heritiers: 'versée aux héritiers légaux ou à la succession selon la clause',
   fils: 'versée au fils survivant (frère du fils prédécédé) selon la clause',
   pere: 'versée au père selon la clause',
@@ -408,12 +408,14 @@ const EPA_BENEF: Record<EpargnePensionBeneficiaire, string> = {
  */
 export function epargnePensionAvertissement(capital: Cents | null, b: EpargnePensionBeneficiaire): string {
   const m = capital === null ? 'montant non renseigné' : formatEUR(capital);
-  const effet = b === 'heritiers' ? ' Si elle tombe dans la succession, elle s’ajoute aux biens partagés et aux droits des héritiers.'
+  const effet = b === 'beneficiaire' ? ' Si l’assureur la verse, elle s’ajoute à la part taxable de la bénéficiaire, comme l’assurance groupe (barème ligne directe, à confirmer) ; refusée, seule la réserve éventuellement restituée compterait.'
+    : b === 'heritiers' ? ' Si elle tombe dans la succession, elle s’ajoute aux biens partagés et aux droits des héritiers.'
     : b === 'fils' ? ' Le fils survivant la recevrait en plus de son assurance (barème entre frères et sœurs, à confirmer).'
     : b === 'pere' ? ' Le père la recevrait (barème en ligne directe, à confirmer).' : '';
   return `Épargne-pension (${m}) : ${EPA_BENEF[b]} ; non comptée dans les droits estimés (régime fiscal propre de l’épargne-pension et droits de succession à confirmer).${effet}`;
 }
 
+/** Capital pris en compte : 0 si le contrat n'existe pas, rien (null) si son existence n'est pas vérifiée. */
 function capitalOf(existe: Existence, v: Value): Cents | null {
   return existe === 'non' ? 0 : existe === 'inconnu' ? null : v.cents;
 }

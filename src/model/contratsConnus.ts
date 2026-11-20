@@ -17,7 +17,11 @@ export const CONTRATS_CONNUS = (): Pick<SuccessionFilsPredecede,
   epargnePensionExiste: 'oui',
   epargnePension: {
     cents: 50_000_00, certainty: 'approx', source: 'Épargne-pension AXA',
-    note: 'Non versée à la cohabitante : l’assureur refuserait le versement (exclusion du suicide, information du 19/11/2026). Réponse écrite, clause bénéficiaire et sort de la réserve à obtenir.',
+    note: NOTE_EPARGNE_PENSION,
   },
-  epargnePensionBeneficiaire: 'inconnu',
+  epargnePensionBeneficiaire: 'beneficiaire',
 });
+
+export const NOTE_EPARGNE_PENSION = 'Bénéficiaire désignée : la cohabitante. L’assureur refuserait le versement (exclusion du suicide, information du 19/11/2026) : réponse écrite et sort de la réserve à obtenir.';
+/** Note publiée le 20/11/2026 (commit fddcf5e), avant de savoir que la cohabitante est la bénéficiaire désignée. */
+export const NOTE_EPARGNE_PENSION_V1 = 'Non versée à la cohabitante : l’assureur refuserait le versement (exclusion du suicide, information du 19/11/2026). Réponse écrite, clause bénéficiaire et sort de la réserve à obtenir.';

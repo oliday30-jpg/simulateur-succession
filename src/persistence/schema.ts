@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { AppState } from '../model/types';
-import { CONTRATS_CONNUS } from '../model/contratsConnus';
+import { CONTRATS_CONNUS, NOTE_EPARGNE_PENSION, NOTE_EPARGNE_PENSION_V1 } from '../model/contratsConnus';
 
 /** Version courante du format d'export JSON. */
 export const SCHEMA_VERSION = 1 as const;
@@ -50,11 +50,21 @@ const avecContratsConnus = (o: Record<string, unknown>): Record<string, unknown>
     epargnePensionExiste: k.epargnePensionExiste, epargnePension: k.epargnePension, epargnePensionBeneficiaire: k.epargnePensionBeneficiaire,
   };
 };
+/**
+ * Données enregistrées avec la première version de l'épargne-pension (commit fddcf5e, 20/11/2026) : laissée telle que
+ * publiée (bénéficiaire « à établir » et note d'origine), elle passe à « la bénéficiaire » avec la note à jour.
+ * Toute modification de l'utilisateur est conservée.
+ */
+const epargnePensionV2 = (o: Record<string, unknown>): Record<string, unknown> => {
+  const e = o.epargnePension as { note?: unknown } | undefined;
+  if (o.epargnePensionBeneficiaire !== 'inconnu' || e?.note !== NOTE_EPARGNE_PENSION_V1) return o;
+  return { ...o, epargnePensionBeneficiaire: 'beneficiaire', epargnePension: { ...e, note: NOTE_EPARGNE_PENSION } };
+};
 const succFilsPredecede = z.preprocess((raw) => {
   if (!raw || typeof raw !== 'object') return raw;
   const r = raw as Record<string, unknown>;
   const o = { ...r, assuranceExiste: r.assuranceExiste ?? existeDepuis(r.assurance), assuranceFilsExiste: r.assuranceFilsExiste ?? existeDepuis(r.assuranceFils) };
-  return r.epargnePensionExiste === undefined ? avecContratsConnus(o) : o;
+  return r.epargnePensionExiste === undefined ? avecContratsConnus(o) : epargnePensionV2(o);
 }, z.object({
   testament: z.enum(['inconnu', 'legs_beneficiaire', 'aucun']),
   descendants: z.enum(['inconnu', 'aucun', 'oui']),
@@ -77,7 +87,7 @@ const succFilsPredecede = z.preprocess((raw) => {
   // Ajoutés le 20/11/2026 : complétés par `avecContratsConnus` pour les données enregistrées avant.
   epargnePensionExiste: existence,
   epargnePension: value,
-  epargnePensionBeneficiaire: z.enum(['inconnu', 'heritiers', 'fils', 'pere', 'autre']),
+  epargnePensionBeneficiaire: z.enum(['inconnu', 'beneficiaire', 'heritiers', 'fils', 'pere', 'autre']),
 }));
 
 const situation = z.object({

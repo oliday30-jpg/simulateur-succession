@@ -132,9 +132,9 @@ export interface SuccessionFilsPredecede {
   /** À qui va ce capital si le fils survivant renonce au bénéfice du contrat (clause bénéficiaire). */
   assuranceFilsSuivant: 'inconnu' | 'beneficiaire' | 'succession' | 'autre';
   /**
-   * Épargne-pension (3e pilier, forme assurance) du fils prédécédé, NON versée à la bénéficiaire selon les
-   * informations reçues : bénéficiaire à établir (clause du contrat). Montant indicatif, non compté dans les droits
-   * estimés tant que le bénéficiaire n'est pas connu (ajouté le 20/11/2026).
+   * Épargne-pension (3e pilier, forme assurance) du fils prédécédé : bénéficiaire désigné selon la clause ;
+   * versement refusé par l'assureur dans le cas connu (exclusion du suicide). Montant indicatif, jamais compté
+   * dans les droits estimés (régime fiscal propre, versement incertain) — ajouté le 20/11/2026.
    */
   epargnePensionExiste: Existence;
   epargnePension: Value;
@@ -254,8 +254,8 @@ export type RulesMode = 'auto' | 'constant2026' | 'decret2024' | 'annonce2026' |
 export type TriState = 'inconnu' | 'appliquer' | 'ne_pas_appliquer';
 /** Existence d'un contrat ou d'un fait non certain : pas encore vérifié, non, peut-être (calcul avec et sans), oui. */
 export type Existence = 'inconnu' | 'non' | 'possible' | 'oui';
-/** Bénéficiaire de l'épargne-pension selon la clause : à établir, héritiers légaux / succession, fils survivant, père, autre personne. */
-export type EpargnePensionBeneficiaire = 'inconnu' | 'heritiers' | 'fils' | 'pere' | 'autre';
+/** Bénéficiaire de l'épargne-pension selon la clause : à établir, la bénéficiaire (cohabitante), héritiers légaux / succession, fils survivant, père, autre personne. */
+export type EpargnePensionBeneficiaire = 'inconnu' | 'beneficiaire' | 'heritiers' | 'fils' | 'pere' | 'autre';
 
 export interface ResultSnapshot {
   savedAt: ISODate;

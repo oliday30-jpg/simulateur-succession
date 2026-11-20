@@ -57,7 +57,7 @@ describe('Point de situation à partager', () => {
     let txt = screen.getByRole('article', { name: 'Point de situation' }).textContent!.replace(/\s/g, ' ');
     expect(txt).toMatch(/au profit de la bénéficiaire : oui — montant 200 000,00 € \(Assurance groupe Ethias\)/);
     expect(txt).toMatch(/frère du fils prédécédé\) : oui — montant 15 000,00 € \(Assurance groupe Beobank\)/);
-    expect(txt).toMatch(/Épargne-pension \(non versée à la bénéficiaire\) : oui — montant 50 000,00 € \(Épargne-pension AXA\) ; bénéficiaire : à établir.*non comptée.*exclusion du suicide/);
+    expect(txt).toMatch(/Épargne-pension : oui — montant 50 000,00 € \(Épargne-pension AXA\) ; bénéficiaire : la bénéficiaire ; non comptée.*Bénéficiaire désignée : la cohabitante.*exclusion du suicide/);
     expect(txt).not.toMatch(/capital pension/);
     // Montant modifiable dans l'onglet de la succession du fils prédécédé.
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
@@ -67,7 +67,7 @@ describe('Point de situation à partager', () => {
     await user.tab();
     await user.click(screen.getByRole('tab', { name: 'Point de situation (PDF)' }));
     txt = screen.getByRole('article', { name: 'Point de situation' }).textContent!.replace(/\s/g, ' ');
-    expect(txt).toMatch(/Épargne-pension \(non versée à la bénéficiaire\) : oui — montant 45 000,00 €/);
+    expect(txt).toMatch(/Épargne-pension : oui — montant 45 000,00 €/);
   });
 
   it('PDF : prénoms masqués par défaut, destinataire repris, prénoms sur demande', async () => {
