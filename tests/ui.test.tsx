@@ -112,7 +112,7 @@ describe('parcours interface', () => {
     const acc = within(card).getByRole('article', { name: /accepte le legs/ });
     expect(acc.textContent).toMatch(/1.750,00.€/);
     await user.selectOptions(screen.getByLabelText(/^Part du fils prédécédé \(nue-propriété\)/), 'renonciation');
-    const ren = within(card).getByRole('article', { name: /renonce/ });
+    const ren = within(card).getByRole('article', { name: 'La bénéficiaire renonce' });
     expect(ren.textContent).toMatch(/option retenue/);
     expect(ren.textContent).toMatch(/10.000,00.€/); // 37 500 € entre frères et sœurs
     expect(screen.getByText(/^Après l’option retenue :/).textContent).toMatch(/Père — PP 17\/24/);

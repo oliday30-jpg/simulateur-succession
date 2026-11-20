@@ -150,6 +150,12 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   _20/11/2026 — commit fddcf5e. 168 tests + build OK (`tests/contratsConnus.test.ts` : acceptation 26 250 € cohabitante + 3 125 € fils survivant). Poussé._
   Complément (20/11/2026, commit 18175ec) : la cohabitante est la bénéficiaire désignée de l'épargne-pension (choix « la bénéficiaire » ajouté) ; données publiées avec fddcf5e mises à jour une fois si non modifiées. 170 tests + build OK. Non poussé.
   À discuter : refus de l'assureur (exclusion du suicide) et sort de la réserve (restituée à la bénéficiaire ou à la succession ?).
+- [ ] **T22 — Ce que la bénéficiaire garderait au final (net), selon son option** (demande du 20/11/2026)
+  Onglet « Succession du fils prédécédé », étape 6 : trois cas toujours calculés — acceptation pure et simple, acceptation sous bénéfice d'inventaire, renonciation.
+  Net = assurance reçue (brut) − droits de succession ± (biens − dettes) ; part de maison comptée en pleine propriété (« dont nue-propriété », pas de l'argent disponible) ;
+  pure : dettes non couvertes payées de sa poche ; bénéfice d'inventaire : jamais négatif (≥ renonciation) ; dettes non renseignées → « inconnu » / « au moins ».
+  Épargne-pension désignée à son profit : signalée, non comptée ; transmission éventuelle de l'assurance du fils survivant : renvoi au tableau existant.
+  Tests `tests/netBeneficiaire.test.tsx` (calculs écrits à la main).
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.

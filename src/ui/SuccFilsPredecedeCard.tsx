@@ -1,6 +1,6 @@
 import type { EpargnePensionBeneficiaire, Existence, Situation, SuccessionFilsPredecede } from '../model/types';
 import { assuranceAChiffrer } from './essentials';
-import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
+import { computeSuccFilsPredecede, ecartRenonciation, type NetBenefResult, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
 import { FracField, MoneyField, SelectField, ValueField, useHelp } from './fields';
 import { NumView, SliceTable, T, useReadOnly, useT, useWho } from './display';
 import { formatEUR } from '../util/money';
@@ -117,6 +117,7 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
       </div>
       <p className="small muted">{t(r.hypothesePrudente)}</p>
       {ecart && <p><strong>{ecart}</strong></p>}
+      {r.net && <NetBlock net={r.net} tr={r.transmission} />}
       {r.transmission && <TransmissionBlock tr={r.transmission} />}
 
       <details open={ro || undefined}>
@@ -128,6 +129,52 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
         </div>
       </details>
       <p className="small muted">Sources : {r.sources.map((x) => `${x.titre} (consulté le ${formatDate(x.consulte)})`).join(' ; ')}.</p>
+    </section>
+  );
+}
+
+/** Ce que la bénéficiaire garde au final selon son option : assurance − droits ± solde de la succession. */
+function NetBlock({ net, tr }: { net: NetBenefResult; tr: TransmissionResult | null }) {
+  const t = useT();
+  const who = useWho();
+  const recus = tr ? tr.options.filter((op) => op.disponible && op.key !== 'garder' && op.recuPrudent !== null).map((op) => op.recuPrudent!) : [];
+  return (
+    <section aria-labelledby="h-sfp-net">
+      <h3 id="h-sfp-net">{t('Ce que la bénéficiaire garderait au final (net), selon son option')}</h3>
+      <p className="small muted">Toutes les options sont calculées, quelle que soit celle retenue. Fourchette = hypothèses fiscales non tranchées ; « hypothèse prudente » = droits les plus élevés.</p>
+      <div className="sfp-grid">
+        {net.cases.map((c) => (
+          <article key={c.key} className="sfp-scenario" aria-label={t(c.titre)}>
+            <h4>{t(c.titre)}</h4>
+            {!c.disponible ? <p><span aria-hidden="true">—</span> Non calculé : {t(c.raison ?? '')}</p> : (
+              <>
+                <div className="table-wrap">
+                  <table>
+                    <caption className="sr-only">Montant net pour {who('beneficiaire')} — {t(c.titre)}</caption>
+                    <tbody>
+                      <tr><th scope="row">Assurance reçue (brut)</th><td><NumView n={c.assurance} showStatus={false} /></td></tr>
+                      <tr><th scope="row">− Droits de succession</th><td><NumView n={c.droits} showStatus={false} /></td></tr>
+                      <tr><th scope="row">± Biens reçus moins dettes payées{c.partMaison ? <div className="small muted">dont part de maison (nue-propriété) : {formatEUR(c.partMaison)}</div> : null}</th><td><NumView n={c.solde} showStatus={false} /></td></tr>
+                    </tbody>
+                    <tfoot><tr><th scope="row">= Net au final</th><td><NumView n={c.net} /></td></tr></tfoot>
+                  </table>
+                </div>
+                {c.netPrudent !== null && <p>Hypothèse prudente : <strong>{formatEUR(c.netPrudent)}</strong></p>}
+                <ul className="small">{c.notes.map((n, i) => <li key={i}>{t(n)}</li>)}</ul>
+              </>
+            )}
+          </article>
+        ))}
+      </div>
+      <ul className="small">
+        {net.epargnePension !== null && net.epargnePension > 0 && (
+          <li><span aria-hidden="true">?</span> {t(`Épargne-pension de ${formatEUR(net.epargnePension)} désignée au profit de la bénéficiaire : non comptée (versement refusé par l’assureur pour exclusion du suicide). Si elle était versée, jusqu’à ${formatEUR(net.epargnePension)} de plus, moins l’impôt et les droits (à confirmer).`)}</li>
+        )}
+        {recus.length > 0 && tr && (
+          <li>{t(`Si le fils survivant (frère du fils prédécédé) lui transmet son assurance de ${formatEUR(tr.capital)} : jusqu’à ${formatEUR(Math.max(...recus))} de plus (hypothèse prudente, voir le tableau suivant).`)}</li>
+        )}
+        {net.notes.map((n, i) => <li key={i}>{t(n)}</li>)}
+      </ul>
     </section>
   );
 }

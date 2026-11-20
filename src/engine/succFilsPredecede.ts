@@ -78,6 +78,36 @@ export interface SfpResult {
   hypothesePrudente: string;
   /** Capital d'assurance du fils survivant : garder ou transmettre à la bénéficiaire (null si non renseigné ou non calculable). */
   transmission: TransmissionResult | null;
+  /** Ce que la bénéficiaire garde au final selon son option (null si non calculable). */
+  net: NetBenefResult | null;
+}
+
+export type NetKey = 'pure' | 'inventaire' | 'renonciation';
+
+/** Montant net final de la bénéficiaire pour une option successorale. */
+export interface NetCase {
+  key: NetKey;
+  titre: string;
+  disponible: boolean;
+  raison?: string;
+  /** Capital d'assurance reçu (brut, avant droits). */
+  assurance: Num;
+  /** Droits de succession à sa charge (part de succession + assurance). */
+  droits: Num;
+  /** Biens de la succession moins les dettes à sa charge (négatif : à payer de sa poche). */
+  solde: Num;
+  /** Dont valeur de la part de maison reçue (nue-propriété, comptée en pleine propriété). */
+  partMaison: Cents | null;
+  net: Num;
+  netPrudent: Cents | null;
+  notes: string[];
+}
+
+export interface NetBenefResult {
+  cases: NetCase[];
+  /** Épargne-pension désignée à son profit : jamais comptée (versement refusé, régime fiscal propre). */
+  epargnePension: Cents | null;
+  notes: string[];
 }
 
 export type TransKey = 'garder' | 'don_bancaire' | 'donation_enregistree' | 'renonciation_benefice';
@@ -108,9 +138,12 @@ export interface TransmissionResult {
   sources: RuleSource[];
 }
 
-/** `ins` : capital d'assurance taxé dans le chef de la bénéficiaire (0 si non compté). */
-/** `insF` : capital d'assurance du fils survivant taxé dans son chef (0 si non compté). */
-interface Variant { base: 'pp' | 'np'; supplement: boolean; ins: Cents; insF: Cents }
+/**
+ * `ins` : capital d'assurance taxé dans le chef de la bénéficiaire (0 si non compté) ;
+ * `recu` : capital qu'elle reçoit effectivement (≠ `ins` si le capital n'est pas taxé) ;
+ * `insF` : capital d'assurance du fils survivant taxé dans son chef (0 si non compté).
+ */
+interface Variant { base: 'pp' | 'np'; supplement: boolean; ins: Cents; recu: Cents; insF: Cents }
 
 const taxOf = (p: SuccessionProfile, id: string, part: Cents) =>
   computeBeneficiaryTax(p, { id, partLogement: 0, partAutre: part, rappel: 0, baseReserve: 0, abattementEligible: true });
@@ -173,11 +206,12 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   const res = resolveSuccession(dateDeces, 'auto');
   const profil = res.ok ? res.profile : null;
   const hypothesePrudente = `Hypothèse prudente : nue-propriété taxée sur ${o.baseNP === 'nue_propriete' ? 'la valeur de la nue-propriété (coefficient saisi)' : 'la valeur de la pleine propriété'}, sans exemption supplémentaire pour la cohabitante, autres biens ${autres === null ? 'non comptés (non renseignés)' : `de ${formatEUR(autres)}`}${ass && o.assuranceTaxee !== 'non' ? `, assurance de ${formatEUR(ass)} taxée` : ''}.`;
-  const base: Omit<SfpResult, 'scenarios' | 'transmission'> = { dateDeces, valeurMaison, quotePart, partPP, partNP, autres, profil, avertissements, sources, hypothesePrudente };
+  const base: Omit<SfpResult, 'scenarios' | 'transmission' | 'net'> = { dateDeces, valeurMaison, quotePart, partPP, partNP, autres, profil, avertissements, sources, hypothesePrudente };
 
   const indispo = (raison: string): SfpResult => ({
     ...base,
     transmission: null,
+    net: null,
     scenarios: (['acceptation', 'renonciation'] as SfpKey[]).map((key) => ({
       key, titre: TITRES[key], disponible: false, raison, rows: [], total: { value: null, status: 'non_disponible', notes: [] }, totalPrudent: null, plancherApplique: false, notes: [], retenu: retenuOf(s, key),
     })),
@@ -195,11 +229,14 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   const supps = o.supplementCohabitant === 'appliquer' ? [true] : o.supplementCohabitant === 'ne_pas_appliquer' ? [false] : [true, false];
   // Assurance : comptée (taxée), non comptée, ou les deux (fourchette) ; la valeur la plus haute d'abord (hypothèse prudente).
   // Contrat seulement « possible » : calculé avec et sans, même si sa taxation est confirmée.
-  const insVals: Cents[] = !ass || o.assuranceTaxee === 'non' ? [0] : o.assuranceTaxee === 'oui' && !assIncertaine ? [ass] : [ass, 0];
+  // Capital reçu (existence), puis capital taxé ; la valeur taxée la plus haute d'abord (hypothèse prudente).
+  const insOpts: { recu: Cents; ins: Cents }[] = (!ass ? [0] : assIncertaine ? [ass, 0] : [ass]).flatMap((recu) =>
+    (recu === 0 || o.assuranceTaxee === 'non' ? [0] : o.assuranceTaxee === 'oui' ? [recu] : [recu, 0]).map((ins) => ({ recu, ins })));
+  const insVals: Cents[] = [...new Set(insOpts.map((x) => x.ins))];
   const avecAssurance = insVals.some((x) => x > 0);
   const insFVals: Cents[] = !assF || o.assuranceFilsTaxee === 'non' ? [0] : o.assuranceFilsTaxee === 'oui' && !assFIncertaine ? [assF] : [assF, 0];
   const avecAssFils = insFVals.some((x) => x > 0);
-  const variants: Variant[] = bases.flatMap((b) => supps.flatMap((supplement) => insVals.flatMap((ins) => insFVals.map((insF) => ({ base: b, supplement, ins, insF })))));
+  const variants: Variant[] = bases.flatMap((b) => supps.flatMap((supplement) => insOpts.flatMap(({ recu, ins }) => insFVals.map((insF) => ({ base: b, supplement, ins, recu, insF })))));
   const hiOk = autres !== null;
   /** Part recueillie dans la succession (jamais négative : un passif net ne se reporte pas sur l'assurance, hypothèse prudente). */
   const partOf = (v: Variant) => Math.max(0, (v.base === 'pp' ? partPP : partNP!) + (autres ?? 0));
@@ -390,8 +427,96 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
     };
   }
 
-  return { ...base, scenarios: [acceptation, renonciation], transmission };
+  // ── Ce que la bénéficiaire garde au final, selon son option.
+  const net = netBeneficiaire({
+    variants, prudentV, baseLoOk, partPP, autres, ass, accepteDispo: acceptation.disponible,
+    droitsAcc: (v) => notaire.beneficiaire ?? benefTax(v).droits ?? 0,
+    droitsRen: (v) => insTax(v).droits ?? 0,
+    epa: o.epargnePensionBeneficiaire === 'beneficiaire' ? epa : null,
+  });
+
+  return { ...base, scenarios: [acceptation, renonciation], transmission, net };
 }
+
+interface NetInput {
+  variants: Variant[];
+  prudentV: Variant;
+  baseLoOk: boolean;
+  partPP: Cents;
+  autres: Cents | null;
+  ass: Cents | null;
+  accepteDispo: boolean;
+  /** Droits de la bénéficiaire qui accepte (part de succession + assurance ; montant du notaire s'il est saisi). */
+  droitsAcc: (v: Variant) => Cents;
+  /** Droits de la bénéficiaire qui renonce (assurance seule). */
+  droitsRen: (v: Variant) => Cents;
+  epa: Cents | null;
+}
+
+/**
+ * Montant net final de la bénéficiaire = assurance reçue − droits de succession + solde de la succession.
+ * Solde : acceptation pure et simple = part de maison + autres biens nets (négatif : dettes payées de sa poche) ;
+ * bénéfice d'inventaire = ce solde, jamais négatif (dettes payées dans la limite des biens) ; renonciation = 0.
+ * La part de maison est comptée à sa valeur en pleine propriété (ce qu'elle vaudra au décès du père, en valeur d'aujourd'hui).
+ * La base de la nue-propriété ne change que les droits : la plus haute (prudente) est toujours calculée,
+ * donc le minimum du net l'est toujours ; son maximum seulement si la base la plus basse est calculée.
+ */
+function netBeneficiaire(x: NetInput): NetBenefResult {
+  const { variants, prudentV, baseLoOk, partPP, autres, ass } = x;
+  const nd: Num = { value: null, status: 'non_disponible', notes: [] };
+  const partiel: Num = { value: null, status: 'partiel', notes: [] };
+  const assNum = numFrom(variants.map((v) => v.recu), true, true);
+  const mk = (key: NetKey, disponible: boolean, droits: (v: Variant) => Cents, solde: ((v: Variant) => Cents) | null, partMaison: Cents | null, notes: string[], siInconnu: Num = partiel): NetCase => {
+    // La renonçante ne recueille pas la nue-propriété : sa base de taxation est sans effet.
+    const baseOk = key === 'renonciation' || baseLoOk;
+    if (!disponible) return { key, titre: NET_TITRES[key], disponible, raison: 'Sans testament en sa faveur, la cohabitante légale ne recueille pas cette part : seule la renonciation la concerne.', assurance: nd, droits: nd, solde: nd, partMaison: null, net: nd, netPrudent: null, notes: [] };
+    return {
+      key, titre: NET_TITRES[key], disponible, assurance: assNum,
+      droits: numFrom(variants.map(droits), baseOk, true),
+      solde: solde ? numFrom(variants.map(solde), true, true) : partiel,
+      partMaison,
+      net: solde ? numFrom(variants.map((v) => v.recu - droits(v) + solde(v)), true, baseOk) : siInconnu,
+      netPrudent: solde ? prudentV.recu - droits(prudentV) + solde(prudentV) : null,
+      notes: notes.filter(Boolean),
+    };
+  };
+  const prudentSans = (droits: (v: Variant) => Cents, solde: Cents) => formatEUR(prudentV.recu - droits(prudentV) + solde);
+  const solde = autres === null ? null : partPP + autres;
+  const pure = mk('pure', x.accepteDispo, x.droitsAcc, solde === null ? null : () => solde, partPP, [
+    solde === null
+      ? `Dettes et autres biens non renseignés (étape 3) : montant final inconnu. Avec des autres biens nets à 0 € : ${prudentSans(x.droitsAcc, partPP)} (hypothèse prudente) ; chaque euro de dettes non couvert le réduit d’un euro.`
+      : solde < 0 ? `Succession déficitaire : elle paierait ${formatEUR(-solde)} de dettes avec son propre argent (y compris l’assurance déjà versée).` : '',
+    'Elle répond de toutes les dettes de la succession, même découvertes plus tard, sur ses propres biens.',
+    'La part de maison est en nue-propriété : ce n’est pas de l’argent disponible tant que le père garde l’usufruit (valeur comptée : pleine propriété). Droits et dettes se paient avec l’assurance.',
+  ]);
+  const inv = mk('inventaire', x.accepteDispo, x.droitsAcc, solde === null ? null : () => Math.max(0, solde), solde !== null && solde < 0 ? 0 : partPP, [
+    solde === null
+      ? `Dettes et autres biens non renseignés (étape 3) : au minimum ce qu’elle garderait en renonçant (${prudentSans(x.droitsRen, 0)}, hypothèse prudente), les dettes n’étant payées que dans la limite des biens recueillis.`
+      : solde < 0 ? 'Les dettes dépassent les biens : elle ne recueille rien de la succession mais ne paie rien de sa poche (même résultat que la renonciation, frais de procédure en plus).' : '',
+    'Dettes payées dans la limite des biens de la succession ; la part de maison peut devoir être vendue (ou rachetée par la famille) pour payer les créanciers.',
+    'Frais de la procédure (déclaration au notaire, publications, inventaire) non déduits.',
+  ], numFrom(variants.map((v) => v.recu - x.droitsRen(v)), true, false));
+  const ren = mk('renonciation', true, x.droitsRen, () => 0, 0, [
+    ass ? 'Elle garde en principe l’assurance (droit propre, hors succession) et ne paie des droits que sur ce capital (à confirmer).' : 'Sans assurance à son profit, elle ne recueille rien et ne paie rien.',
+    'Elle ne reçoit rien de la succession et ne paie aucune de ses dettes (sauf un crédit qu’elle aurait cosigné).',
+  ]);
+  return {
+    cases: [pure, inv, ren],
+    epargnePension: x.epa,
+    notes: [
+      'Net = assurance reçue − droits de succession ± solde de la succession (biens − dettes). Indicatif, à valider par le notaire.',
+      ass ? 'Assurance : montant brut ou net des retenues (INAMI, solidarité, impôt) à confirmer.' : 'Aucune assurance comptée pour la bénéficiaire (inexistante ou non renseignée).',
+      'Sa propre moitié du logement du couple et ses propres comptes lui appartiennent déjà : hors succession, non comptés ici. Si elle a cosigné un crédit, elle reste tenue quelle que soit son option.',
+      'Avant de choisir, éviter tout acte qui vaudrait acceptation (vider les comptes du défunt, vendre ses biens, payer ses dettes avec l’argent de la succession).',
+    ],
+  };
+}
+
+const NET_TITRES: Record<NetKey, string> = {
+  pure: 'Elle accepte purement et simplement',
+  inventaire: 'Elle accepte sous bénéfice d’inventaire',
+  renonciation: 'Elle renonce à la succession',
+};
 
 const EPA_BENEF: Record<EpargnePensionBeneficiaire, string> = {
   inconnu: 'bénéficiaire à établir (clause à lire)',
