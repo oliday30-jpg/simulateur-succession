@@ -136,13 +136,13 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   (rendu synchrone `flushSync` le temps de fabriquer le PDF : l'écran garde les prénoms, l'activation utilisateur iOS est conservée) ; date « établie le » en date locale.
   _19/11/2026 — commit 80aeea1. 159 tests + build OK. PDF du cas d'exemple contrôlé page par page (3 pages : questions, sections 3 à 5, tableau + points en suspens + sources).
   Feuille de partage iPhone à tester après le push._
-- [ ] **T20 — Onglet « Point de situation (PDF) »** (demande du 20/11/2026 : document à partager avec une conseillère bancaire)
+- [x] **T20 — Onglet « Point de situation (PDF) »** (demande du 20/11/2026 : document à partager avec une conseillère bancaire)
   Document en lecture seule construit à partir des données de l'appareil : partie 1 « situation du père » (valeurs de la maison avec fiabilité,
   répartition acte 2005 avec valeurs indicatives, épargne et total — « incomplet » si un montant manque —, prêt au fils prédécédé, budget,
   ordre de grandeur des droits si rien ne change, questions ouvertes) ; partie 2 « succession du fils prédécédé » (faits connus, biens et dettes,
   assurances, droits selon l'option de la cohabitante, points d'interrogation, questions pour un regard bancaire). Cases vides → « non renseigné ».
   « Préparé pour » et « Afficher les prénoms » propres au document (ni enregistrés ni exportés) ; « Créer le PDF » (feuille de partage iOS) + « Imprimer ».
-  _20/11/2026 — 162 tests + build OK (`tests/bilanPdf.test.tsx`). PDF du cas d'exemple contrôlé page par page (3 pages)._
+  _20/11/2026 — commit 2c2a68b. 162 tests + build OK (`tests/bilanPdf.test.tsx`). PDF du cas d'exemple contrôlé page par page (3 pages). Non poussé (accord requis)._
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
