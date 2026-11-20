@@ -1,8 +1,8 @@
 import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../src/App';
-import { defaultState } from '../src/model/sample';
 import { readBlobText } from '../src/persistence/io';
+import { etatSansContrats } from './sansContrats';
 
 /**
  * Parcours : modifier valeur maison et épargne, dupliquer, ajouter une donation,
@@ -21,7 +21,7 @@ describe('parcours interface', () => {
 
   it('de la saisie à l’export/import et au détail', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
 
     // 1. Valeur de la maison et épargne
     const hyp = screen.getByRole('group', { name: 'Hypothèse de travail' });
@@ -92,7 +92,7 @@ describe('parcours interface', () => {
 
   it('sélection de la répartition de la succession de la mère', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     const sel = screen.getByLabelText(/^Répartition issue de la succession de la mère/) as HTMLSelectElement;
     expect(sel.value).toBe('acte2005_reduction');
     expect(screen.getByText(/^Résumé :/).textContent).toMatch(/Père — PP 2\/3/);
@@ -105,7 +105,7 @@ describe('parcours interface', () => {
 
   it('succession du fils prédécédé : renonciation retenue, partage des lots et droits comparés', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     // Valeurs par défaut : hypothèse prudente chiffrée (50 000 € en PP, sans supplément) → 1 750 € si elle accepte
@@ -120,7 +120,7 @@ describe('parcours interface', () => {
 
   it('succession du fils prédécédé : onglet séparé de la situation du père, renvoi et prénom', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     // Onglet Situation : plus de bloc ni de cases propres à cette succession, seulement un renvoi.
     expect(screen.queryByRole('region', { name: /Succession du fils prédécédé : droits/ })).toBeNull();
     expect(screen.queryByLabelText(/^Part du fils prédécédé \(nue-propriété\)/)).toBeNull();
@@ -139,7 +139,7 @@ describe('parcours interface', () => {
 
   it('succession du fils prédécédé : dettes supérieures aux biens (montant négatif) et assurance', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     const montant = (name: RegExp) => within(within(card).getByRole('group', { name })).getByLabelText('Montant');
@@ -158,7 +158,7 @@ describe('parcours interface', () => {
 
   it('assurance du fils survivant : comparaison garder / transmettre à la bénéficiaire', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     const card = screen.getByRole('region', { name: /Succession du fils prédécédé : droits/ });
     expect(within(card).queryByRole('region', { name: /la garder ou la transmettre/ })).toBeNull();
@@ -181,7 +181,7 @@ describe('parcours interface', () => {
 
   it('suites de la succession de la mère : source cadastre, quasi-usufruit, autres immeubles', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     // Préréglage par défaut (acte 2005) : la note cite le cadastre comme confirmation.
     expect(document.body.textContent).toMatch(/Situation reprise par le cadastre \(MyMinfin, consulté le 18\/11\/2026/);
     // Bloc du fils prédécédé : les « autres biens » rappellent la créance de restitution.
@@ -201,7 +201,7 @@ describe('parcours interface', () => {
 
   it('les prénoms saisis remplacent les rôles dans la simulation', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
     await user.type(screen.getByLabelText('Prénom — Fils survivant'), 'Olivier');
     await user.type(screen.getByLabelText('Prénom — Fils prédécédé'), 'Pierre');
@@ -218,7 +218,7 @@ describe('parcours interface', () => {
 
   it('piste à étudier en priorité affichée en tête de la comparaison', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Comparaison' }));
     const card = screen.getByRole('heading', { name: 'Piste à étudier en priorité' }).parentElement!;
     // Variantes + modèles : le scénario mixte (donation + don + legs) arrive en tête dans l'exemple.
@@ -228,7 +228,7 @@ describe('parcours interface', () => {
 
   it('onglets utilisables au clavier', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     screen.getByRole('tab', { name: 'Situation et sources' }).focus();
     await user.keyboard('{ArrowRight}');
     expect(screen.getByRole('tab', { name: 'Succession du fils prédécédé' })).toHaveProperty('ariaSelected', 'true');
@@ -236,7 +236,7 @@ describe('parcours interface', () => {
 
   it('rapport simple : chiffres de la référence, piste, conseils et prénoms', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.type(screen.getByLabelText('Prénom — Père'), 'Marcel');
     await user.click(screen.getByRole('tab', { name: 'Rapport simple' }));
     const art = screen.getByRole('article');
@@ -249,7 +249,7 @@ describe('parcours interface', () => {
   });
   it('donation sur mesure : montant libre et bénéficiaire au choix', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Scénarios' }));
     // Les modèles à montant figé ne sont plus proposés en un clic.
     expect(screen.queryByRole('button', { name: /Don bancaire 10 000/ })).toBeNull();

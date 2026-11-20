@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from '../src/App';
-import { defaultState } from '../src/model/sample';
 import { HELP } from '../src/ui/help';
+import { etatSansContrats } from './sansContrats';
 
 /**
  * Aide « ? » : chaque entrée répond au minimum à « quoi », « où » et « si vide » ;
@@ -19,7 +19,7 @@ describe('aide des cases', () => {
 
   it('assurance du fils survivant : aide propre pour « taxée ? » et aide du tableau de comparaison', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     await user.selectOptions(screen.getByLabelText(/^Une assurance groupe \/ vie est-elle versée au fils survivant/), 'oui');
     // La case « taxée ? » du fils survivant a sa propre aide (barème entre frères et sœurs), pas celle de la bénéficiaire.
@@ -44,7 +44,7 @@ describe('aide des cases', () => {
 
   it('toute case indispensable de l’onglet de la succession du fils prédécédé a un bouton « ? »', async () => {
     const user = userEvent.setup();
-    const { container } = render(<App initial={defaultState()} />);
+    const { container } = render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     for (const l of [/^Une assurance groupe \/ vie est-elle versée à la bénéficiaire/, /^Une assurance groupe \/ vie est-elle versée au fils survivant/]) await user.selectOptions(screen.getByLabelText(l), 'possible');
     // 7 cases de base + les 2 montants d'assurance
@@ -57,7 +57,7 @@ describe('aide des cases', () => {
   });
 
   it('toute case indispensable de l’onglet Situation a un bouton « ? »', () => {
-    const { container } = render(<App initial={defaultState()} />);
+    const { container } = render(<App initial={etatSansContrats()} />);
     const essentials = [...container.querySelectorAll('.field.essentiel')];
     expect(essentials.length).toBeGreaterThan(0);
     for (const f of essentials) {
@@ -68,7 +68,7 @@ describe('aide des cases', () => {
 
   it('le bouton ouvre une fenêtre flottante hors de la case, fermée par « Fermer », Échap ou un toucher ailleurs', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     const btn = screen.getByRole('button', { name: /Aide : Répartition issue de la succession/ });
     expect(btn.getAttribute('aria-expanded')).toBe('false');
     await user.click(btn);

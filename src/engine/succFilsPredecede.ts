@@ -1,4 +1,4 @@
-import type { Existence, Situation, SuccessionFilsPredecede, Value } from '../model/types';
+import type { EpargnePensionBeneficiaire, Existence, Situation, SuccessionFilsPredecede, Value } from '../model/types';
 import { allocate, applyRateBp, formatEUR, type Cents } from '../util/money';
 import { formatPct, mulCents, sum, type Frac } from '../util/fraction';
 import { formatDate } from '../util/dates';
@@ -166,6 +166,8 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
   const assF = capitalOf(o.assuranceFilsExiste, o.assuranceFils);
   const assFIncertaine = o.assuranceFilsExiste === 'possible';
   if (o.assuranceFilsExiste !== 'inconnu' && o.assuranceFilsExiste !== 'non' && assF === null) avertissements.push('Assurance groupe / vie versée au fils survivant (frère du fils prédécédé) : montant non renseigné, non comptée.');
+  const epa = capitalOf(o.epargnePensionExiste, o.epargnePension);
+  if (o.epargnePensionExiste !== 'inconnu' && o.epargnePensionExiste !== 'non') avertissements.push(epargnePensionAvertissement(epa, o.epargnePensionBeneficiaire));
 
   const sources = [SOURCES.spfSuccession, SOURCES.spfTarifsAutres];
   const res = resolveSuccession(dateDeces, 'auto');
@@ -392,6 +394,26 @@ export function computeSuccFilsPredecede(s: Situation): SfpResult {
 }
 
 /** Capital pris en compte : 0 si le contrat n'existe pas, rien (null) si son existence n'est pas vérifiée. */
+const EPA_BENEF: Record<EpargnePensionBeneficiaire, string> = {
+  inconnu: 'bénéficiaire à établir (pas la bénéficiaire de la part, selon les informations reçues)',
+  heritiers: 'versée aux héritiers légaux ou à la succession selon la clause',
+  fils: 'versée au fils survivant (frère du fils prédécédé) selon la clause',
+  pere: 'versée au père selon la clause',
+  autre: 'versée à une autre personne selon la clause',
+};
+
+/**
+ * Épargne-pension : jamais comptée dans les droits estimés (régime fiscal propre et bénéficiaire à établir).
+ * Le texte rappelle seulement ce qu'elle pourrait changer.
+ */
+export function epargnePensionAvertissement(capital: Cents | null, b: EpargnePensionBeneficiaire): string {
+  const m = capital === null ? 'montant non renseigné' : formatEUR(capital);
+  const effet = b === 'heritiers' ? ' Si elle tombe dans la succession, elle s’ajoute aux biens partagés et aux droits des héritiers.'
+    : b === 'fils' ? ' Le fils survivant la recevrait en plus de son assurance (barème entre frères et sœurs, à confirmer).'
+    : b === 'pere' ? ' Le père la recevrait (barème en ligne directe, à confirmer).' : '';
+  return `Épargne-pension (${m}) : ${EPA_BENEF[b]} ; non comptée dans les droits estimés (régime fiscal propre de l’épargne-pension et droits de succession à confirmer).${effet}`;
+}
+
 function capitalOf(existe: Existence, v: Value): Cents | null {
   return existe === 'non' ? 0 : existe === 'inconnu' ? null : v.cents;
 }

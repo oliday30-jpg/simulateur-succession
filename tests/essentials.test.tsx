@@ -4,6 +4,7 @@ import { App } from '../src/App';
 import { defaultState, sampleSituation, mkDonBancaire, mkLegs } from '../src/model/sample';
 import { countMissing, scenarioNeeds, sfpNeeds, situationNeeds } from '../src/ui/essentials';
 import type { Scenario } from '../src/model/types';
+import { etatSansContrats, sansContrats } from './sansContrats';
 
 /**
  * Cases indispensables = celles dont l'absence rend le moteur « bloquant ».
@@ -12,7 +13,7 @@ import type { Scenario } from '../src/model/types';
  */
 describe('cases indispensables', () => {
   it('situation d’exemple : toutes renseignées ; vider l’avoir ou la valeur retenue en fait manquer une', () => {
-    const s = sampleSituation();
+    const s = sansContrats(sampleSituation());
     expect(countMissing(situationNeeds(s))).toBe(0);
     const compte = s.postes.find((p) => p.kind === 'compte')!;
     compte.value.cents = null;
@@ -45,7 +46,7 @@ describe('cases indispensables', () => {
    * Une assurance « peut-être » ajoute son montant ; « non » le retire ; base « nue-propriété » ajoute le coefficient.
    */
   it('succession du fils prédécédé : cases selon la situation', () => {
-    const s = sampleSituation();
+    const s = sansContrats(sampleSituation());
     expect(countMissing(sfpNeeds(s))).toBe(7);
     s.succFilsPredecede.assuranceExiste = 'possible';
     expect(countMissing(sfpNeeds(s))).toBe(7); // existence renseignée (−1), montant demandé (+1)
@@ -65,7 +66,7 @@ describe('cases indispensables', () => {
 
   it('succession du fils prédécédé : légende, cases jaunes et montant d’assurance affiché seulement si le contrat existe', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
     expect(screen.getByText(/Encore 7 cases indispensables à remplir/)).toBeTruthy();
     const q = screen.getByLabelText(/^Une assurance groupe \/ vie est-elle versée à la bénéficiaire/);
@@ -81,7 +82,7 @@ describe('cases indispensables', () => {
 
   it('interface : légende et case jaune « à remplir » qui passe au vert', async () => {
     const user = userEvent.setup();
-    render(<App initial={defaultState()} />);
+    render(<App initial={etatSansContrats()} />);
     expect(screen.getByText(/Toutes les cases indispensables de cet onglet sont remplies/)).toBeTruthy();
     const compte = screen.getByRole('group', { name: /Compte — Comptes et placements/ });
     const input = within(compte).getByLabelText('Montant');

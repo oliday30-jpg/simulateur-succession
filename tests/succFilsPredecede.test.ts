@@ -10,6 +10,7 @@ import { DON_ACTUEL, SUCC_AUTRES_PERSONNES, SUCC_FRERES_SOEURS } from '../src/ta
 import { euros } from '../src/util/money';
 import { frac } from '../src/util/fraction';
 import type { Situation } from '../src/model/types';
+import { sansContrats } from './sansContrats';
 
 const E = euros;
 
@@ -19,7 +20,7 @@ const E = euros;
  * pas de descendant, maison non affectée à la résidence commune.
  */
 const sit = (f: (s: Situation) => void = () => {}): Situation => {
-  const s = sampleSituation();
+  const s = sansContrats(sampleSituation());
   s.succFilsPredecede.testament = 'legs_beneficiaire';
   s.succFilsPredecede.descendants = 'aucun';
   s.succFilsPredecede.residenceCommune = 'non';

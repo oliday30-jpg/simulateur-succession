@@ -219,6 +219,23 @@ export const HELP = {
     ou: 'Courrier de l’assureur ou de l’employeur (clause bénéficiaire, règlement du plan de pension).',
     siVide: '« Je ne sais pas encore » : rien n’est compté et la comparaison « garder / transmettre » n’est pas affichée.',
   },
+  sfpEpargnePensionExiste: {
+    quoi: 'Si le fils prédécédé avait une épargne-pension (3e pilier, souvent sous forme d’assurance) qui ne revient pas à la bénéficiaire. « Peut-être » : contrat non confirmé.',
+    ou: 'Courrier de l’assureur ou de la banque ; attestation fiscale annuelle d’épargne-pension ; notaire de la succession.',
+    siVide: '« Je ne sais pas encore » : rien n’est affiché ni compté. Même renseignée, elle n’entre pas dans les droits estimés (bénéficiaire et fiscalité à établir).',
+  },
+  sfpEpargnePension: {
+    quoi: 'Le capital que l’assureur verse au décès (réserve constituée), avant retenues.',
+    ou: 'Décompte de l’assureur ; dernière attestation annuelle du contrat.',
+    exemple: '50 000',
+    siVide: 'Le montant est affiché « non renseigné » ; aucun calcul n’en dépend pour l’instant.',
+    certitude: 'Marquer « vérifié » quand le décompte de l’assureur est reçu.',
+  },
+  sfpEpargnePensionBenef: {
+    quoi: 'À qui la clause bénéficiaire attribue le capital. Sans désignation, les contrats prévoient souvent « le conjoint, à défaut les héritiers légaux » : une cohabitante légale n’y est pas toujours assimilée au conjoint.',
+    ou: 'Conditions particulières du contrat (clause bénéficiaire) ; demande écrite à l’assureur.',
+    siVide: '« À établir » : un avertissement le rappelle et une question figure dans la fiche pour le notaire.',
+  },
   sfpAutresBiens: {
     quoi: 'Ce que laisse le fils prédécédé en dehors de la maison de Gembloux (sa part de son propre logement, comptes, voiture…), moins ses dettes et frais, dont la dette envers le père. Y ajouter ce qu’il avait recueilli dans la succession de la mère hors maison : '
       + 'sa créance de restitution envers le père (quasi-usufruit sur les comptes et titres de la mère, environ 1/3 de ceux-ci, exigible au décès du père) '

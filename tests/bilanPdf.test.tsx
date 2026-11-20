@@ -50,6 +50,26 @@ describe('Point de situation à partager', () => {
     expect(within(doc).queryAllByRole('button')).toHaveLength(0);
   });
 
+  it('contrats connus (20/11/2026) : assureurs, montants et épargne-pension non comptée ; montants modifiables', async () => {
+    const user = userEvent.setup();
+    render(<App initial={defaultState()} />);
+    await user.click(screen.getByRole('tab', { name: 'Point de situation (PDF)' }));
+    let txt = screen.getByRole('article', { name: 'Point de situation' }).textContent!.replace(/\s/g, ' ');
+    expect(txt).toMatch(/au profit de la bénéficiaire : oui — montant 200 000,00 € \(Assurance groupe Ethias\)/);
+    expect(txt).toMatch(/frère du fils prédécédé\) : oui — montant 15 000,00 € \(Assurance groupe Beobank\)/);
+    expect(txt).toMatch(/Épargne-pension \(non versée à la bénéficiaire\) : oui — montant 50 000,00 € \(Épargne-pension AXA\) ; bénéficiaire : à établir.*non comptée.*exclusion du suicide/);
+    expect(txt).not.toMatch(/capital pension/);
+    // Montant modifiable dans l'onglet de la succession du fils prédécédé.
+    await user.click(screen.getByRole('tab', { name: 'Succession du fils prédécédé' }));
+    const champ = within(screen.getByRole('group', { name: /^Épargne-pension \(capital au décès\)/ })).getByLabelText('Montant');
+    await user.clear(champ);
+    await user.type(champ, '45000');
+    await user.tab();
+    await user.click(screen.getByRole('tab', { name: 'Point de situation (PDF)' }));
+    txt = screen.getByRole('article', { name: 'Point de situation' }).textContent!.replace(/\s/g, ' ');
+    expect(txt).toMatch(/Épargne-pension \(non versée à la bénéficiaire\) : oui — montant 45 000,00 €/);
+  });
+
   it('PDF : prénoms masqués par défaut, destinataire repris, prénoms sur demande', async () => {
     const user = userEvent.setup();
     render(<App initial={defaultState()} />);

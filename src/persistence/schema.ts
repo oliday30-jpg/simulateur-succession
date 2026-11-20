@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { AppState } from '../model/types';
+import { CONTRATS_CONNUS } from '../model/contratsConnus';
 
 /** Version courante du format d'export JSON. */
 export const SCHEMA_VERSION = 1 as const;
@@ -23,10 +24,11 @@ const defaultAssuranceFils = () => ({ cents: null, certainty: 'approx' as const,
 export const defaultSuccFilsPredecede = () => ({
   testament: 'inconnu' as const, descendants: 'inconnu' as const, residenceCommune: 'inconnu' as const,
   autresBiensNets: { cents: null, certainty: 'approx' as const, source: 'Succession du fils prédécédé (notaire)' },
-  assuranceExiste: 'inconnu' as const, assurance: defaultAssurance(), assuranceTaxee: 'inconnu' as const,
-  assuranceFilsExiste: 'inconnu' as const, assuranceFils: defaultAssuranceFils(), assuranceFilsTaxee: 'inconnu' as const, assuranceFilsSuivant: 'inconnu' as const,
+  assuranceTaxee: 'inconnu' as const, assuranceFilsTaxee: 'inconnu' as const, assuranceFilsSuivant: 'inconnu' as const,
   baseNP: 'a_confirmer' as const, coefNP: null, supplementCohabitant: 'inconnu' as const,
   droitsNotaire: { beneficiaire: null, pere: null, fils: null },
+  // Contrats connus au 20/11/2026 (situation de base).
+  ...CONTRATS_CONNUS(),
 });
 const existence = z.enum(['inconnu', 'non', 'possible', 'oui']);
 /** Données enregistrées avant le 19/11/2026 (sans « existe ? ») : un montant > 0 vaut « oui », 0 vaut « non », vide « inconnu ». */
@@ -34,10 +36,25 @@ const existeDepuis = (v: unknown) => {
   const c = (v as { cents?: unknown } | undefined)?.cents;
   return typeof c === 'number' ? (c > 0 ? 'oui' : 'non') : 'inconnu';
 };
+/**
+ * Données enregistrées avant le 20/11/2026 (sans épargne-pension) : mise à jour unique avec les contrats connus.
+ * Un contrat déjà renseigné (existence ≠ « je ne sais pas » ou montant saisi) est conservé tel quel.
+ */
+const avecContratsConnus = (o: Record<string, unknown>): Record<string, unknown> => {
+  const k = CONTRATS_CONNUS();
+  const vierge = (e: unknown, v: unknown) => (e === undefined || e === 'inconnu') && (v as { cents?: unknown } | undefined)?.cents == null;
+  return {
+    ...o,
+    ...(vierge(o.assuranceExiste, o.assurance) ? { assuranceExiste: k.assuranceExiste, assurance: k.assurance } : {}),
+    ...(vierge(o.assuranceFilsExiste, o.assuranceFils) ? { assuranceFilsExiste: k.assuranceFilsExiste, assuranceFils: k.assuranceFils } : {}),
+    epargnePensionExiste: k.epargnePensionExiste, epargnePension: k.epargnePension, epargnePensionBeneficiaire: k.epargnePensionBeneficiaire,
+  };
+};
 const succFilsPredecede = z.preprocess((raw) => {
   if (!raw || typeof raw !== 'object') return raw;
   const r = raw as Record<string, unknown>;
-  return { ...r, assuranceExiste: r.assuranceExiste ?? existeDepuis(r.assurance), assuranceFilsExiste: r.assuranceFilsExiste ?? existeDepuis(r.assuranceFils) };
+  const o = { ...r, assuranceExiste: r.assuranceExiste ?? existeDepuis(r.assurance), assuranceFilsExiste: r.assuranceFilsExiste ?? existeDepuis(r.assuranceFils) };
+  return r.epargnePensionExiste === undefined ? avecContratsConnus(o) : o;
 }, z.object({
   testament: z.enum(['inconnu', 'legs_beneficiaire', 'aucun']),
   descendants: z.enum(['inconnu', 'aucun', 'oui']),
@@ -57,6 +74,10 @@ const succFilsPredecede = z.preprocess((raw) => {
   // Ajoutés le 19/11/2026 (T15) : déduits du montant pour les données enregistrées avant (voir ci-dessus).
   assuranceExiste: existence,
   assuranceFilsExiste: existence,
+  // Ajoutés le 20/11/2026 : complétés par `avecContratsConnus` pour les données enregistrées avant.
+  epargnePensionExiste: existence,
+  epargnePension: value,
+  epargnePensionBeneficiaire: z.enum(['inconnu', 'heritiers', 'fils', 'pere', 'autre']),
 }));
 
 const situation = z.object({

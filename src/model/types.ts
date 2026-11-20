@@ -131,6 +131,14 @@ export interface SuccessionFilsPredecede {
   assuranceFilsTaxee: 'inconnu' | 'oui' | 'non';
   /** À qui va ce capital si le fils survivant renonce au bénéfice du contrat (clause bénéficiaire). */
   assuranceFilsSuivant: 'inconnu' | 'beneficiaire' | 'succession' | 'autre';
+  /**
+   * Épargne-pension (3e pilier, forme assurance) du fils prédécédé, NON versée à la bénéficiaire selon les
+   * informations reçues : bénéficiaire à établir (clause du contrat). Montant indicatif, non compté dans les droits
+   * estimés tant que le bénéficiaire n'est pas connu (ajouté le 20/11/2026).
+   */
+  epargnePensionExiste: Existence;
+  epargnePension: Value;
+  epargnePensionBeneficiaire: EpargnePensionBeneficiaire;
   /** Base taxable de la nue-propriété recueillie (règle d'évaluation non trouvée dans les sources consultées). */
   baseNP: 'a_confirmer' | 'pleine_propriete' | 'nue_propriete';
   /** Valeur de la nue-propriété en fraction de la pleine propriété (fournie par le notaire). */
@@ -246,6 +254,8 @@ export type RulesMode = 'auto' | 'constant2026' | 'decret2024' | 'annonce2026' |
 export type TriState = 'inconnu' | 'appliquer' | 'ne_pas_appliquer';
 /** Existence d'un contrat ou d'un fait non certain : pas encore vérifié, non, peut-être (calcul avec et sans), oui. */
 export type Existence = 'inconnu' | 'non' | 'possible' | 'oui';
+/** Bénéficiaire de l'épargne-pension selon la clause : à établir, héritiers légaux / succession, fils survivant, père, autre personne. */
+export type EpargnePensionBeneficiaire = 'inconnu' | 'heritiers' | 'fils' | 'pere' | 'autre';
 
 export interface ResultSnapshot {
   savedAt: ISODate;

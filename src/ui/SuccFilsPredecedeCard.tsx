@@ -1,4 +1,4 @@
-import type { Existence, Situation, SuccessionFilsPredecede } from '../model/types';
+import type { EpargnePensionBeneficiaire, Existence, Situation, SuccessionFilsPredecede } from '../model/types';
 import { assuranceAChiffrer } from './essentials';
 import { computeSuccFilsPredecede, ecartRenonciation, type SfpScenario, type TransmissionResult } from '../engine/succFilsPredecede';
 import { FracField, MoneyField, SelectField, ValueField, useHelp } from './fields';
@@ -70,6 +70,18 @@ export function SuccFilsPredecedeCard({ s, update }: { s: Situation; update: Upd
             <SelectField label="Si le fils survivant (frère du fils prédécédé) renonce au bénéfice du contrat, le capital va à…" help="sfpAssuranceFilsSuivant" value={o.assuranceFilsSuivant} onChange={(v) => set((x) => { x.assuranceFilsSuivant = v; })}
               options={[['inconnu', 'Inconnu (clause à lire)'], ['beneficiaire', t('La bénéficiaire (cohabitante légale)')], ['succession', 'Personne : la succession'], ['autre', 'Une autre personne']]}
               hint="Lire la clause bénéficiaire (ou le règlement du plan) avant d’accepter le capital." />
+          </>
+        )}
+      </div>
+
+      <div className="grid">
+        <SelectField<Existence> label="Une épargne-pension du fils prédécédé (non versée à la bénéficiaire) existe-t-elle ?" help="sfpEpargnePensionExiste" value={o.epargnePensionExiste} onChange={(v) => set((x) => { x.epargnePensionExiste = v; })} options={EXISTE} />
+        {assuranceAChiffrer(o.epargnePensionExiste) && (
+          <>
+            <ValueField label="Épargne-pension (capital au décès)" help="sfpEpargnePension" value={o.epargnePension} onChange={(v) => set((x) => { x.epargnePension = v; })}
+              hint="Non comptée dans les droits estimés tant que le bénéficiaire et le régime fiscal ne sont pas connus." />
+            <SelectField<EpargnePensionBeneficiaire> label="Bénéficiaire de l’épargne-pension selon la clause" help="sfpEpargnePensionBenef" value={o.epargnePensionBeneficiaire} onChange={(v) => set((x) => { x.epargnePensionBeneficiaire = v; })}
+              options={[['inconnu', 'À établir (clause à lire)'], ['heritiers', 'Les héritiers légaux / la succession'], ['fils', t('Le fils survivant (frère du fils prédécédé)')], ['pere', t('Le père')], ['autre', 'Une autre personne']]} />
           </>
         )}
       </div>
