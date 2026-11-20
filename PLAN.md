@@ -143,6 +143,12 @@ Aucune tâche de code en cours. La session s'est arrêtée après la mise en lig
   assurances, droits selon l'option de la cohabitante, points d'interrogation, questions pour un regard bancaire). Cases vides → « non renseigné ».
   « Préparé pour » et « Afficher les prénoms » propres au document (ni enregistrés ni exportés) ; « Créer le PDF » (feuille de partage iOS) + « Imprimer ».
   _20/11/2026 — commit 2c2a68b. 162 tests + build OK (`tests/bilanPdf.test.tsx`). PDF du cas d'exemple contrôlé page par page (3 pages). Non poussé (accord requis)._
+- [x] **T21 — Contrats connus du fils prédécédé dans la situation de base** (demande du 20/11/2026)
+  Assurance groupe Ethias ≈ 200 000 € à la cohabitante (versement annoncé comme accepté) ; assurance groupe Beobank 15 000 € au fils survivant ;
+  nouvelle case « épargne-pension » (AXA 50 000 €, non versée à la cohabitante = contrat refusé pour exclusion du suicide ; bénéficiaire à établir ; non comptée dans les droits, avertissement + question notaire).
+  Valeurs dans `src/model/contratsConnus.ts` ; données enregistrées avant : complétées une seule fois si les contrats n'avaient jamais été renseignés (saisies conservées).
+  _20/11/2026 — commit fddcf5e. 168 tests + build OK (`tests/contratsConnus.test.ts` : acceptation 26 250 € cohabitante + 3 125 € fils survivant). Poussé._
+  À discuter : à qui revient l'épargne-pension (clause, héritiers légaux = père et fils survivant ?) et si la réserve est restituée malgré le refus.
 - [ ] **T8 — Script `npm run dev:reseau`** (optionnel, proposé mais non confirmé) : `vite --host` pour le Wi-Fi local.
 - [ ] **T12 — Repères de coefficient d'usufruit selon l'âge** (onglet Scénarios, bloc Vente ; aucune dépendance)
   Saisie facultative de la date de naissance de l'usufruitier (stockée localement, exclue des exports par défaut) et de la date de vente prévue.
