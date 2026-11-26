@@ -122,6 +122,7 @@ function NotaireContent({ state, rows, showNames, setShowNames, creerPdf, msg, f
         <h3>3. Donation et vente</h3>
         <ul className="checklist">
           <li>☐ Coût de l’acte de donation immobilière (honoraires, frais, droits) — devis.</li>
+          <li>☐ <strong>Qui paie les droits et les frais de la donation</strong> : par défaut <T>le fils survivant</T> (donataire), ou <T>le père</T> (donateur) si l’acte le prévoit (donation « nette de droits ») ? Si <T>le père</T> paie, cette prise en charge est-elle taxée comme une donation supplémentaire ? (Simulation : environ 1 750 à 3 000 € de droits de succession en moins si <T>le père</T> paie, car ces sommes sortent de son patrimoine.)</li>
           <li>☐ Base des droits d’une donation avec réserve d’usufruit ; cumul avec des donations antérieures.
             <ul>
               <li>☐ <strong>Démembrement</strong> : une donation de la nue-propriété des 2/3 <T>du père</T> avec réserve d’usufruit est-elle intéressante, sachant que les droits de donation wallons portent sur la valeur de la pleine propriété du lot donné ?</li>
